@@ -1,6 +1,6 @@
 // Module for Continous Passive Independent Searcher
 
-use crate::error::{Error, ErrorCode, MAXTRIAL};
+use crate::error::{Error, ErrorCode};
 use crate::searcher_mod::{SearcherType, SearcherCore, MoveType, Passive};
 use crate::system_mod::{SystemCore};
 use crate::target_mod::{TargetCore};
@@ -11,7 +11,7 @@ use std::fmt::{self, Display, Formatter};
 
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub struct ContPassiveIndepSearcher{
+pub struct ContPassiveIndepSearcher{        // 연속한 시스템에서 Passive하게 움직이는 independent searcher
     pub stype : SearcherType,               // Type of searcher
     pub mtype : MoveType,                   // Type of random movement
     pub dim : usize,                        // dimension of space containing searcher
@@ -31,19 +31,12 @@ impl ContPassiveIndepSearcher{
 
     pub fn new_uniform(sys : &dyn SystemCore<f64>, target : &dyn TargetCore<f64>,
                    rng : &mut Pcg64, mtype : MoveType) -> Result<Self, Error>{
-
-        let mut pos : Position<f64> = sys.position_out_of_system();
-        let mut trial : usize = 0;
+        // system과 target이 주어져 있는 상황에서 시스템 domain 안에서 초기위치를 uniform하게 뽑아 searcher를 정의해주는 함수
+        let mut pos : Position<f64> = sys.position_out_of_system();  // 초기값을 위해 무조건 시스템 밖의 벡터를 받도록 한다
         loop{
-            sys.random_pos_to_vec(rng, &mut pos)?;
+            sys.random_pos_to_vec(rng, &mut pos)?;   //
             if !target.check_find(&pos)?{
                 break;
-            }
-            else{
-                trial += 1;
-                if trial > MAXTRIAL{
-                    return Err(Error::make_error_syntax(ErrorCode::InvalidConfiguration));
-                }
             }
         }
 
