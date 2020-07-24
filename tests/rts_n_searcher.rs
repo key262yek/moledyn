@@ -11,6 +11,9 @@ use rts::error::Error;
 #[test]
 #[ignore]
 fn test_n_ptl_fpt() -> Result<(), Error>{
+    // n ptl fpt가 기존의 연구결과와 잘 맞는지 확인하는 테스트
+    // 하지만 단일 cpu로 계산하기엔 시간이 너무 오래걸려서 접음.
+    // 돌리면 분명 Fail이 날 것.
     let data_set : [(usize, f64); 30] = [(1, 8.00462E+01), (2, 3.85612E+01), (3, 2.48137E+01), (4, 1.81125E+01),
                                          (5, 1.39493E+01), (6, 1.13163E+01), (7, 9.34559E+00), (8, 7.98293E+00),
                                          (9, 6.96739E+00), (10, 6.06164E+00), (15, 3.62867E+00), (20, 2.47003E+00),
@@ -33,6 +36,7 @@ fn test_n_ptl_fpt() -> Result<(), Error>{
 
 
 fn ensemble_n_ptl_fpt(n : usize, num_ensemble : usize, rng: &mut Pcg64) -> Result<f64, Error>{
+    // n ptl fpt를 num_ensemble 만큼 반복
     let mut data : f64 = 0f64;
     for _i in 0..num_ensemble{
         let time : f64 = n_ptl_fpt(n, rng)?;
@@ -44,6 +48,7 @@ fn ensemble_n_ptl_fpt(n : usize, num_ensemble : usize, rng: &mut Pcg64) -> Resul
 
 fn n_ptl_fpt(n : usize, rng: &mut Pcg64) -> Result<f64, Error>{
     // n ptl이 target을 찾는 FPT를 출력해주는 함수.
+    // n번 시스템을 돌려서 그 중 최소 fpt를 반환함.
     let sys_size : f64 = 10f64;                             // System size
     let target_size : f64 = 1f64;                           // Target size
     let dt : f64 = 1e-2;                                    // Time step

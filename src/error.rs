@@ -11,31 +11,31 @@ pub struct Error{
     err: Box<ErrorCode>,
 }
 
-pub const MAXTRIAL : usize = 100;
+pub const MAX_TRIAL : usize = 100;
 
 /// Alias for a `Result` with the error type `serde_json::Error`.
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl Error{
-    pub fn make_error_msg(msg: String) -> Self{
+    pub fn make_error_msg(msg: String) -> Self{                         // message만을 담고 있는 error
         Error {
             err: Box::new(ErrorCode::Message(msg.into_boxed_str())),
         }
     }
 
-    pub fn make_error_io(error: io::Error) -> Self{
+    pub fn make_error_io(error: io::Error) -> Self{                     // io에서 돌아온 error
         Error {
             err: Box::new(ErrorCode::Io(error)),
         }
     }
 
-    pub fn make_error_syntax(code : ErrorCode) -> Self{
+    pub fn make_error_syntax(code : ErrorCode) -> Self{                 // 직접 정의한 error들. syntax error 중심
         Error {
             err: Box::new(code),
         }
     }
 
-    pub fn classify(&self) -> Category{
+    pub fn classify(&self) -> Category{                                 // error들을 분류
         match *self.err{
             ErrorCode::Message(_) => Category::Data,
             ErrorCode::Io(_) => Category::Io,
@@ -62,6 +62,8 @@ impl Error{
 }
 
 impl PartialEq for Error{
+    // 여러 이유로 Error 구조체는 등식을 정의하기 어렵다.
+    // 그래서 대신 category만 같으면 같은 에러로 취급하는 것
     fn eq(&self, other : &Self) -> bool{
         self.classify() == other.classify()
     }

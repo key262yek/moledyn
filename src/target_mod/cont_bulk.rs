@@ -34,7 +34,7 @@ impl TargetCore<f64> for ContBulkTarget{
         self.ttype.clone()
     }
 
-    // Check whether a position is near at target
+    // Check whether a searcher finds the target
     fn check_find(&self, pos: &Position<f64>) -> Result<bool, Error>{
         let d = self.distance(pos)?;
         let rad : f64 = self.radius;
@@ -56,6 +56,7 @@ impl Display for ContBulkTarget{
 #[cfg(test)]
 mod tests{
     use super::*;
+    use crate::error::ErrorCode;
 
     #[test]
     fn test_fmt(){

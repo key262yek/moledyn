@@ -1,5 +1,5 @@
 // Modules for continous circular system.
-//
+// 연속된 원형, 혹은 구형 시스템
 
 use crate::error::{Error, ErrorCode};
 use crate::system_mod::{SystemType, BoundaryCond, SystemCore};
@@ -8,15 +8,18 @@ use rand_pcg::Pcg64;
 
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
-pub struct ContCircSystem{
-    pub stype : SystemType,
-    pub bctype : BoundaryCond,
-    pub radius : f64,
-    pub dim : usize,
+pub struct ContCircSystem{              // 연속 원형(구형) 시스템
+    pub stype : SystemType,             // System type
+    pub bctype : BoundaryCond,          // Boundary condition : here, only reflective bc is available
+    pub radius : f64,                   // radius of system
+    pub dim : usize,                    // dimension of system
 }
 
 impl ContCircSystem{
     pub fn new(r : f64, dim : usize) -> Self{
+        // r : radius of system
+        // dim : dimension of system
+
         ContCircSystem{
             stype : SystemType::ContinousCircular,
             bctype : BoundaryCond::Reflection,
@@ -27,13 +30,16 @@ impl ContCircSystem{
 }
 
 impl SystemCore<f64> for ContCircSystem{
-    // Return whether a position vector is in the system
     fn check_inclusion(&self, pos: &Position<f64>) -> Result<bool, Error>{
+        // Return whether a position vector is in the system
+        // pos : vector to check
+
+        // 주어진 pos의 dimension이 system dimension과 다른 경우 error
         if self.dim != pos.coordinate.len(){
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
 
-        let r : f64 = pos.norm();
+        let r : f64 = pos.norm();   // distance between center and position
 
         if r > self.radius{
             return Ok(false);
@@ -44,43 +50,55 @@ impl SystemCore<f64> for ContCircSystem{
     }
 
     fn check_bc(&self, pos: &mut Position<f64>, dp: &mut Position<f64>) -> Result<(), Error>{
-        // first order 보다는 훨씬 정확함.
-        // 얼마나 작아야 정확하려나
-        pos.mut_add(dp)?;
-        if self.check_inclusion(pos)?{
-            return Ok(());
+        // check boundary condition
+        // For every movement of ptl (from pos to pos + dp here)
+        // we should check the boundary condition
+        // pos : initial position of ptl
+        // dp : displacement of ptl
+
+        pos.mut_add(dp)?;                           // add dp to pos
+        if self.check_inclusion(pos)?{              // if ptl is still in the system after movement
+            return Ok(());                          // return
         }
 
         let r0 : f64 = self.radius;
         let s : f64 = pos.norm();
-        pos.mut_scalar_mul((2f64 * r0 - s) / s);
-        if self.check_inclusion(pos)?{
+        pos.mut_scalar_mul((2f64 * r0 - s) / s);    // 그냥 반지름 비례로 크기만 줄임. 꽤나 정확함.
+        if self.check_inclusion(pos)?{              // 지금은 안에 있는가?
             return Ok(());
         }
         return Err(Error::make_error_syntax(ErrorCode::TooLargeTimeStep));
+        // 이렇게 했는데도 밖에 있단 의미는 step size가 너무 크단 의미임. error.
     }
 
 
-    // System 내부의 임의의 위치를 uniform하게 뽑아 반환
+
     fn random_pos(&self, rng: &mut Pcg64) -> Result<Position<f64>, Error>{
+        // System 내부의 임의의 위치를 uniform하게 뽑아 반환
+        // rng : random number generator
+
         use crate::random_mod::get_uniform_vec;
 
         let r : f64 = self.radius;
         let dim : usize = self.dim;
-        let pos0 : Position<f64> = Position::<f64>::new(vec![-0.5f64, -0.5f64]);
+        let pos0 : Position<f64> = Position::<f64>::new(vec![-0.5f64; self.dim]);
         let mut pos1;
         loop{
-            pos1 = &get_uniform_vec(rng, dim) + &pos0;
-            pos1.mut_scalar_mul(2f64 * r);
-            if self.check_inclusion(&pos1)?{
+            pos1 = &get_uniform_vec(rng, dim) + &pos0;          // 일단 (0, 1)^dim 에서 뽑은 후에, (-0.5, 0.5)^dim이 되도록
+                                                                // 평행이동
+            pos1.mut_scalar_mul(2f64 * r);                      // 그러고 2r을 곱해서 (-r, r)^dim로 변환
+            if self.check_inclusion(&pos1)?{                    // 그래도 system 밖에 있을 수 있으니 check
                 break;
             }
         }
         return Ok(pos1);
     }
 
-    // System 내부의 임의의 위치를 uniform하게 뽑아서 mutable reference에 기입
     fn random_pos_to_vec(&self, rng: &mut Pcg64, vec: &mut Position<f64>) -> Result<(), Error>{
+        // System 내부의 임의의 위치를 uniform하게 뽑아서 mutable reference에 기입
+        // rng : random number generator
+        // vec : 결과 적을 mutable reference
+
         use crate::random_mod::get_uniform_to_vec_nonstandard;
 
         let r : f64 = self.radius;
@@ -90,23 +108,26 @@ impl SystemCore<f64> for ContCircSystem{
         }
         loop{
             vec.clear();
-            get_uniform_to_vec_nonstandard(rng, vec, -r, r);
-            if self.check_inclusion(vec)?{
+            get_uniform_to_vec_nonstandard(rng, vec, -r, r);        // (-r, r)^dim 에서 uniform하게 뽑음
+            if self.check_inclusion(vec)?{                          // 그리고 그게 system 내부에 있는지 확인
                 break;
             }
         }
         return Ok(());
     }
 
-    // system 밖의 점을 하나 출력해주는 함수
     fn position_out_of_system(&self) -> Position<f64>{
+        // system 밖의 점을 하나 출력해주는 함수
+        // searcher를 새로 정의할 때, 맨 처음 위치를 시스템 밖에 두면 편리해서 생긴 기능
+
         let r : f64 = self.radius;
         let dim : usize = self.dim;
-        return Position::new(vec![2f64 * r; dim]);
+        return Position::new(vec![2f64 * r; dim]);   // (2r, 2r,...)  꼴은 무조건 밖에 있을 것.
     }
 
-    // system 밖의 점을 하나 vector에 적어주는 함수
     fn position_out_of_system_to_vec(&self, vec: &mut Position<f64>) -> Result<(), Error>{
+        // system 밖의 점을 하나 vector에 적어주는 함수
+
         if self.dim != vec.dim(){
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
@@ -121,6 +142,15 @@ impl SystemCore<f64> for ContCircSystem{
 
 pub fn check_bc_exact(sys: ContCircSystem, pos: &mut Position<f64>, dp: &mut Position<f64>) -> Result<(), Error>{
     // Most exact way
+    // 가장 정확한 방법으로 reflection을 계산하는 함수
+    // pos 에서 pos + dp 를 잇는 선분에서 시스템의 경계점을 찾고
+    // 그 경계점 위치가 곧 접평면의 법선벡터임을 이용해 대칭점을 계산하는 방식.
+    // 단순히 중심과의 거리를 계산해 비례해서 시스템 안으로 옮겨오도록 하는 함수보다 2배 정도 느리다.
+    // 움직이는 거리가 작으면 두 함수의 차이는 거의 없다.
+    // sys : system configuration
+    // pos : initial position of ptl
+    // dp : displacement of ptl
+
     pos.mut_add(dp)?;
     if sys.check_inclusion(pos)?{
         return Ok(());
@@ -146,7 +176,9 @@ pub fn check_bc_exact(sys: ContCircSystem, pos: &mut Position<f64>, dp: &mut Pos
 
 pub fn check_bc_first_order(sys: ContCircSystem, pos: &mut Position<f64>, dp: &mut Position<f64>) -> Result<(), Error>{
     // first order expansion
+    // 위의 정확한 계산에서 dp가 작고, pos이 경계에 가깝단 조건에서 first order만 남긴 결과
     // 비례로 줄여들어오는 것보다 오히려 더 안좋다.
+
     pos.mut_add(dp)?;
     if sys.check_inclusion(pos)?{
         return Ok(());

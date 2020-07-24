@@ -8,6 +8,8 @@ use rts::random_mod::{rng_seed, get_uniform, get_gaussian};
 use std::f64::consts::PI;
 
 fn bin_bounds(min: f64, max: f64, count: usize) -> HistogramBins{
+    // 원하는 범위와 원하는 칸 개수를 정의하기 위한 함수
+    // 그냥 Histogram crate의 기능을 이용하면 그래프마다 정확한 계산을 할 수 없음.
     let range = max - min;
     let mut bounds: Vec<f64> = (0..count)
         .map(|n| (n as f64 / count as f64) * range + min)

@@ -4,11 +4,12 @@ use rts::error::Error;
 use rts::system_mod::{SystemCore, cont_circ::ContCircSystem};
 use rts::random_mod::{rng_seed, get_uniform_vec, get_gaussian_vec, get_uniform_to_vec, get_gaussian_to_vec};
 use rts::position::Position;
-use std::default::Default;
 
 #[test]
 #[ignore]
-fn test_random_pos_contour() -> Result<(), Error>{
+fn test_cont_circ_random_pos_contour() -> Result<(), Error>{
+    // random_pos 결과가 잘 나오는지 위치를 다 찍어주는 테스트
+    // plot 프로그램으로 시스템 결과를 확인해볼 수 있다.
     use std::fs::File;
     use std::io::Write;
 
@@ -29,7 +30,7 @@ fn test_random_pos_contour() -> Result<(), Error>{
 
 #[test]
 #[ignore]
-fn test_random_pos_to_vec_contour() -> Result<(), Error>{
+fn test_cont_circ_random_pos_to_vec_contour() -> Result<(), Error>{
     use std::fs::File;
     use std::io::Write;
 
@@ -52,6 +53,7 @@ fn test_random_pos_to_vec_contour() -> Result<(), Error>{
 #[test]
 #[ignore]
 fn test_get_uniform_vec() -> Result<(), Error>{
+    // uniform vector가 정말 uniform하게 나오는지 개별 데이터를 출력해주는 테스트
     use std::fs::File;
     use std::io::Write;
 
@@ -72,6 +74,7 @@ fn test_get_uniform_vec() -> Result<(), Error>{
 #[test]
 #[ignore]
 fn test_get_uniform_to_vec() -> Result<(), Error>{
+    // uniform vector가 정말 uniform하게 나오는지 개별 데이터를 출력해주는 테스트
     use std::fs::File;
     use std::io::Write;
 
@@ -93,6 +96,7 @@ fn test_get_uniform_to_vec() -> Result<(), Error>{
 #[test]
 #[ignore]
 fn test_get_gaussian_vec() -> Result<(), Error>{
+    // gaussian vector가 정말 gaussian하게 나오는지 개별 데이터를 출력해주는 테스트
     use std::fs::File;
     use std::io::Write;
 
@@ -113,6 +117,7 @@ fn test_get_gaussian_vec() -> Result<(), Error>{
 #[test]
 #[ignore]
 fn test_get_gaussian_to_vec() -> Result<(), Error>{
+    /// gaussian vector가 정말 uniform하게 나오는지 개별 데이터를 출력해주는 테스트
     use std::fs::File;
     use std::io::Write;
 

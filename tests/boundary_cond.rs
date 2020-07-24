@@ -6,7 +6,9 @@ use std::f64::consts::PI;
 
 
 #[test]
+#[ignore]
 fn test_cont_circ_reflection() -> Result<(), Error>{
+    // Reflective boundary condition check가 잘 이뤄지는지 확인하는 테스트
     let sys : ContCircSystem = ContCircSystem::new(1.0, 2);
 
     for i in 0..10{
@@ -27,7 +29,9 @@ fn test_cont_circ_reflection() -> Result<(), Error>{
 }
 
 #[test]
+#[ignore]
 fn test_check_bc_realization() -> Result<(), Error>{
+    // 실제 데이터를 확인하기 위해 reflection 결과를 출력해주는 test
     use std::fs::File;
     use std::io::Write;
     use rts::system_mod::cont_circ::check_bc_exact;
@@ -69,7 +73,9 @@ fn test_check_bc_realization() -> Result<(), Error>{
 }
 
 #[test]
+#[ignore]
 fn test_error_check_bc()-> Result<(), Error>{
+    // 여러 버젼의 boundary condition check들간의 차이를 확인하는 테스트
     use std::fs::File;
     use std::io::Write;
     use rts::system_mod::cont_circ::{check_bc_exact, check_bc_first_order};
@@ -116,7 +122,7 @@ fn test_error_check_bc()-> Result<(), Error>{
 }
 
 fn single_test_cont_circ_exact(sys: ContCircSystem, pos: &Position<f64>, dp: &Position<f64>) -> Result<(), Error>{
-    // Most exact way
+    // 가장 정확한 boundary condition checker의 각 계산 단계를 검증하는 테스트
     let pos2 : Position<f64> = pos + dp;
     if sys.check_inclusion(&pos2)?{
         return Ok(());

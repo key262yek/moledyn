@@ -45,7 +45,7 @@ pub trait TargetCore<T>{
     // Return the type of target
     fn ttype(&self) -> TargetType;
 
-    // Check whether a position is near at target
+    // Check whether a searcher finds the target
     fn check_find(&self, pos: &Position<T>) -> Result<bool, Error>;
 }
 

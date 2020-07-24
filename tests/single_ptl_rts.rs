@@ -52,14 +52,17 @@ fn test_ptl_diffusion_in_time() -> Result<(), Error>{
 #[ignore]
 fn test_single_ptl_fpt() -> Result<(), Error>{
     // single ptl의 searching time 계산
-    // 1000번 ensemble로 85정도 나오는거 보면 평균치는 비슷하게 나오는 것 같은데
-    // 시간이 오래걸리네 생각보다
-    const NUM_ENSEMBLE : usize = 1000;                       // Number of ensemble
+    // system size 10, target_size 1, diffusion을 1로 계산한 상황에서
+    // single ptl rts는 82 정도의 mfpt가 나와야함.
+    // 테스트 결과 : 83.7
+    // 적절하다.
+    const NUM_ENSEMBLE : usize = 10000;                       // Number of ensemble
     let sys_size : f64 = 10f64;                             // System size
     let target_size : f64 = 1f64;                           // Target size
     let dt : f64 = 1e-2;                                    // Time step
     let dim : usize = 2;                                    // dimension of system
     let mut data : f64 = 0f64;                              // variable for computing average fpt
+    let mut single_move : Position<f64> = Position::new(vec![0.0; dim]);
 
     let mut rng : Pcg64 = rng_seed(1231412314);             // random number generator
     let sys : ContCircSystem = ContCircSystem::new(sys_size, dim);   // System
@@ -71,7 +74,8 @@ fn test_single_ptl_fpt() -> Result<(), Error>{
         let mut time : f64 = 0f64;
 
         while !target.check_find(&searcher.pos)?{
-            let mut single_move : Position<f64> = searcher.random_move(&mut rng, dt)?;
+            single_move.clear();
+            searcher.random_move_to_vec(&mut rng, dt, &mut single_move)?;
             sys.check_bc(&mut searcher.pos, &mut single_move)?;
             time += dt;
         }

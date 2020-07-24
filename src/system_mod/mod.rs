@@ -13,7 +13,7 @@ pub mod cont_circ;
 
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
-pub enum SystemType{
+pub enum SystemType{                        // System type
     ContinousCircular,
     ContinousRectangular,
     Lattice,
@@ -32,8 +32,8 @@ impl fmt::Display for SystemType{
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
-pub enum BoundaryCond{
-    Periodic,  // Only valid for Rectanuglar system or Lattice
+pub enum BoundaryCond{                      // Boundary condition
+    Periodic,                               // Only valid for Rectanuglar system or Lattice
     Reflection,
 }
 
@@ -41,7 +41,7 @@ impl fmt::Display for BoundaryCond{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
         match *self{
             BoundaryCond::Periodic => write!(f, "Periodic Boundary Condition"),
-            BoundaryCond::Reflection => write!(f, "Reflection Boundary Condtion"),
+            BoundaryCond::Reflection => write!(f, "Reflective Boundary Condtion"),
         }
     }
 }
@@ -81,7 +81,7 @@ mod tests{
         assert_eq!(format!("{}", SystemType::Network).as_str(), "Network system.");
 
         assert_eq!(format!("{}", BoundaryCond::Periodic).as_str(), "Periodic Boundary Condition");
-        assert_eq!(format!("{}", BoundaryCond::Reflection).as_str(), "Reflection Boundary Condtion");
+        assert_eq!(format!("{}", BoundaryCond::Reflection).as_str(), "Reflective Boundary Condtion");
     }
 }
 

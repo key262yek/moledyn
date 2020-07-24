@@ -7,34 +7,41 @@ use std::default::Default;
 
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
-pub struct Position<T>{
-    pub coordinate : Vec<T>
-}
+pub struct Position<T>{                 // vector 연산을 정의하기 위해서 wrapping한 structure
+    pub coordinate : Vec<T>             // generic type T를 이용해 확장성을 노렸다.
+}                                       // T가 정수형이면 discrete system, 실수형이면 continuous system이 되는 것
 
 impl<T : Clone> Position<T>{
-    pub fn new(vec : Vec<T>) -> Self{
+    pub fn new(vec : Vec<T>) -> Self{   // vector를 새로 정의하는 함수
         Position::<T>{
-            coordinate : vec.clone()
-        }
+            coordinate : vec.clone()    // 벡터는 copy가 되지 않으므로, clone을 해야함.
+        }                               // 그래서 T도 clone trait이 정의된 type이어야 하는 것.
     }
 }
 
-impl<T> Position<T>{
+impl<T> Position<T>{                    // 일반적인 position vector가 가져야 하는 함수들
     pub fn dim(&self) -> usize{
+        // dimension을 출력해주는 함수
         self.coordinate.len()
     }
 }
 
 impl<T : Default> Position<T>{
     pub fn clear(&mut self){
+        // 종종 vector를 initialize해야할 필요가 있다.
+        // 모두 0으로 만들어주는 함수
+        // rust에서는 정수형에서의 0과 실수형에서의 0이 다르다.
+        // 따라서 default trait을 이용해 0으로 바꿔주는 함수
+
         for x in &mut self.coordinate{
             *x = Default::default();
         }
     }
 }
 
-impl Position<f64>{
+impl Position<f64>{                                 // 실수형 벡터의 함수들
     pub fn norm(&self) -> f64{
+        // Norm function
         let mut res : f64 = 0f64;
         for &x in self.coordinate.iter(){
             res += x * x;
@@ -43,6 +50,11 @@ impl Position<f64>{
     }
 
     pub fn distance(&self, other : &Self) -> Result<f64, Error>{
+        // distance between self and other
+        // norm을 이용하면 간단할 수 있지만,
+        // 그 경우 벡터를 새로 정의해서 그 벡터의 norm을 구해야하는 문제가 생김
+        // allocation, free가 시간을 많이 잡아먹기 때문에 아래와 같이 구성함.
+
         if self.dim() != other.dim(){
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
@@ -56,6 +68,7 @@ impl Position<f64>{
     }
 
     pub fn inner_product(&self, other : &Self) -> Result<f64, Error>{
+        // inner product
         if self.dim() != other.dim(){
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
@@ -110,6 +123,10 @@ impl Position<i32>{
 impl<'a, 'b, T> Add<&'b Position<T>> for &'b Position<T>
     where T : Add<Output = T> + Clone + Copy{
     type Output = Position<T>;
+    // 종종 가독성을 위해 그냥 덧셈을 정의하는 것이 좋을 때도 있다.
+    // 다만 이 경우들은 모두 새로운 벡터를 정의하고 있기 때문에,
+    // allocation, free 시간을 소모해야함
+    // 그래서 최대한 쓰지 않으려 한다.
 
     fn add(self, other: &'b Position<T>) -> Position<T>{
         if self.dim() != other.dim(){
@@ -130,6 +147,7 @@ impl<'a, 'b, T> Add<&'b Position<T>> for &'b Position<T>
 impl<'a, 'b, T> Add<&'b mut Position<T>> for &'b mut Position<T>
     where T : Add<Output = T> + Clone + Copy{
     type Output = Position<T>;
+    // 위와 같은 함수인데, mutable reference에 대해서 따로 정리해줘야함
 
     fn add(self, other: &'b mut Position<T>) -> Position<T>{
         if self.dim() != other.dim(){
@@ -150,6 +168,10 @@ impl<'a, 'b, T> Add<&'b mut Position<T>> for &'b mut Position<T>
 impl<'a, 'b, T> Sub<&'b Position<T>> for &'b Position<T>
     where T : Sub<Output = T> + Clone + Copy{
     type Output = Position<T>;
+    // 종종 가독성을 위해 그냥 뺄셈을 정의하는 것이 좋을 때도 있다.
+    // 다만 이 경우들은 모두 새로운 벡터를 정의하고 있기 때문에,
+    // allocation, free 시간을 소모해야함
+    // 그래서 최대한 쓰지 않으려 한다.
 
     fn sub(self, other: &'b Position<T>) -> Position<T>{
         if self.dim() != other.dim(){
@@ -170,6 +192,7 @@ impl<'a, 'b, T> Sub<&'b Position<T>> for &'b Position<T>
 impl<'a, 'b, T> Sub<&'b mut Position<T>> for &'b mut Position<T>
     where T : Sub<Output = T> + Clone + Copy{
     type Output = Position<T>;
+    // 위와 같은 함수지만 mutable reference에 대해 따로 정의해줘야 함.
 
     fn sub(self, other: &'b mut Position<T>) -> Position<T>{
         if self.dim() != other.dim(){
@@ -188,15 +211,19 @@ impl<'a, 'b, T> Sub<&'b mut Position<T>> for &'b mut Position<T>
 }
 
 pub trait Numerics<T>{
+    // Numerics를 정의한 trait
+    // 대부분의 벡터 연산은 이들을 이용할 것.
+
     // Scalar Multiplication
     fn scalar_mul(&self, scalar : T) -> Position<T>;
 
+    // 스칼라곱. 계산 결과를 새로운 벡터로 출력하는 것이 아니라 주어진 벡터를 바꾸는 방식
     fn mut_scalar_mul(&mut self, scalar : T);
 
-    // addition by mutation
+    // 덧셈. 계산 결과를 새로운 벡터로 출력하는 것이 아니라 주어진 벡터를 바꾸는 방식
     fn mut_add(&mut self, other: &Self) -> Result<(), Error>;
 
-    // subtraction by mutation
+    // 뺄셈. 계산 결과를 새로운 벡터로 출력하는 것이 아니라 주어진 벡터를 바꾸는 방식
     fn mut_sub(&mut self, other: &Self) -> Result<(), Error>;
 }
 

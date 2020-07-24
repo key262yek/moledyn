@@ -8,10 +8,10 @@ use crate::error::Error;
 use crate::position::Position;
 use rand_pcg::Pcg64;
 
-pub mod cont_passive_indep;
+pub mod cont_passive_indep;     // 연속 시스템에서 Passive하게 움직이는 독립된 searcher
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
-pub enum SearcherType{
+pub enum SearcherType{                          // Type of searcher
     ContinousPassiveIndependent,
     ContinousPassiveInteracting,
     ContinousActiveIndependent,
@@ -29,14 +29,14 @@ pub enum SearcherType{
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub enum MoveType{
     Brownian(f64),      // Brownian motion with given diffusion coefficient
-    Levy,
+    Levy,               // Levy walk. not developed yet.
 }
 
-pub trait SearcherCore<T>{
+pub trait SearcherCore<T>{    // Core functionality of searcher.
 
 }
 
-pub trait Passive<T>{
+pub trait Passive<T>{         // Functions for Passive ptls
     // Random movement
     fn random_move(&self, rng : &mut Pcg64, dt : T) -> Result<Position<T>, Error>;
 
@@ -44,7 +44,7 @@ pub trait Passive<T>{
     fn random_move_to_vec(&self, rng: &mut Pcg64, dt: f64, vec: &mut Position<f64>) -> Result<(), Error>;
 }
 
-pub trait Active<T>{
+pub trait Active<T>{          // Functions for Active ptls
     // Active motion
     fn active_move(&self) -> Position<T>;
 }

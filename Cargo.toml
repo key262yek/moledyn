@@ -16,7 +16,7 @@ criterion = "0.3"
 plotlib = "0.5.1"
 
 [[bench]]
-name = "rts_benchmark"
+name = "setup_benchmark"
 harness = false
 
 [profile.release]
