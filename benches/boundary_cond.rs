@@ -19,7 +19,9 @@ fn bench_exact(c : &mut Criterion){
 fn bench_ratio(c : &mut Criterion){
     // Collecting 100 samples in estimated 5.0021 s (7.6M iterations)
     // 656.58 ns 658.09 ns 659.75 ns
-    // 2배 정도 느리네. bc가 항상 작동하는 기작이 아니니까 필수적인게 아닐지도 모르겠다.
+    // 2배 정도 느리다.
+    // 전반적으로 check_bc 함수는 전체 rts 구동시간의 22% 정도를 차지한다.
+    // 2배가 느려지는 것은 꽤 큰 performance 차이를 보일 것.
     let sys : ContCircSystem = ContCircSystem::new(1.0, 2);
     let mut pos : Position<f64> = Position::new(vec![0.99, 0.0]);
     let t: f64 = 3.141592f64 / 6f64;
