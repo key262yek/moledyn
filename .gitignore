@@ -2,3 +2,7 @@
 Cargo.lock
 sftp-config.json
 .DS_Store
+*.c
+*.x
+*.dat
+*.svg
