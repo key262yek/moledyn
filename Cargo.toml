@@ -1,0 +1,23 @@
+[package]
+name = "rts"
+version = "0.2.0"
+authors = ["Myeongseon Choi"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rand = "0.7"
+rand_pcg = "0.2.1"
+rand_distr = "0.2.2"
+
+[dev-dependencies]
+criterion = "0.3"
+plotlib = "0.5.1"
+
+[[bench]]
+name = "rts_benchmark"
+harness = false
+
+[profile.release]
+panic = 'abort'
