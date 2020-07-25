@@ -4,6 +4,8 @@ use std::ops::{Add, Sub, Mul, AddAssign, SubAssign};
 use std::fmt::{self, Display, Write, Formatter, LowerExp};
 use crate::error::{Error, ErrorCode};
 use std::default::Default;
+use std::num::{ParseIntError, ParseFloatError};
+use std::str::FromStr;
 
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
@@ -82,6 +84,20 @@ impl Position<f64>{                                 // 실수형 벡터의 함�
     }
 }
 
+impl FromStr for Position<f64>{
+    type Err = ParseFloatError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let coords: Vec<&str> = s.trim_matches(|p| p == '(' || p == ')' )
+                                 .split(',')
+                                 .collect();
+        let coords: Vec<f64> = coords.iter()
+                                     .map(|x| x.parse::<f64>().expect("Failed to parse"))
+                                     .collect();
+        return Ok(Position::<f64>::new(coords));
+    }
+}
+
 impl Position<i32>{
     pub fn norm(&self) -> f64{
         let mut res : f64 = 0f64;
@@ -117,6 +133,20 @@ impl Position<i32>{
             r += (x - y).abs();
         }
         return Ok(r);
+    }
+}
+
+impl FromStr for Position<i32>{
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let coords: Vec<&str> = s.trim_matches(|p| p == '(' || p == ')' )
+                                 .split(',')
+                                 .collect();
+        let coords: Vec<i32> = coords.iter()
+                                     .map(|x| x.parse::<i32>().expect("Failed to parse"))
+                                     .collect();
+        return Ok(Position::<i32>::new(coords));
     }
 }
 
@@ -412,6 +442,53 @@ mod tests{
         let mut pos = Position::<f64>::new(vec![3.0, 2.0]);
         pos.clear();
         assert_eq!(pos, Position::<f64>::new(vec![0.0, 0.0]));
+    }
+
+    #[test]
+    fn test_from_str(){
+        // Test from_str function for Position<f64>
+        let str1 = "(0.0,0.0)";
+        let str2 = "0.0,0.0";
+
+        let pos1 = Position::<f64>::from_str(str1);
+        let pos2 = Position::<f64>::from_str(str2);
+        let expect = Ok(Position::<f64>::new(vec![0.0; 2]));
+
+        assert_eq!(pos1, expect);
+        assert_eq!(pos2, expect);
+
+        // Test parse function for Position<f64>
+        let str1 = "(0.0,0.0)";
+        let str2 = "0.0,0.0";
+
+        let pos1 : Position<f64> = str1.parse().expect("Failed to parse");
+        let pos2 : Position<f64> = str2.parse().expect("Failed to parse");
+        let expect = Position::<f64>::new(vec![0.0; 2]);
+
+        assert_eq!(pos1, expect);
+        assert_eq!(pos2, expect);
+
+        // Test from_str function for Position<i32>
+        let str1 = "(0,0)";
+        let str2 = "0,0";
+
+        let pos1 = Position::<i32>::from_str(str1);
+        let pos2 = Position::<i32>::from_str(str2);
+        let expect = Ok(Position::<i32>::new(vec![0; 2]));
+
+        assert_eq!(pos1, expect);
+        assert_eq!(pos2, expect);
+
+        // Test parse function for Position<f64>
+        let str1 = "(0,0)";
+        let str2 = "0,0";
+
+        let pos1 : Position<i32> = str1.parse().expect("Failed to parse");
+        let pos2 : Position<i32> = str2.parse().expect("Failed to parse");
+        let expect = Position::<i32>::new(vec![0; 2]);
+
+        assert_eq!(pos1, expect);
+        assert_eq!(pos2, expect);
     }
 }
 
