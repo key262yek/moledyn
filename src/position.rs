@@ -45,7 +45,7 @@ impl<T : FromStr + Default + Clone> FromStr for Position<T>{
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let coords: Vec<&str> = s.trim()
                                  .trim_matches(|p| p == '(' || p == ')')
-                                 .split(',')
+                                 .split(|c| c == ',' || c == ':')
                                  .collect();
         let coords: Vec<T> = coords.iter()
                                      .map(|x| x.parse::<T>().map_or(Default::default(), |v| v))
