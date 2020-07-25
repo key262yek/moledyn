@@ -4,7 +4,7 @@ use crate::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct ContBulkTarget{
-    pub ttype : TargetType,
+    pub target_type : TargetType,
     pub target_pos : Position::<f64>,
     pub target_size : f64,
 }
@@ -13,7 +13,7 @@ impl ContBulkTarget{
     // Generate Target
     pub fn new(pos : Position::<f64>, r : f64) -> ContBulkTarget{
         ContBulkTarget{
-            ttype : TargetType::ContinuousInBulk,
+            target_type : TargetType::ContinuousInBulk,
             target_pos : pos,
             target_size : r,
         }
@@ -25,16 +25,16 @@ impl ContBulkTarget{
     }
 }
 
-impl_argument_trait!(ContBulkTarget, ContBulkTargetArguments, 2,
-    ttype, TargetType, TargetType::ContinuousInBulk;
+impl_argument_trait!(ContBulkTarget, "Target", ContBulkTargetArguments, 2,
+    target_type, TargetType, TargetType::ContinuousInBulk;
     target_pos, Position::<f64>, "Position of Target",
     target_size, f64, "Size of Target");
 
 
 impl TargetCore<f64> for ContBulkTarget{
     // Return the type of target
-    fn ttype(&self) -> TargetType{
-        self.ttype.clone()
+    fn target_type(&self) -> TargetType{
+        self.target_type.clone()
     }
 
     // Check whether a searcher finds the target
@@ -78,7 +78,7 @@ mod tests{
     #[test]
     fn test_ttype(){
         let target : ContBulkTarget = ContBulkTarget::new(Position::<f64>::new(vec![0.0, 0.0]), 3.0);
-        assert_eq!(target.ttype(), TargetType::ContinuousInBulk);
+        assert_eq!(target.target_type(), TargetType::ContinuousInBulk);
     }
 
     #[test]

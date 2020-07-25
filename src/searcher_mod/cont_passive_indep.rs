@@ -8,7 +8,7 @@ use crate::random_mod::{get_gaussian_vec, get_gaussian_to_vec_nonstandard};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct ContPassiveIndepSearcher{        // 연속한 시스템에서 Passive하게 움직이는 independent searcher
-    pub stype : SearcherType,               // Type of searcher
+    pub searcher_type : SearcherType,               // Type of searcher
     pub mtype : MoveType,                   // Type of random movement
     pub itype : InitType<f64>,              // Type of Initialization
     pub dim : usize,                        // dimension of space containing searcher
@@ -22,7 +22,7 @@ impl ContPassiveIndepSearcher{
         // pos : initial position of searcher
 
         ContPassiveIndepSearcher{
-            stype : SearcherType::ContinousPassiveIndependent,
+            searcher_type : SearcherType::ContinousPassiveIndependent,
             mtype : mtype,
             itype : InitType::SpecificPosition(pos.clone()),
             dim : pos.dim(),
@@ -46,14 +46,20 @@ impl ContPassiveIndepSearcher{
             }
         }
 
-        Ok(ContPassiveIndepSearcher::new(mtype, pos))
+        Ok(ContPassiveIndepSearcher{
+            searcher_type : SearcherType::ContinousPassiveIndependent,
+            mtype : mtype,
+            itype : InitType::Uniform,
+            dim : pos.dim(),
+            pos : pos,
+        })
     }
 }
 
-impl_argument_trait!(ContPassiveIndepSearcher, ContPassiveIndepSearcherArguments, 1,
-    stype, SearcherType, SearcherType::ContinousPassiveIndependent,
+impl_argument_trait!(ContPassiveIndepSearcher, "Searcher", ContPassiveIndepSearcherArguments, 1,
+    searcher_type, SearcherType, SearcherType::ContinousPassiveIndependent,
     mtype, MoveType, MoveType::Brownian(1f64);
-    itype, InitType<f64>, InitType::<f64>::Uniform);
+    itype, InitType<f64>, "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform");
 
 impl SearcherCore<f64> for ContPassiveIndepSearcher{
 
@@ -102,12 +108,8 @@ impl Passive<f64> for ContPassiveIndepSearcher{
 
 #[cfg(test)]
 mod tests{
+    #[allow(unused_imports)]
     use super::*;
 
-    #[test]
-    fn test_fmt(){
-        let searcher = ContPassiveIndepSearcher::new(MoveType::Brownian(0.0), Position::new(vec![0.0, 0.0]));
-        assert_eq!(format!("{}", searcher).as_str(),
-            "Passive Independent Searcher in Continous system.\nRandom walk : Brownian with diffusion coefficient 0, Pos : (0,0)");
-    }
+
 }

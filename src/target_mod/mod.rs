@@ -33,7 +33,7 @@ impl_fromstr_for_type!(TargetType,
 
 pub trait TargetCore<T>{
     // Return the type of target
-    fn ttype(&self) -> TargetType;
+    fn target_type(&self) -> TargetType;
 
     // Check whether a searcher finds the target
     fn check_find(&self, pos: &Position<T>) -> Result<bool, Error>;

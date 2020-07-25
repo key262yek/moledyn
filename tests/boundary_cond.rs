@@ -128,7 +128,7 @@ fn single_test_cont_circ_exact(sys: ContCircSystem, pos: &Position<f64>, dp: &Po
         return Ok(());
     }
 
-    let r0 = sys.radius;
+    let r0 = sys.sys_size;
     let r = pos.norm();
     let dr = dp.norm();
     let rdr = pos.inner_product(dp)?;

@@ -196,17 +196,20 @@ impl FromStr for MoveType{
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let split : Vec<&str> = s.split_whitespace().collect();
-        if split.len() == 1{
-            split[0].parse::<f64>().map(|c| MoveType::Brownian(c))
+        match split[0]{
+            "Brownian" => Ok(MoveType::Brownian(split[4].parse::<f64>().expect("Failed to parse"))),
+            "Levy" => Ok(MoveType::Levy),
+            _ => {
+                if split.len() == 1{
+                    split[0].parse::<f64>().map(|c| MoveType::Brownian(c))
                                    .map_err(|_e| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))
+                }
+                else{
+                    Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput))
+                }
+            },
         }
-        else{
-            match split[0]{
-                "Brownian" => Ok(MoveType::Brownian(split[4].parse::<f64>().expect("Failed to parse"))),
-                "Levy" => Ok(MoveType::Levy),
-                _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
-            }
-        }
+
     }
 }
 
@@ -227,7 +230,12 @@ impl<T : FromStr + Default + Clone> FromStr for InitType<T>{
     fn from_str(s: &str) -> Result<Self, Self::Err>{
         let split : Vec<&str> = s.split_whitespace().collect();
         if split.len() == 1{
-            split[0].parse::<Position<T>>().map(|pos| InitType::<T>::SpecificPosition(pos))
+            match split[0]{
+                "Uniform" => Ok(InitType::<T>::Uniform),
+                _ => {
+                    split[0].parse::<Position<T>>().map(|pos| InitType::<T>::SpecificPosition(pos))
+                },
+            }
         }
         else{
             match split[1]{

@@ -5,7 +5,7 @@ use crate::prelude::*;
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct ContCircSystem{              // 연속 원형(구형) 시스템
-    pub stype : SystemType,             // System type
+    pub sys_type : SystemType,             // System type
     pub bctype : BoundaryCond,          // Boundary condition : here, only reflective bc is available
     pub sys_size : f64,                   // radius of system
     pub dim : usize,                    // dimension of system
@@ -17,7 +17,7 @@ impl ContCircSystem{
         // dim : dimension of system
 
         ContCircSystem{
-            stype : SystemType::ContinuousCircular,
+            sys_type : SystemType::ContinuousCircular,
             bctype : BoundaryCond::Reflection,
             sys_size : r,
             dim : dim,
@@ -25,8 +25,8 @@ impl ContCircSystem{
     }
 }
 
-impl_argument_trait!(ContCircSystem, ContCircSystemArguments, 2,
-    stype, SystemType, SystemType::ContinuousCircular,
+impl_argument_trait!(ContCircSystem, "System", ContCircSystemArguments, 2,
+    sys_type, SystemType, SystemType::ContinuousCircular,
     bctype, BoundaryCond, BoundaryCond::Reflection;
     sys_size, f64, "Size of System",
     dim, usize, "Dimension of System");
@@ -216,7 +216,7 @@ mod tests{
     fn test_new(){
         let sys : ContCircSystem = ContCircSystem::new(3.0, 2);
 
-        assert_eq!(sys.stype, SystemType::ContinuousCircular);
+        assert_eq!(sys.sys_type, SystemType::ContinuousCircular);
         assert_eq!(sys.sys_size, 3.0);
         assert_eq!(sys.dim, 2);
     }

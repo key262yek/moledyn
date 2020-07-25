@@ -20,6 +20,9 @@ pub trait Argument<T>{
     // width는 변수명이 담기는 영역의 길이를 말한다. align을 위한 장치
     fn info(width : usize) -> String;
 
+    // info 보다 더 짧게, 변수명만 적은 info
+    fn brief_info() -> String;
+
     // args 벡터로부터 structure_arguments를 읽어서 반환해주는 함수
     fn read_args_from_vec(args: Vec<String>) -> Result<T, Error>;
 
@@ -49,10 +52,10 @@ macro_rules! define_arguments{
     ($name:ident $(, $type_name:ident, $type_type:ty)* ;$($var:ident, $t:ty), *) =>{
         #[allow(dead_code)]
         #[derive(Clone, Debug, PartialEq, PartialOrd)]
-        struct $name{
-            $($type_name : $type_type,
+        pub struct $name{
+            $(pub $type_name : $type_type,
                 )*
-            $($var : $t,
+            $(pub $var : $t,
                 )*
         }
     }
@@ -75,6 +78,21 @@ macro_rules! impl_fn_info {
 
 #[macro_export]
 #[allow(unused_macros)]
+macro_rules! impl_fn_brief_info {
+    ($description:expr, $($var:ident),*) => {
+        #[allow(unused_variables)]
+        fn brief_info() -> String{
+            #[allow(unused_mut)]
+            let mut string = String::from(format!("{0:} arguments : ", $description));
+            $(string.push_str(format!("({}) ", stringify!($var)).as_str());
+                )*
+            string
+        }
+    }
+}
+
+#[macro_export]
+#[allow(unused_macros)]
 macro_rules! impl_fn_read_args_from_vec{
     ($name:ident $(, $type_name:ident, $type_default:expr)* ; $($var:ident), *) => {
         fn read_args_from_vec(args: Vec<String>) -> Result<$name, Error>{
@@ -87,7 +105,10 @@ macro_rules! impl_fn_read_args_from_vec{
             Ok($name{
                 $($type_name : $type_default,
                     )*
-                $($var : iter.next().unwrap().parse().expect("Failed to parse\n"),
+                $($var : {
+                        let word : &str = iter.next().unwrap().trim();
+                        word.parse().expect("Failed to parse\n")
+                    },
                     )*
             })
         }
@@ -133,7 +154,7 @@ macro_rules! impl_fn_read_args_from_lines{
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! impl_argument_trait{
-    ($struct_name:ident, $arg_name:ident, $num_args:expr
+    ($struct_name:ident, $struct_description:expr, $arg_name:ident, $num_args:expr
         $(,$type_name:ident, $type_type:ty, $type_default:expr)*;
         $($var:ident, $t:ty, $description:expr), *) => {
         define_num_args!($num_args);
@@ -141,6 +162,8 @@ macro_rules! impl_argument_trait{
 
         impl Argument<$arg_name> for $struct_name{
             impl_fn_info!($($var, $description), *);
+
+            impl_fn_brief_info!($struct_description $(, $var)*);
 
             impl_fn_read_args_from_vec!($arg_name $(,$type_name, $type_default)*; $($var), *);
 
@@ -187,6 +210,10 @@ mod tests{
                 string.push_str(format!("{}", format_args!("{0:1$}: {2:}\n", stringify!(var1), width, "Test variable 1")).as_str());
                 string.push_str(format!("{}", format_args!("{0:1$}: {2:}\n", stringify!(var2), width, "Test variable 2")).as_str());
                 string
+            }
+
+            fn brief_info() -> String{
+                "Test arguments : (var1) (var2) ".to_string()
             }
 
             fn read_args_from_vec(args: Vec<String>) -> Result<TestArguments, Error>{
@@ -275,6 +302,12 @@ mod tests{
     }
 
     #[test]
+    fn test_impl_fn_breif_info(){
+        impl_fn_brief_info!("Test", var1, var2);
+        assert_eq!(brief_info(), String::from("Test arguments : (var1) (var2) "));
+    }
+
+    #[test]
     fn test_impl_read_args_from_vec(){
         define_num_args!(2);
         define_arguments!(TestArguments ; var1, f64, var2, usize);
@@ -334,7 +367,7 @@ mod tests{
             var3 : String,
         }
 
-        impl_argument_trait!(TestStruct, TestArguments, 2 ;var1, f64, "Test variable 1",
+        impl_argument_trait!(TestStruct, "Test", TestArguments, 2 ;var1, f64, "Test variable 1",
                                                            var2, usize, "Test variable 2");
 
         let test1 = TestStruct{
@@ -368,7 +401,7 @@ mod tests{
             var3 : SystemType,
         }
 
-        impl_argument_trait!(TestStruct, TestArguments, 2,
+        impl_argument_trait!(TestStruct, "Test", TestArguments, 2,
                                        var3, SystemType, SystemType::ContinuousCircular;
                                        var1, f64, "Test variable 1",
                                        var2, usize, "Test variable 2");
