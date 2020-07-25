@@ -56,9 +56,9 @@ impl ContPassiveIndepSearcher{
     }
 }
 
-impl_argument_trait!(ContPassiveIndepSearcher, "Searcher", ContPassiveIndepSearcherArguments, 1,
-    searcher_type, SearcherType, SearcherType::ContinousPassiveIndependent,
-    mtype, MoveType, MoveType::Brownian(1f64);
+impl_argument_trait!(ContPassiveIndepSearcher, "Searcher", ContPassiveIndepSearcherArguments, 2,
+    searcher_type, SearcherType, SearcherType::ContinousPassiveIndependent;
+    mtype, MoveType, "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype, InitType<f64>, "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform");
 
 impl SearcherCore<f64> for ContPassiveIndepSearcher{

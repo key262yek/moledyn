@@ -43,7 +43,7 @@ impl SimulationArguments{
 
 #[test]
 fn test_arguments() -> Result<(), Error>{
-    let args: [&str; 11] = ["10", "2", "0:0", "1", "Uniform", "100", "1e-3", "10", "1", "12314", "tests/images/"];
+    let args: [&str; 12] = ["10", "2", "0:0", "1", "1", "Uniform", "100", "1e-3", "10", "1", "12314", "tests/images/"];
     let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
     const TOTAL_NUM_ARGS : usize = NUM_ARGS + cont_circ::NUM_ARGS + cont_bulk::NUM_ARGS
                                     + cont_passive_indep::NUM_ARGS;
