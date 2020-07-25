@@ -1,7 +1,6 @@
 // Moduel for defining errors
 
-use std::fmt::{self, Display, Formatter};
-use std::io;
+use crate::prelude::*;
 
 #[derive(Debug)]
 pub struct Error{
@@ -43,6 +42,8 @@ impl Error{
             | ErrorCode::InvalidType
             | ErrorCode::InvalidConfiguration
             | ErrorCode::InvalidNumberOfArguments
+            | ErrorCode::InvalidArgumentInput
+            | ErrorCode::InvalidFormat
             | ErrorCode::TooLargeTimeStep
             | ErrorCode::FeatureNotProvided => Category::Syntax,
         }
@@ -98,6 +99,12 @@ pub enum ErrorCode{
     // Number of Arguments is invalid
     InvalidNumberOfArguments,
 
+    // Given argument is invalid
+    InvalidArgumentInput,
+
+    // Invalid Format
+    InvalidFormat,
+
     // Time step is too large
     TooLargeTimeStep,
 
@@ -114,6 +121,8 @@ impl Display for ErrorCode{
             ErrorCode::InvalidDimension => f.write_str("Invalid Dimension of vectors"),
             ErrorCode::InvalidConfiguration => f.write_str("Invalid Configuration is given"),
             ErrorCode::InvalidNumberOfArguments => f.write_str("Number of Arguments is invalid"),
+            ErrorCode::InvalidArgumentInput => f.write_str("Given argument is invalid"),
+            ErrorCode::InvalidFormat => f.write_str("Invalid Format"),
             ErrorCode::TooLargeTimeStep => f.write_str("Time step is too large"),
             ErrorCode::FeatureNotProvided => f.write_str("Functionality is not provided yet"),
         }
@@ -147,6 +156,10 @@ mod tests{
             "Invalid Configuration is given");
         assert_eq!(format!("{}", Error::make_error_syntax(ErrorCode::InvalidNumberOfArguments)).as_str(),
             "Number of Arguments is invalid");
+        assert_eq!(format!("{}", Error::make_error_syntax(ErrorCode::InvalidArgumentInput)).as_str(),
+            "Given argument is invalid");
+        assert_eq!(format!("{}", Error::make_error_syntax(ErrorCode::InvalidFormat)).as_str(),
+            "Invalid Format");
         assert_eq!(format!("{}", Error::make_error_syntax(ErrorCode::FeatureNotProvided)).as_str(),
             "Functionality is not provided yet");
         assert_eq!(format!("{}", Error::make_error_syntax(ErrorCode::TooLargeTimeStep)).as_str(),

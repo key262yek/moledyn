@@ -1,17 +1,13 @@
 // Modules for continous circular system.
 // 연속된 원형, 혹은 구형 시스템
 
-use crate::error::{Error, ErrorCode};
-use crate::system_mod::{SystemType, BoundaryCond, SystemCore};
-use crate::position::{Position, Numerics};
-use rand_pcg::Pcg64;
-
+use crate::prelude::*;
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct ContCircSystem{              // 연속 원형(구형) 시스템
     pub stype : SystemType,             // System type
     pub bctype : BoundaryCond,          // Boundary condition : here, only reflective bc is available
-    pub radius : f64,                   // radius of system
+    pub sys_size : f64,                   // radius of system
     pub dim : usize,                    // dimension of system
 }
 
@@ -21,13 +17,19 @@ impl ContCircSystem{
         // dim : dimension of system
 
         ContCircSystem{
-            stype : SystemType::ContinousCircular,
+            stype : SystemType::ContinuousCircular,
             bctype : BoundaryCond::Reflection,
-            radius : r,
+            sys_size : r,
             dim : dim,
         }
     }
 }
+
+impl_argument_trait!(ContCircSystem, ContCircSystemArguments, 2,
+    stype, SystemType, SystemType::ContinuousCircular,
+    bctype, BoundaryCond, BoundaryCond::Reflection;
+    sys_size, f64, "Size of System",
+    dim, usize, "Dimension of System");
 
 impl SystemCore<f64> for ContCircSystem{
     fn check_inclusion(&self, pos: &Position<f64>) -> Result<bool, Error>{
@@ -41,7 +43,7 @@ impl SystemCore<f64> for ContCircSystem{
 
         let r : f64 = pos.norm();   // distance between center and position
 
-        if r > self.radius{
+        if r > self.sys_size{
             return Ok(false);
         }
         else{
@@ -61,7 +63,7 @@ impl SystemCore<f64> for ContCircSystem{
             return Ok(());                          // return
         }
 
-        let r0 : f64 = self.radius;
+        let r0 : f64 = self.sys_size;
         let s : f64 = pos.norm();
         pos.mut_scalar_mul((2f64 * r0 - s) / s);    // 그냥 반지름 비례로 크기만 줄임. 꽤나 정확함.
         if self.check_inclusion(pos)?{              // 지금은 안에 있는가?
@@ -79,7 +81,7 @@ impl SystemCore<f64> for ContCircSystem{
 
         use crate::random_mod::get_uniform_vec;
 
-        let r : f64 = self.radius;
+        let r : f64 = self.sys_size;
         let dim : usize = self.dim;
         let pos0 : Position<f64> = Position::<f64>::new(vec![-0.5f64; self.dim]);
         let mut pos1;
@@ -101,7 +103,7 @@ impl SystemCore<f64> for ContCircSystem{
 
         use crate::random_mod::get_uniform_to_vec_nonstandard;
 
-        let r : f64 = self.radius;
+        let r : f64 = self.sys_size;
         let dim : usize = self.dim;
         if vec.dim() != dim{
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
@@ -120,7 +122,7 @@ impl SystemCore<f64> for ContCircSystem{
         // system 밖의 점을 하나 출력해주는 함수
         // searcher를 새로 정의할 때, 맨 처음 위치를 시스템 밖에 두면 편리해서 생긴 기능
 
-        let r : f64 = self.radius;
+        let r : f64 = self.sys_size;
         let dim : usize = self.dim;
         return Position::new(vec![2f64 * r; dim]);   // (2r, 2r,...)  꼴은 무조건 밖에 있을 것.
     }
@@ -132,7 +134,7 @@ impl SystemCore<f64> for ContCircSystem{
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
 
-        let r : f64 = self.radius;
+        let r : f64 = self.sys_size;
         for x in &mut vec.coordinate{
             *x = 2f64 * r;
         }
@@ -157,7 +159,7 @@ pub fn check_bc_exact(sys: ContCircSystem, pos: &mut Position<f64>, dp: &mut Pos
     }
 
     pos.mut_sub(dp)?;
-    let r0 = sys.radius;
+    let r0 = sys.sys_size;
     let r = pos.norm();
     let dr = dp.norm();
     let rdr = pos.inner_product(dp)?;
@@ -185,7 +187,7 @@ pub fn check_bc_first_order(sys: ContCircSystem, pos: &mut Position<f64>, dp: &m
     }
 
     pos.mut_sub(dp)?;
-    let r0 = sys.radius;
+    let r0 = sys.sys_size;
     let r = pos.norm();
     let dr = dp.norm();
     let rdr = pos.inner_product(dp)?;
@@ -214,8 +216,8 @@ mod tests{
     fn test_new(){
         let sys : ContCircSystem = ContCircSystem::new(3.0, 2);
 
-        assert_eq!(sys.stype, SystemType::ContinousCircular);
-        assert_eq!(sys.radius, 3.0);
+        assert_eq!(sys.stype, SystemType::ContinuousCircular);
+        assert_eq!(sys.sys_size, 3.0);
         assert_eq!(sys.dim, 2);
     }
 

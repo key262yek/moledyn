@@ -9,8 +9,7 @@
 // 차고 넘친다고 할 수 있다.
 
 
-use crate::position::Position;
-use rand_pcg::Pcg64;
+use crate::prelude::*;
 use rand_distr::StandardNormal;
 use rand::distributions::Open01;
 use rand::Rng;

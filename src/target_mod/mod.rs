@@ -4,42 +4,32 @@
 // It provides function a 'check_find' which check whether a position vector v is near the target
 //
 
-use std::fmt::{Display, Formatter, self};
-use crate::error::Error;
-use crate::position::Position;
+use crate::prelude::*;
 
 pub mod cont_bulk;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum TargetType{
-    ContinousInBulk,
-    ContinousAtBoundary,
+    ContinuousInBulk,
+    ContinuousAtBoundary,
     LatticeInBulk,
     LatticeAtBoundary,
     NetworkSingleNode,
 }
 
-impl Display for TargetType{
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result{
-        match self{
-            TargetType::ContinousInBulk => {
-                write!(f, "Target in Bulk of Continous System.")
-            }
-            TargetType::ContinousAtBoundary => {
-                write!(f, "Target at Boundary of Continous System.")
-            }
-            TargetType::LatticeInBulk => {
-                write!(f, "Target in Bulk of Lattice System.")
-            }
-            TargetType::LatticeAtBoundary => {
-                write!(f, "Target at Boundary of Lattice System.")
-            }
-            TargetType::NetworkSingleNode => {
-                write!(f, "Target is a Single Node in Network.")
-            }
-        }
-    }
-}
+impl_fmt_for_type!(TargetType,
+    TargetType::ContinuousInBulk => "Target in Bulk of Continous System.",
+    TargetType::ContinuousAtBoundary => "Target at Boundary of Continous System.",
+    TargetType::LatticeInBulk => "Target in Bulk of Lattice System.",
+    TargetType::LatticeAtBoundary => "Target at Boundary of Lattice System.",
+    TargetType::NetworkSingleNode => "Target is a Single Node in Network.");
+
+impl_fromstr_for_type!(TargetType,
+    TargetType::ContinuousInBulk => "Target in Bulk of Continous System.",
+    TargetType::ContinuousAtBoundary => "Target at Boundary of Continous System.",
+    TargetType::LatticeInBulk => "Target in Bulk of Lattice System.",
+    TargetType::LatticeAtBoundary => "Target at Boundary of Lattice System.",
+    TargetType::NetworkSingleNode => "Target is a Single Node in Network.");
 
 pub trait TargetCore<T>{
     // Return the type of target
@@ -54,20 +44,23 @@ pub trait TargetCore<T>{
 #[cfg(test)]
 mod tests{
     use super::*;
+    use crate::{impl_fmt_test, impl_fromstr_test};
 
-    #[test]
-    fn test_fmt(){
-        assert_eq!(format!("{}", TargetType::ContinousInBulk).as_str(),
-            "Target in Bulk of Continous System.");
-        assert_eq!(format!("{}", TargetType::ContinousAtBoundary).as_str(),
-            "Target at Boundary of Continous System.");
-        assert_eq!(format!("{}", TargetType::LatticeInBulk).as_str(),
-            "Target in Bulk of Lattice System.");
-        assert_eq!(format!("{}", TargetType::LatticeAtBoundary).as_str(),
-            "Target at Boundary of Lattice System.");
-        assert_eq!(format!("{}", TargetType::NetworkSingleNode).as_str(),
-            "Target is a Single Node in Network.");
-    }
+    impl_fmt_test!(test_fmt_targettype,
+        TargetType::ContinuousInBulk => "Target in Bulk of Continous System.",
+        TargetType::ContinuousAtBoundary => "Target at Boundary of Continous System.",
+        TargetType::LatticeInBulk => "Target in Bulk of Lattice System.",
+        TargetType::LatticeAtBoundary => "Target at Boundary of Lattice System.",
+        TargetType::NetworkSingleNode => "Target is a Single Node in Network.");
+
+    impl_fromstr_test!(test_fromstr_targettype,
+        TargetType,
+        TargetType::ContinuousInBulk => "Target in Bulk of Continous System.",
+        TargetType::ContinuousAtBoundary => "Target at Boundary of Continous System.",
+        TargetType::LatticeInBulk => "Target in Bulk of Lattice System.",
+        TargetType::LatticeAtBoundary => "Target at Boundary of Lattice System.",
+        TargetType::NetworkSingleNode => "Target is a Single Node in Network.");
+
 }
 
 

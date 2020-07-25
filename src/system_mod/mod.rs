@@ -4,32 +4,33 @@
 // It provides function a 'check_inclusion' which check whether a position vector v is in the system.the
 //
 
-use std::fmt;
-use crate::error::Error;
-use crate::position::Position;
-use rand_pcg::Pcg64;
+use crate::prelude::*;
 
 pub mod cont_circ;
 
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub enum SystemType{                        // System type
-    ContinousCircular,
-    ContinousRectangular,
+    ContinuousCircular,
+    ContinuousRectangular,
     Lattice,
     Network,
 }
 
-impl fmt::Display for SystemType{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        match *self{
-            SystemType::ContinousCircular => write!(f, "Continous Circular system."),
-            SystemType::ContinousRectangular => write!(f, "Continous Rectangular system."),
-            SystemType::Lattice => write!(f, "Lattice system."),
-            SystemType::Network => write!(f, "Network system."),
-        }
-    }
-}
+// Formatting
+impl_fmt_for_type!(SystemType,
+    SystemType::ContinuousCircular => "Continuous Circular system.",
+    SystemType::ContinuousRectangular => "Continuous Rectangular system.",
+    SystemType::Lattice => "Lattice system.",
+    SystemType::Network => "Network system.");
+
+// From String to Type
+impl_fromstr_for_type!(SystemType,
+    SystemType::ContinuousCircular => "Continuous Circular system.",
+    SystemType::ContinuousRectangular => "Continuous Rectangular system.",
+    SystemType::Lattice => "Lattice system.",
+    SystemType::Network => "Network system.");
+
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
 pub enum BoundaryCond{                      // Boundary condition
@@ -37,14 +38,15 @@ pub enum BoundaryCond{                      // Boundary condition
     Reflection,
 }
 
-impl fmt::Display for BoundaryCond{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
-        match *self{
-            BoundaryCond::Periodic => write!(f, "Periodic Boundary Condition"),
-            BoundaryCond::Reflection => write!(f, "Reflective Boundary Condtion"),
-        }
-    }
-}
+// Formatting
+impl_fmt_for_type!(BoundaryCond,
+    BoundaryCond::Periodic => "Periodic Boundary Condition",
+    BoundaryCond::Reflection => "Reflective Boundary Condtion");
+
+// From String to Type
+impl_fromstr_for_type!(BoundaryCond,
+    BoundaryCond::Periodic => "Periodic Boundary Condition",
+    BoundaryCond::Reflection => "Reflective Boundary Condtion");
 
 pub trait SystemCore<T>{
     // Return whether a position vector is in the system
@@ -72,17 +74,29 @@ pub trait SystemCore<T>{
 #[cfg(test)]
 mod tests{
     use super::*;
+    use crate::{impl_fmt_test, impl_fromstr_test};
 
-    #[test]
-    fn test_fmt(){
-        assert_eq!(format!("{}", SystemType::ContinousCircular).as_str(), "Continous Circular system.");
-        assert_eq!(format!("{}", SystemType::ContinousRectangular).as_str(), "Continous Rectangular system.");
-        assert_eq!(format!("{}", SystemType::Lattice).as_str(), "Lattice system.");
-        assert_eq!(format!("{}", SystemType::Network).as_str(), "Network system.");
+    impl_fmt_test!(test_fmt_systemtype,
+        SystemType::ContinuousCircular => "Continuous Circular system.",
+        SystemType::ContinuousRectangular => "Continuous Rectangular system.",
+        SystemType::Lattice => "Lattice system.",
+        SystemType::Network => "Network system.");
 
-        assert_eq!(format!("{}", BoundaryCond::Periodic).as_str(), "Periodic Boundary Condition");
-        assert_eq!(format!("{}", BoundaryCond::Reflection).as_str(), "Reflective Boundary Condtion");
-    }
+    impl_fmt_test!(test_fmt_boundarycond,
+        BoundaryCond::Periodic => "Periodic Boundary Condition",
+        BoundaryCond::Reflection => "Reflective Boundary Condtion");
+
+    impl_fromstr_test!(test_fromstr_systemtype,
+        SystemType,
+        SystemType::ContinuousCircular => "Continuous Circular system.",
+        SystemType::ContinuousRectangular => "Continuous Rectangular system.",
+        SystemType::Lattice => "Lattice system.",
+        SystemType::Network => "Network system.");
+
+    impl_fromstr_test!(test_fromstr_boundarycond,
+        BoundaryCond,
+        BoundaryCond::Periodic => "Periodic Boundary Condition",
+        BoundaryCond::Reflection => "Reflective Boundary Condtion");
 }
 
 

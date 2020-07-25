@@ -1,32 +1,35 @@
 // Module for target in bulk of continous system
 
-use crate::error::{Error};
-use crate::target_mod::{TargetType, TargetCore};
-use crate::position::Position;
-use std::fmt::{self, Display, Formatter};
+use crate::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct ContBulkTarget{
     pub ttype : TargetType,
-    pub pos : Position::<f64>,
-    pub radius : f64,
+    pub target_pos : Position::<f64>,
+    pub target_size : f64,
 }
 
 impl ContBulkTarget{
     // Generate Target
-    pub fn new(pos : Position::<f64>, radius : f64) -> ContBulkTarget{
+    pub fn new(pos : Position::<f64>, r : f64) -> ContBulkTarget{
         ContBulkTarget{
-            ttype : TargetType::ContinousInBulk,
-            pos : pos,
-            radius : radius,
+            ttype : TargetType::ContinuousInBulk,
+            target_pos : pos,
+            target_size : r,
         }
     }
 
     // Distance between target and given position
     pub fn distance(&self, other_pos: &Position<f64>) -> Result<f64, Error>{
-        self.pos.distance(other_pos)
+        self.target_pos.distance(other_pos)
     }
 }
+
+impl_argument_trait!(ContBulkTarget, ContBulkTargetArguments, 2,
+    ttype, TargetType, TargetType::ContinuousInBulk;
+    target_pos, Position::<f64>, "Position of Target",
+    target_size, f64, "Size of Target");
+
 
 impl TargetCore<f64> for ContBulkTarget{
     // Return the type of target
@@ -37,18 +40,12 @@ impl TargetCore<f64> for ContBulkTarget{
     // Check whether a searcher finds the target
     fn check_find(&self, pos: &Position<f64>) -> Result<bool, Error>{
         let d = self.distance(pos)?;
-        let rad : f64 = self.radius;
+        let rad : f64 = self.target_size;
 
         if d < rad{
             return Ok(true);
         }
         return Ok(false);
-    }
-}
-
-impl Display for ContBulkTarget{
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result{
-        write!(f, "{}\nPos : ({}), Radius : {}", self.ttype, self.pos, self.radius)
     }
 }
 
@@ -59,22 +56,15 @@ mod tests{
     use crate::error::ErrorCode;
 
     #[test]
-    fn test_fmt(){
-        let target : ContBulkTarget = ContBulkTarget::new(Position::<f64>::new(vec![0.0, 0.0]), 3.0);
-        assert_eq!(format!("{}", target).as_str(),
-            "Target in Bulk of Continous System.\nPos : (0, 0), Radius : 3");
-    }
-
-    #[test]
     fn test_pos(){
         let target : ContBulkTarget = ContBulkTarget::new(Position::<f64>::new(vec![0.0, 0.0]), 3.0);
-        assert_eq!(target.pos, Position::<f64>::new(vec![0.0, 0.0]));
+        assert_eq!(target.target_pos, Position::<f64>::new(vec![0.0, 0.0]));
     }
 
     #[test]
     fn test_radius(){
         let target : ContBulkTarget = ContBulkTarget::new(Position::<f64>::new(vec![0.0, 0.0]), 3.0);
-        assert_eq!(target.radius, 3.0);
+        assert_eq!(target.target_size, 3.0);
     }
 
     #[test]
@@ -88,7 +78,7 @@ mod tests{
     #[test]
     fn test_ttype(){
         let target : ContBulkTarget = ContBulkTarget::new(Position::<f64>::new(vec![0.0, 0.0]), 3.0);
-        assert_eq!(target.ttype(), TargetType::ContinousInBulk);
+        assert_eq!(target.ttype(), TargetType::ContinuousInBulk);
     }
 
     #[test]

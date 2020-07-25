@@ -3,10 +3,8 @@
 // Searcher is defined with size, position, and its various characteristic of movement
 
 
-use std::fmt::{Display, Formatter, self};
-use crate::error::Error;
-use crate::position::Position;
-use rand_pcg::Pcg64;
+use crate::prelude::*;
+use std::default::Default;
 
 pub mod cont_passive_indep;     // 연속 시스템에서 Passive하게 움직이는 독립된 searcher
 
@@ -26,10 +24,18 @@ pub enum SearcherType{                          // Type of searcher
     NetworkActiveInteracting,
 }
 
+
+
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub enum MoveType{
     Brownian(f64),      // Brownian motion with given diffusion coefficient
     Levy,               // Levy walk. not developed yet.
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
+pub enum InitType<T>{
+    SpecificPosition(Position<T>),      // Brownian motion with given diffusion coefficient
+    Uniform,               // Levy walk. not developed yet.
 }
 
 pub trait SearcherCore<T>{    // Core functionality of searcher.
@@ -146,36 +152,33 @@ impl SearcherType{
     }
 }
 
-impl Display for SearcherType{
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result{
-        match self{
-            SearcherType::ContinousPassiveIndependent =>
-                write!(f, "Passive Independent Searcher in Continous system."),
-            SearcherType::ContinousPassiveInteracting =>
-                write!(f, "Passive Interacting Searcher in Continous system."),
-            SearcherType::ContinousActiveIndependent =>
-                write!(f, "Active Independent Searcher in Continous system."),
-            SearcherType::ContinousActiveInteracting =>
-                write!(f, "Active Interacting Searcher in Continous system."),
-            SearcherType::LatticePassiveIndependent =>
-                write!(f, "Passive Independent Searcher in Lattice system."),
-            SearcherType::LatticePassiveInteracting =>
-                write!(f, "Passive Interacting Searcher in Lattice system."),
-            SearcherType::LatticeActiveIndependent =>
-                write!(f, "Active Independent Searcher in Lattice system."),
-            SearcherType::LatticeActiveInteracting =>
-                write!(f, "Active Interacting Searcher in Lattice system."),
-            SearcherType::NetworkPassiveIndependent =>
-                write!(f, "Passive Independent Searcher in Network."),
-            SearcherType::NetworkPassiveInteracting =>
-                write!(f, "Passive Interacting Searcher in Network."),
-            SearcherType::NetworkActiveIndependent =>
-                write!(f, "Active Independent Searcher in Network."),
-            SearcherType::NetworkActiveInteracting =>
-                write!(f, "Active Interacting Searcher in Network."),
-        }
-    }
-}
+impl_fmt_for_type!(SearcherType,
+    SearcherType::ContinousPassiveIndependent => "Passive Independent Searcher in Continous system.",
+    SearcherType::ContinousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
+    SearcherType::ContinousActiveIndependent => "Active Independent Searcher in Continous system.",
+    SearcherType::ContinousActiveInteracting => "Active Interacting Searcher in Continous system.",
+    SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
+    SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
+    SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
+    SearcherType::LatticeActiveInteracting => "Active Interacting Searcher in Lattice system.",
+    SearcherType::NetworkPassiveIndependent => "Passive Independent Searcher in Network.",
+    SearcherType::NetworkPassiveInteracting => "Passive Interacting Searcher in Network.",
+    SearcherType::NetworkActiveIndependent => "Active Independent Searcher in Network.",
+    SearcherType::NetworkActiveInteracting => "Active Interacting Searcher in Network.");
+
+impl_fromstr_for_type!(SearcherType,
+    SearcherType::ContinousPassiveIndependent => "Passive Independent Searcher in Continous system.",
+    SearcherType::ContinousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
+    SearcherType::ContinousActiveIndependent => "Active Independent Searcher in Continous system.",
+    SearcherType::ContinousActiveInteracting => "Active Interacting Searcher in Continous system.",
+    SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
+    SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
+    SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
+    SearcherType::LatticeActiveInteracting => "Active Interacting Searcher in Lattice system.",
+    SearcherType::NetworkPassiveIndependent => "Passive Independent Searcher in Network.",
+    SearcherType::NetworkPassiveInteracting => "Passive Interacting Searcher in Network.",
+    SearcherType::NetworkActiveIndependent => "Active Independent Searcher in Network.",
+    SearcherType::NetworkActiveInteracting => "Active Interacting Searcher in Network.");
 
 impl Display for MoveType{
     fn fmt(&self, f: &mut Formatter) -> fmt::Result{
@@ -183,7 +186,55 @@ impl Display for MoveType{
             MoveType::Brownian(coeff_diff) =>
                 write!(f, "Brownian with diffusion coefficient {}", coeff_diff),
             MoveType::Levy =>
-                write!(f, "Levy"),
+                write!(f, "Levy walk"),
+        }
+    }
+}
+
+impl FromStr for MoveType{
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let split : Vec<&str> = s.split_whitespace().collect();
+        if split.len() == 1{
+            split[0].parse::<f64>().map(|c| MoveType::Brownian(c))
+                                   .map_err(|_e| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))
+        }
+        else{
+            match split[0]{
+                "Brownian" => Ok(MoveType::Brownian(split[4].parse::<f64>().expect("Failed to parse"))),
+                "Levy" => Ok(MoveType::Levy),
+                _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
+            }
+        }
+    }
+}
+
+impl<T : Display> Display for InitType<T>{
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result{
+        match self{
+            InitType::SpecificPosition(pos) =>
+                write!(f, "Initialize all searchers at {}", pos),
+            InitType::Uniform =>
+                write!(f, "Initialize searchers uniformly"),
+        }
+    }
+}
+
+impl<T : FromStr + Default + Clone> FromStr for InitType<T>{
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err>{
+        let split : Vec<&str> = s.split_whitespace().collect();
+        if split.len() == 1{
+            split[0].parse::<Position<T>>().map(|pos| InitType::<T>::SpecificPosition(pos))
+        }
+        else{
+            match split[1]{
+                "all" => Ok(InitType::<T>::SpecificPosition(split[4].parse::<Position<T>>().expect("Failed to parse"))),
+                "searchers" => Ok(InitType::<T>::Uniform),
+                _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
+            }
         }
     }
 }
@@ -191,39 +242,76 @@ impl Display for MoveType{
 #[cfg(test)]
 mod tests{
     use super::*;
+    use crate::{impl_fmt_test, impl_fromstr_test};
+
+    impl_fmt_test!(test_fmt_searchertype,
+        SearcherType::ContinousPassiveIndependent => "Passive Independent Searcher in Continous system.",
+        SearcherType::ContinousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
+        SearcherType::ContinousActiveIndependent => "Active Independent Searcher in Continous system.",
+        SearcherType::ContinousActiveInteracting => "Active Interacting Searcher in Continous system.",
+        SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
+        SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
+        SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
+        SearcherType::LatticeActiveInteracting => "Active Interacting Searcher in Lattice system.",
+        SearcherType::NetworkPassiveIndependent => "Passive Independent Searcher in Network.",
+        SearcherType::NetworkPassiveInteracting => "Passive Interacting Searcher in Network.",
+        SearcherType::NetworkActiveIndependent => "Active Independent Searcher in Network.",
+        SearcherType::NetworkActiveInteracting => "Active Interacting Searcher in Network.");
+
+    impl_fromstr_test!(test_fromstr_searchertype,
+        SearcherType,
+        SearcherType::ContinousPassiveIndependent => "Passive Independent Searcher in Continous system.",
+        SearcherType::ContinousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
+        SearcherType::ContinousActiveIndependent => "Active Independent Searcher in Continous system.",
+        SearcherType::ContinousActiveInteracting => "Active Interacting Searcher in Continous system.",
+        SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
+        SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
+        SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
+        SearcherType::LatticeActiveInteracting => "Active Interacting Searcher in Lattice system.",
+        SearcherType::NetworkPassiveIndependent => "Passive Independent Searcher in Network.",
+        SearcherType::NetworkPassiveInteracting => "Passive Interacting Searcher in Network.",
+        SearcherType::NetworkActiveIndependent => "Active Independent Searcher in Network.",
+        SearcherType::NetworkActiveInteracting => "Active Interacting Searcher in Network.");
 
     #[test]
-    fn test_fmt(){
-        assert_eq!(format!("{}", SearcherType::ContinousPassiveIndependent).as_str(),
-            "Passive Independent Searcher in Continous system.");
-        assert_eq!(format!("{}", SearcherType::ContinousPassiveInteracting).as_str(),
-            "Passive Interacting Searcher in Continous system.");
-        assert_eq!(format!("{}", SearcherType::ContinousActiveIndependent).as_str(),
-            "Active Independent Searcher in Continous system.");
-        assert_eq!(format!("{}", SearcherType::ContinousActiveInteracting).as_str(),
-            "Active Interacting Searcher in Continous system.");
-        assert_eq!(format!("{}", SearcherType::LatticePassiveIndependent).as_str(),
-            "Passive Independent Searcher in Lattice system.");
-        assert_eq!(format!("{}", SearcherType::LatticePassiveInteracting).as_str(),
-            "Passive Interacting Searcher in Lattice system.");
-        assert_eq!(format!("{}", SearcherType::LatticeActiveIndependent).as_str(),
-            "Active Independent Searcher in Lattice system.");
-        assert_eq!(format!("{}", SearcherType::LatticeActiveInteracting).as_str(),
-            "Active Interacting Searcher in Lattice system.");
-        assert_eq!(format!("{}", SearcherType::NetworkPassiveIndependent).as_str(),
-            "Passive Independent Searcher in Network.");
-        assert_eq!(format!("{}", SearcherType::NetworkPassiveInteracting).as_str(),
-            "Passive Interacting Searcher in Network.");
-        assert_eq!(format!("{}", SearcherType::NetworkActiveIndependent).as_str(),
-            "Active Independent Searcher in Network.");
-        assert_eq!(format!("{}", SearcherType::NetworkActiveInteracting).as_str(),
-            "Active Interacting Searcher in Network.");
-
+    fn test_fmt_boundary_cond(){
         assert_eq!(format!("{}", MoveType::Brownian(0.0)).as_str(),
             "Brownian with diffusion coefficient 0");
         assert_eq!(format!("{}", MoveType::Levy).as_str(),
-            "Levy");
+            "Levy walk");
     }
+
+    #[test]
+    fn test_fromstr_boundary_cond(){
+        let test1 = "Brownian with diffusion coefficient 0";
+        let result1 = Ok(MoveType::Brownian(0.0));
+
+        assert_eq!(MoveType::from_str(test1), result1);
+
+        let test2 = "Levy walk";
+        let result2 = Ok(MoveType::Levy);
+        assert_eq!(MoveType::from_str(test2), result2);
+    }
+
+    #[test]
+    fn test_fmt_init_type(){
+        assert_eq!(format!("{}", InitType::<f64>::SpecificPosition(Position::<f64>::new(vec![0.0; 2]))).as_str(),
+            "Initialize all searchers at 0,0");
+        assert_eq!(format!("{}", InitType::<f64>::Uniform).as_str(),
+            "Initialize searchers uniformly");
+    }
+
+    #[test]
+    fn test_fromstr_init_type(){
+        let test1 = "Initialize all searchers at 0,0";
+        let result1 = Ok(InitType::<f64>::SpecificPosition(Position::<f64>::new(vec![0.0; 2])));
+        assert_eq!(InitType::<f64>::from_str(test1), result1);
+
+        let test2 = "Initialize searchers uniformly";
+        let result2 = Ok(InitType::<f64>::Uniform);
+        assert_eq!(InitType::<f64>::from_str(test2), result2);
+    }
+
 
     #[test]
     fn test_classify(){

@@ -1,11 +1,9 @@
 // Module for Position
 
+use crate::prelude::*;
 use std::ops::{Add, Sub, Mul, AddAssign, SubAssign};
-use std::fmt::{self, Display, Write, Formatter, LowerExp};
-use crate::error::{Error, ErrorCode};
+use std::fmt::{Write, LowerExp};
 use std::default::Default;
-use std::num::{ParseIntError, ParseFloatError};
-use std::str::FromStr;
 
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Default)]
@@ -38,6 +36,20 @@ impl<T : Default> Position<T>{
         for x in &mut self.coordinate{
             *x = Default::default();
         }
+    }
+}
+
+impl<T : FromStr + Default + Clone> FromStr for Position<T>{
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let coords: Vec<&str> = s.trim_matches(|p| p == '(' || p == ')' )
+                                 .split(',')
+                                 .collect();
+        let coords: Vec<T> = coords.iter()
+                                     .map(|x| x.parse::<T>().map_or(Default::default(), |v| v))
+                                     .collect();
+        return Ok(Position::<T>::new(coords));
     }
 }
 
@@ -84,20 +96,6 @@ impl Position<f64>{                                 // 실수형 벡터의 함�
     }
 }
 
-impl FromStr for Position<f64>{
-    type Err = ParseFloatError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let coords: Vec<&str> = s.trim_matches(|p| p == '(' || p == ')' )
-                                 .split(',')
-                                 .collect();
-        let coords: Vec<f64> = coords.iter()
-                                     .map(|x| x.parse::<f64>().expect("Failed to parse"))
-                                     .collect();
-        return Ok(Position::<f64>::new(coords));
-    }
-}
-
 impl Position<i32>{
     pub fn norm(&self) -> f64{
         let mut res : f64 = 0f64;
@@ -133,20 +131,6 @@ impl Position<i32>{
             r += (x - y).abs();
         }
         return Ok(r);
-    }
-}
-
-impl FromStr for Position<i32>{
-    type Err = ParseIntError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let coords: Vec<&str> = s.trim_matches(|p| p == '(' || p == ')' )
-                                 .split(',')
-                                 .collect();
-        let coords: Vec<i32> = coords.iter()
-                                     .map(|x| x.parse::<i32>().expect("Failed to parse"))
-                                     .collect();
-        return Ok(Position::<i32>::new(coords));
     }
 }
 
@@ -309,7 +293,7 @@ impl<T: Display> Display for Position<T>{
 
         write!(&mut string, "{}", self.coordinate[0])?;
         for x in self.coordinate.iter().skip(1){
-            write!(&mut string, ", {}", x)?;
+            write!(&mut string, ",{}", x)?;
         }
         write!(f, "{}", string)
     }
@@ -320,7 +304,7 @@ impl<T: LowerExp> LowerExp for Position<T>{
         // write!(f, "(")?;
         LowerExp::fmt(&self.coordinate[0], f)?;
         for x in self.coordinate.iter().skip(1){
-            write!(f, ", ")?;
+            write!(f, ",")?;
             LowerExp::fmt(x, f)?;
         }
         // write!(f, ")")?;
@@ -340,17 +324,17 @@ mod tests{
             let vec : Vec<f64> = vec![0f64, 0f64];
             pos = Position::new(vec);
         }
-        assert_eq!(format!("{}", pos), "0, 0");
+        assert_eq!(format!("{}", pos), "0,0");
     }
 
     #[test]
     fn test_fmt(){
-        assert_eq!(format!("{}", Position::<f64>{coordinate : vec![0.0, 1.1]}), "0, 1.1");
-        assert_eq!(format!("{}", Position::<i32>{coordinate : vec![0, 2]}), "0, 2");
-        assert_eq!(format!("{}", Position::<usize>{coordinate : vec![0, 2]}), "0, 2");
+        assert_eq!(format!("{}", Position::<f64>{coordinate : vec![0.0, 1.1]}), "0,1.1");
+        assert_eq!(format!("{}", Position::<i32>{coordinate : vec![0, 2]}), "0,2");
+        assert_eq!(format!("{}", Position::<usize>{coordinate : vec![0, 2]}), "0,2");
 
-        assert_eq!(format!("{:e}", Position::<f64>{coordinate : vec![0.0, 1.0]}), "0e0, 1e0");
-        assert_eq!(format!("{:05e}", Position::<f64>{coordinate : vec![0.0, 1.0]}), "000e0, 001e0");
+        assert_eq!(format!("{:e}", Position::<f64>{coordinate : vec![0.0, 1.0]}), "0e0,1e0");
+        assert_eq!(format!("{:05e}", Position::<f64>{coordinate : vec![0.0, 1.0]}), "000e0,001e0");
     }
 
     #[test]
