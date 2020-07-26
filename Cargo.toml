@@ -1,6 +1,6 @@
 [package]
 name = "rts"
-version = "0.3.0"
+version = "0.3.5"
 authors = ["Myeongseon Choi"]
 edition = "2018"
 
@@ -16,7 +16,7 @@ criterion = "0.3"
 plotlib = "0.5.1"
 
 [[bench]]
-name = "setup_benchmark"
+name = "rts_benchmark_2"
 harness = false
 
 [profile.release]

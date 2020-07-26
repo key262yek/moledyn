@@ -10,10 +10,10 @@ pub mod cont_passive_indep;     // 연속 시스템에서 Passive하게 움직�
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
 pub enum SearcherType{                          // Type of searcher
-    ContinousPassiveIndependent,
-    ContinousPassiveInteracting,
-    ContinousActiveIndependent,
-    ContinousActiveInteracting,
+    ContinuousPassiveIndependent,
+    ContinuousPassiveInteracting,
+    ContinuousActiveIndependent,
+    ContinuousActiveInteracting,
     LatticePassiveIndependent,
     LatticePassiveInteracting,
     LatticeActiveIndependent,
@@ -80,10 +80,10 @@ impl SearcherType{
     #[allow(dead_code)]
     fn in_continous(&self) -> bool{
         match self{
-            SearcherType::ContinousPassiveIndependent
-            | SearcherType::ContinousPassiveInteracting
-            | SearcherType::ContinousActiveIndependent
-            | SearcherType::ContinousActiveInteracting => true,
+            SearcherType::ContinuousPassiveIndependent
+            | SearcherType::ContinuousPassiveInteracting
+            | SearcherType::ContinuousActiveIndependent
+            | SearcherType::ContinuousActiveInteracting => true,
             _ => false,
         }
     }
@@ -102,8 +102,8 @@ impl SearcherType{
     #[allow(dead_code)]
     fn is_passive(&self) -> bool{
         match self{
-            SearcherType::ContinousPassiveIndependent
-            | SearcherType::ContinousPassiveInteracting
+            SearcherType::ContinuousPassiveIndependent
+            | SearcherType::ContinuousPassiveInteracting
             | SearcherType::LatticePassiveIndependent
             | SearcherType::LatticePassiveInteracting
             | SearcherType::NetworkPassiveIndependent
@@ -115,8 +115,8 @@ impl SearcherType{
     #[allow(dead_code)]
     fn is_active(&self) -> bool{
         match self{
-            SearcherType::ContinousActiveIndependent
-            | SearcherType::ContinousActiveInteracting
+            SearcherType::ContinuousActiveIndependent
+            | SearcherType::ContinuousActiveInteracting
             | SearcherType::LatticeActiveIndependent
             | SearcherType::LatticeActiveInteracting
             | SearcherType::NetworkActiveIndependent
@@ -128,8 +128,8 @@ impl SearcherType{
     #[allow(dead_code)]
     fn is_independent(&self) -> bool{
         match self{
-            SearcherType::ContinousPassiveIndependent
-            | SearcherType::ContinousActiveIndependent
+            SearcherType::ContinuousPassiveIndependent
+            | SearcherType::ContinuousActiveIndependent
             | SearcherType::LatticePassiveIndependent
             | SearcherType::LatticeActiveIndependent
             | SearcherType::NetworkPassiveIndependent
@@ -141,8 +141,8 @@ impl SearcherType{
     #[allow(dead_code)]
     fn is_interacting(&self) -> bool{
         match self{
-            SearcherType::ContinousPassiveInteracting
-            | SearcherType::ContinousActiveInteracting
+            SearcherType::ContinuousPassiveInteracting
+            | SearcherType::ContinuousActiveInteracting
             | SearcherType::LatticePassiveInteracting
             | SearcherType::LatticeActiveInteracting
             | SearcherType::NetworkPassiveInteracting
@@ -153,10 +153,10 @@ impl SearcherType{
 }
 
 impl_fmt_for_type!(SearcherType,
-    SearcherType::ContinousPassiveIndependent => "Passive Independent Searcher in Continous system.",
-    SearcherType::ContinousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
-    SearcherType::ContinousActiveIndependent => "Active Independent Searcher in Continous system.",
-    SearcherType::ContinousActiveInteracting => "Active Interacting Searcher in Continous system.",
+    SearcherType::ContinuousPassiveIndependent => "Passive Independent Searcher in Continous system.",
+    SearcherType::ContinuousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
+    SearcherType::ContinuousActiveIndependent => "Active Independent Searcher in Continous system.",
+    SearcherType::ContinuousActiveInteracting => "Active Interacting Searcher in Continous system.",
     SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
     SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
     SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
@@ -167,10 +167,10 @@ impl_fmt_for_type!(SearcherType,
     SearcherType::NetworkActiveInteracting => "Active Interacting Searcher in Network.");
 
 impl_fromstr_for_type!(SearcherType,
-    SearcherType::ContinousPassiveIndependent => "Passive Independent Searcher in Continous system.",
-    SearcherType::ContinousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
-    SearcherType::ContinousActiveIndependent => "Active Independent Searcher in Continous system.",
-    SearcherType::ContinousActiveInteracting => "Active Interacting Searcher in Continous system.",
+    SearcherType::ContinuousPassiveIndependent => "Passive Independent Searcher in Continous system.",
+    SearcherType::ContinuousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
+    SearcherType::ContinuousActiveIndependent => "Active Independent Searcher in Continous system.",
+    SearcherType::ContinuousActiveInteracting => "Active Interacting Searcher in Continous system.",
     SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
     SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
     SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
@@ -247,16 +247,17 @@ impl<T : FromStr + Default + Clone> FromStr for InitType<T>{
     }
 }
 
+
 #[cfg(test)]
 mod tests{
     use super::*;
     use crate::{impl_fmt_test, impl_fromstr_test};
 
     impl_fmt_test!(test_fmt_searchertype,
-        SearcherType::ContinousPassiveIndependent => "Passive Independent Searcher in Continous system.",
-        SearcherType::ContinousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
-        SearcherType::ContinousActiveIndependent => "Active Independent Searcher in Continous system.",
-        SearcherType::ContinousActiveInteracting => "Active Interacting Searcher in Continous system.",
+        SearcherType::ContinuousPassiveIndependent => "Passive Independent Searcher in Continous system.",
+        SearcherType::ContinuousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
+        SearcherType::ContinuousActiveIndependent => "Active Independent Searcher in Continous system.",
+        SearcherType::ContinuousActiveInteracting => "Active Interacting Searcher in Continous system.",
         SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
         SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
         SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
@@ -268,10 +269,10 @@ mod tests{
 
     impl_fromstr_test!(test_fromstr_searchertype,
         SearcherType,
-        SearcherType::ContinousPassiveIndependent => "Passive Independent Searcher in Continous system.",
-        SearcherType::ContinousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
-        SearcherType::ContinousActiveIndependent => "Active Independent Searcher in Continous system.",
-        SearcherType::ContinousActiveInteracting => "Active Interacting Searcher in Continous system.",
+        SearcherType::ContinuousPassiveIndependent => "Passive Independent Searcher in Continous system.",
+        SearcherType::ContinuousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
+        SearcherType::ContinuousActiveIndependent => "Active Independent Searcher in Continous system.",
+        SearcherType::ContinuousActiveInteracting => "Active Interacting Searcher in Continous system.",
         SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
         SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
         SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
@@ -323,14 +324,14 @@ mod tests{
 
     #[test]
     fn test_classify(){
-        assert_eq!(SearcherType::ContinousPassiveIndependent.in_continous(), true);
-        assert_eq!(SearcherType::ContinousPassiveIndependent.in_lattice(), false);
-        assert_eq!(SearcherType::ContinousPassiveIndependent.in_network(), false);
+        assert_eq!(SearcherType::ContinuousPassiveIndependent.in_continous(), true);
+        assert_eq!(SearcherType::ContinuousPassiveIndependent.in_lattice(), false);
+        assert_eq!(SearcherType::ContinuousPassiveIndependent.in_network(), false);
 
-        assert_eq!(SearcherType::ContinousPassiveIndependent.is_passive(), true);
-        assert_eq!(SearcherType::ContinousPassiveIndependent.is_active(), false);
+        assert_eq!(SearcherType::ContinuousPassiveIndependent.is_passive(), true);
+        assert_eq!(SearcherType::ContinuousPassiveIndependent.is_active(), false);
 
-        assert_eq!(SearcherType::ContinousPassiveIndependent.is_independent(), true);
-        assert_eq!(SearcherType::ContinousPassiveIndependent.is_interacting(), false);
+        assert_eq!(SearcherType::ContinuousPassiveIndependent.is_independent(), true);
+        assert_eq!(SearcherType::ContinuousPassiveIndependent.is_interacting(), false);
     }
 }

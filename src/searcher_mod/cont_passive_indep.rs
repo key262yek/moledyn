@@ -22,7 +22,7 @@ impl ContPassiveIndepSearcher{
         // pos : initial position of searcher
 
         ContPassiveIndepSearcher{
-            searcher_type : SearcherType::ContinousPassiveIndependent,
+            searcher_type : SearcherType::ContinuousPassiveIndependent,
             mtype : mtype,
             itype : InitType::SpecificPosition(pos.clone()),
             dim : pos.dim(),
@@ -47,7 +47,7 @@ impl ContPassiveIndepSearcher{
         }
 
         Ok(ContPassiveIndepSearcher{
-            searcher_type : SearcherType::ContinousPassiveIndependent,
+            searcher_type : SearcherType::ContinuousPassiveIndependent,
             mtype : mtype,
             itype : InitType::Uniform,
             dim : pos.dim(),
@@ -57,7 +57,7 @@ impl ContPassiveIndepSearcher{
 }
 
 impl_argument_trait!(ContPassiveIndepSearcher, "Searcher", ContPassiveIndepSearcherArguments, 2,
-    searcher_type, SearcherType, SearcherType::ContinousPassiveIndependent;
+    searcher_type, SearcherType, SearcherType::ContinuousPassiveIndependent;
     mtype, MoveType, "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype, InitType<f64>, "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform");
 

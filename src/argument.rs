@@ -10,9 +10,9 @@
 #[allow(unused_imports)]
 use crate::prelude::*;
 
+
 // Argument Trait
 pub trait Argument<T>{
-    // T : 추후에 structure마다 structure_arguments 라는 structure가 정의될 것인데, 이를 의미
 
     // 해당 structure를 정의하기 위해서
     // 어떤 값들이 주어져야 하는지, 그 값들의 type이 무엇인지, 값들의 의미는 무엇인지
@@ -35,7 +35,7 @@ pub trait Argument<T>{
     // print_configuration의 결과를 다시 variable들로 바꿔줄 필요가 있다.
     // file -> BufReader -> Lines<BufRead> 로 바꾼 후에 함수를 호출하면
     // 해당 변수에 필요한 정보들을 parsing해 structure_arguments를 반환해준다.
-    fn read_args_from_lines(reader : &Vec<String>) -> Result<T, Error>;
+    fn read_args_from_lines(reader : &mut Lines<BufReader<File>>) -> Result<T, Error>;
 }
 
 #[macro_export]
@@ -43,21 +43,6 @@ pub trait Argument<T>{
 macro_rules! define_num_args{
     ($var:expr) => {
         pub const NUM_ARGS : usize = $var;
-    }
-}
-
-#[macro_export]
-#[allow(unused_macros)]
-macro_rules! define_arguments{
-    ($name:ident $(, $type_name:ident, $type_type:ty)* ;$($var:ident, $t:ty), *) =>{
-        #[allow(dead_code)]
-        #[derive(Clone, Debug, PartialEq, PartialOrd)]
-        pub struct $name{
-            $(pub $type_name : $type_type,
-                )*
-            $(pub $var : $t,
-                )*
-        }
     }
 }
 
@@ -132,10 +117,9 @@ macro_rules! impl_fn_print_configuration{
 #[allow(unused_macros)]
 macro_rules! impl_fn_read_args_from_lines{
     ($name:ident, $($var:ident), *) => {
-        fn read_args_from_lines(reader : &Vec<String>) -> Result<$name, Error>{
-            let mut iter = reader.iter();
+        fn read_args_from_lines(reader : &mut Lines<BufReader<File>>) -> Result<$name, Error>{
             Ok($name{
-                $($var : {let list : &String = iter.next().unwrap();
+                $($var : { let list : String = reader.next().unwrap().unwrap();
                             let split : Vec<String> = list.split(":")
                                                           .map(|s| s.to_string())
                                                           .collect();
@@ -150,7 +134,6 @@ macro_rules! impl_fn_read_args_from_lines{
     }
 }
 
-
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! impl_argument_trait{
@@ -158,7 +141,8 @@ macro_rules! impl_argument_trait{
         $(,$type_name:ident, $type_type:ty, $type_default:expr)*;
         $($var:ident, $t:ty, $description:expr), *) => {
         define_num_args!($num_args);
-        define_arguments!($arg_name $(, $type_name, $type_type)* ; $($var, $t), *);
+        define_structure!($arg_name $(, $type_name, $type_type)* ; $($var, $t), *);
+        impl_structure!($arg_name $(, $type_name, $type_default)* ; $($var, $t), *);
 
         impl Argument<$arg_name> for $struct_name{
             impl_fn_info!($($var, $description), *);
@@ -184,101 +168,101 @@ macro_rules! impl_argument_trait{
 mod tests{
     use super::*;
 
-    #[test]
-    fn test_structure(){
-        // macro를 정의하기 전에 macro로 짤 구조가 잘 작동하는지부터 확인하고 macro를 짜도록 하자.
+    // #[test]
+    // fn test_structure(){
+    //     // macro를 정의하기 전에 macro로 짤 구조가 잘 작동하는지부터 확인하고 macro를 짜도록 하자.
 
-        #[allow(dead_code)]
-        struct TestStruct{
-            var1 : f64,
-            var2 : usize,
-            var3 : String,
-        }
+    //     #[allow(dead_code)]
+    //     struct TestStruct{
+    //         var1 : f64,
+    //         var2 : usize,
+    //         var3 : String,
+    //     }
 
-        #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
-        struct TestArguments{
-            var1 : f64,
-            var2 : usize,
-        }
+    //     #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
+    //     struct TestArguments{
+    //         var1 : f64,
+    //         var2 : usize,
+    //     }
 
-        pub const NUM_ARGS : usize = 2;
+    //     pub const NUM_ARGS : usize = 2;
 
-        impl Argument<TestArguments> for TestStruct{
+    //     impl Argument<TestArguments> for TestStruct{
 
-            fn info(width : usize) -> String{
-                let mut string = String::new();
-                string.push_str(format!("{}", format_args!("{0:1$}: {2:}\n", stringify!(var1), width, "Test variable 1")).as_str());
-                string.push_str(format!("{}", format_args!("{0:1$}: {2:}\n", stringify!(var2), width, "Test variable 2")).as_str());
-                string
-            }
+    //         fn info(width : usize) -> String{
+    //             let mut string = String::new();
+    //             string.push_str(format!("{}", format_args!("{0:1$}: {2:}\n", stringify!(var1), width, "Test variable 1")).as_str());
+    //             string.push_str(format!("{}", format_args!("{0:1$}: {2:}\n", stringify!(var2), width, "Test variable 2")).as_str());
+    //             string
+    //         }
 
-            fn brief_info() -> String{
-                "Test arguments : (var1) (var2) ".to_string()
-            }
+    //         fn brief_info() -> String{
+    //             "Test arguments : (var1) (var2) ".to_string()
+    //         }
 
-            fn read_args_from_vec(args: Vec<String>) -> Result<TestArguments, Error>{
-                if args.len() != NUM_ARGS{
-                    return Err(Error::make_error_syntax(ErrorCode::InvalidNumberOfArguments));
-                }
-                let mut iter = args.iter();
-                Ok(TestArguments{
-                    var1 : iter.next().unwrap().parse().expect("Failed to parse\n"),
-                    var2 : iter.next().unwrap().parse().expect("Failed to parse\n"),
-                })
-            }
+    //         fn read_args_from_vec(args: Vec<String>) -> Result<TestArguments, Error>{
+    //             if args.len() != NUM_ARGS{
+    //                 return Err(Error::make_error_syntax(ErrorCode::InvalidNumberOfArguments));
+    //             }
+    //             let mut iter = args.iter();
+    //             Ok(TestArguments{
+    //                 var1 : iter.next().unwrap().parse().expect("Failed to parse\n"),
+    //                 var2 : iter.next().unwrap().parse().expect("Failed to parse\n"),
+    //             })
+    //         }
 
-            fn print_configuration(&self, width : usize) -> String{
-                let mut string = String::new();
-                string.push_str(format!("{}", format_args!("{0:1$}: {2:.3$e}\n", stringify!(var1), width, self.var1, 5)).as_str());
-                string.push_str(format!("{}", format_args!("{0:1$}: {2:3$}\n", stringify!(var2), width, self.var2, 0)).as_str());
-                string
-            }
+    //         fn print_configuration(&self, width : usize) -> String{
+    //             let mut string = String::new();
+    //             string.push_str(format!("{}", format_args!("{0:1$}: {2:.3$e}\n", stringify!(var1), width, self.var1, 5)).as_str());
+    //             string.push_str(format!("{}", format_args!("{0:1$}: {2:3$}\n", stringify!(var2), width, self.var2, 0)).as_str());
+    //             string
+    //         }
 
-            fn read_args_from_lines(reader : &Vec<String>) -> Result<TestArguments, Error>{
-                let mut iter = reader.iter();
-                Ok(TestArguments{
-                    var1 : {let list : &String = iter.next().unwrap();
-                            let split : Vec<String> = list.split(":")
-                                                          .map(|s| s.to_string())
-                                                          .collect();
-                            if split.len() != 2{
-                                return Err(Error::make_error_syntax(ErrorCode::InvalidFormat));
-                            }
-                            let val_string : &str = &split[1].trim();
-                            val_string.parse().expect("Failed to parse\n")},
-                    var2 : {let list : &String = iter.next().unwrap();
-                            let split : Vec<String> = list.split(":")
-                                                          .map(|s| s.to_string())
-                                                          .collect();
-                            if split.len() != 2{
-                                return Err(Error::make_error_syntax(ErrorCode::InvalidFormat));
-                            }
-                            let val_string : &str = &split[1].trim();
-                            val_string.parse().expect("Failed to parse\n")},
-                })
-            }
-        }
+    //         fn read_args_from_lines(reader : &Vec<String>) -> Result<TestArguments, Error>{
+    //             let mut iter = reader.iter();
+    //             Ok(TestArguments{
+    //                 var1 : {let list : &String = iter.next().unwrap();
+    //                         let split : Vec<String> = list.split(":")
+    //                                                       .map(|s| s.to_string())
+    //                                                       .collect();
+    //                         if split.len() != 2{
+    //                             return Err(Error::make_error_syntax(ErrorCode::InvalidFormat));
+    //                         }
+    //                         let val_string : &str = &split[1].trim();
+    //                         val_string.parse().expect("Failed to parse\n")},
+    //                 var2 : {let list : &String = iter.next().unwrap();
+    //                         let split : Vec<String> = list.split(":")
+    //                                                       .map(|s| s.to_string())
+    //                                                       .collect();
+    //                         if split.len() != 2{
+    //                             return Err(Error::make_error_syntax(ErrorCode::InvalidFormat));
+    //                         }
+    //                         let val_string : &str = &split[1].trim();
+    //                         val_string.parse().expect("Failed to parse\n")},
+    //             })
+    //         }
+    //     }
 
-        let test1 = TestStruct{
-            var1 : 3.0f64,
-            var2 : 15usize,
-            var3 : String::from("Test string"),
-        };
-        let test_arg = TestArguments{
-            var1 : 3.0f64,
-            var2 : 15usize,
-        };
-        let test_args = vec!["3.0".to_string(), "15".to_string()];
-        let test_iter : Vec<String> = String::from("var1      : 3.00000e0\nvar2      : 15\n")
-                                            .split("\n")
-                                            .map(|s| s.to_string())
-                                            .collect();
+    //     let test1 = TestStruct{
+    //         var1 : 3.0f64,
+    //         var2 : 15usize,
+    //         var3 : String::from("Test string"),
+    //     };
+    //     let test_arg = TestArguments{
+    //         var1 : 3.0f64,
+    //         var2 : 15usize,
+    //     };
+    //     let test_args = vec!["3.0".to_string(), "15".to_string()];
+    //     let test_iter : Vec<String> = String::from("var1      : 3.00000e0\nvar2      : 15\n")
+    //                                         .split("\n")
+    //                                         .map(|s| s.to_string())
+    //                                         .collect();
 
-        assert_eq!(TestStruct::info(10), String::from("var1      : Test variable 1\nvar2      : Test variable 2\n"));
-        assert_eq!(TestStruct::read_args_from_vec(test_args), Ok(test_arg));
-        assert_eq!(test1.print_configuration(10), String::from("var1      : 3.00000e0\nvar2      : 15\n"));
-        assert_eq!(TestStruct::read_args_from_lines(&test_iter), Ok(test_arg));
-    }
+    //     assert_eq!(TestStruct::info(10), String::from("var1      : Test variable 1\nvar2      : Test variable 2\n"));
+    //     assert_eq!(TestStruct::read_args_from_vec(test_args), Ok(test_arg));
+    //     assert_eq!(test1.print_configuration(10), String::from("var1      : 3.00000e0\nvar2      : 15\n"));
+    //     assert_eq!(TestStruct::read_args_from_lines(&test_iter), Ok(test_arg));
+    // }
 
     #[test]
     fn test_define_num_args(){
@@ -288,7 +272,7 @@ mod tests{
 
     #[test]
     fn test_define_arguments(){
-        define_arguments!(TestArguments ;var1, f64, var2, usize);
+        define_structure!(TestArguments ;var1, f64, var2, usize);
         let _test = TestArguments{
             var1 : 3.0f64,
             var2 : 15usize,
@@ -310,7 +294,7 @@ mod tests{
     #[test]
     fn test_impl_read_args_from_vec(){
         define_num_args!(2);
-        define_arguments!(TestArguments ; var1, f64, var2, usize);
+        define_structure!(TestArguments ; var1, f64, var2, usize);
         impl_fn_read_args_from_vec!(TestArguments ;var1 ,var2);
 
         let test_arg = TestArguments{
@@ -342,90 +326,51 @@ mod tests{
         assert_eq!(test1.print_configuration(10), String::from("var1      : 3\nvar2      : 15\n"));
     }
 
-    #[test]
-    fn test_impl_fn_read_args_from_lines(){
-        define_arguments!(TestArguments; var1, f64, var2, usize);
-        impl_fn_read_args_from_lines!(TestArguments, var1, var2);
-
-        let test_arg = TestArguments{
-            var1 : 3.0f64,
-            var2 : 15usize,
-        };
-        let test_vec = String::from("var1      : 3.00000e0\nvar2      : 15\n")
-                                            .split("\n")
-                                            .map(|s| s.to_string())
-                                            .collect();
-        assert_eq!(read_args_from_lines(&test_vec), Ok(test_arg));
-    }
 
     #[test]
     fn test_impl_argument_trait(){
-        #[allow(dead_code)]
-        struct TestStruct{
-            var1 : f64,
-            var2 : usize,
-            var3 : String,
-        }
+        use crate::system_mod::cont_circ::{ContCircSystem, ContCircSystemArguments};
 
-        impl_argument_trait!(TestStruct, "Test", TestArguments, 2 ;var1, f64, "Test variable 1",
-                                                           var2, usize, "Test variable 2");
+        let f = File::open("tests/images/RTS_N_PTL_INDEP_SEARCHER_SYS_SIZE_10_DIM_2_TARGET_SIZE_1_NUMBER_OF_SEARCHER_1_SET_1.dat").unwrap();
+        let f = BufReader::new(f);
+        let mut lines = f.lines();
+        lines.next();
 
-        let test1 = TestStruct{
-            var1 : 3.0f64,
-            var2 : 15usize,
-            var3 : String::from("Test string"),
+
+        let test1 = ContCircSystem::new(10f64, 2usize);
+        let test2 = ContCircSystemArguments{
+            sys_type : SystemType::ContinuousCircular,
+            bctype : BoundaryCond::Reflection,
+            sys_size : 10f64,
+            dim : 2usize,
         };
-        let test_arg = TestArguments{
-            var1 : 3.0f64,
-            var2 : 15usize,
-        };
-        let test_args = vec!["3.0".to_string(), "15".to_string()];
-        let test_vec = String::from("var1      : 3.00000e0\nvar2      : 15\n")
-                                            .split("\n")
-                                            .map(|s| s.to_string())
-                                            .collect();
+        let test_args = vec!["10.0".to_string(), "2".to_string()];
 
-        assert_eq!(TestStruct::info(10), String::from("var1      : Test variable 1\nvar2      : Test variable 2\n"));
-        assert_eq!(TestStruct::read_args_from_vec(test_args), Ok(test_arg.clone()));
-        assert_eq!(test1.print_configuration(10), String::from("var1      : 3\nvar2      : 15\n"));
-        assert_eq!(TestStruct::read_args_from_lines(&test_vec), Ok(test_arg));
+        assert_eq!(ContCircSystem::info(10), String::from("sys_size  : Size of System\ndim       : Dimension of System\n"));
+        assert_eq!(ContCircSystem::read_args_from_vec(test_args), Ok(test2.clone()));
+        assert_eq!(test1.print_configuration(10), String::from("sys_type  : Continuous Circular system.\nbctype    : Reflective Boundary Condtion\nsys_size  : 10\ndim       : 2\n"));
+        assert_eq!(ContCircSystem::read_args_from_lines(&mut lines), Ok(test2));
     }
 
+
     #[test]
-    fn test_impl_argument_trait_with_type(){
-        use crate::system_mod::SystemType;
+    fn test_impl_read_args_from_lines2() -> Result<(), io::Error>{
+        use crate::system_mod::cont_circ::ContCircSystem;
 
-        struct TestStruct{
-            var1 : f64,
-            var2 : usize,
-            var3 : SystemType,
-        }
+        let f = File::open("tests/images/RTS_N_PTL_INDEP_SEARCHER_SYS_SIZE_10_DIM_2_TARGET_SIZE_1_NUMBER_OF_SEARCHER_1_SET_1.dat")?;
+        let f = BufReader::new(f);
+        let mut lines = f.lines();
+        lines.next();
 
-        impl_argument_trait!(TestStruct, "Test", TestArguments, 2,
-                                       var3, SystemType, SystemType::ContinuousCircular;
-                                       var1, f64, "Test variable 1",
-                                       var2, usize, "Test variable 2");
 
-        let test1 = TestStruct{
-            var1 : 3.0f64,
-            var2 : 15usize,
-            var3 : SystemType::ContinuousCircular,
-        };
-        let test_arg = TestArguments{
-            var1 : 3.0f64,
-            var2 : 15usize,
-            var3 : SystemType::ContinuousCircular,
-        };
-        let test_args = vec!["3.0".to_string(), "15".to_string()];
-        let test_vec = String::from("var3      : Continuous Circular system.\nvar1      : 3\nvar2      : 15\n")
-                                            .split("\n")
-                                            .map(|s| s.to_string())
-                                            .collect();
+        impl_fn_read_args_from_lines!(ContCircSystem,
+            sys_type, bctype, sys_size, dim);
 
-        assert_eq!(TestStruct::info(10), String::from("var1      : Test variable 1\nvar2      : Test variable 2\n"));
-        assert_eq!(TestStruct::read_args_from_vec(test_args), Ok(test_arg.clone()));
-        assert_eq!(test1.print_configuration(10), String::from("var3      : Continuous Circular system.\nvar1      : 3\nvar2      : 15\n"));
-        assert_eq!(TestStruct::read_args_from_lines(&test_vec), Ok(test_arg));
+        let sys = read_args_from_lines(&mut lines).unwrap();
+        let res = ContCircSystem::new(10f64, 2usize);
+
+        assert_eq!(sys, res);
+        Ok(())
     }
 }
 

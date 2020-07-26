@@ -9,11 +9,13 @@
 pub mod error;
 pub mod macros;
 pub mod argument;
+pub mod analysis;
 pub mod system_mod;
 pub mod target_mod;
 pub mod searcher_mod;
 pub mod random_mod;
 pub mod position;
+
 
 pub mod prelude;
 

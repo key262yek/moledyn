@@ -56,3 +56,59 @@ macro_rules! impl_fromstr_test{
         }
     }
 }
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! define_structure{
+    ($name:ident $(, $type_name:ident, $type_type:ty)* ;$($var:ident, $t:ty), *) =>{
+        #[allow(dead_code)]
+        #[derive(Clone, Debug, PartialEq, PartialOrd)]
+        pub struct $name{
+            $(pub $type_name : $type_type,
+                )*
+            $(pub $var : $t,
+                )*
+        }
+    }
+}
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! impl_structure{
+    ($name:ident $(, $type_name:ident, $type_default:expr)* ;$($var:ident, $t:ty), *) =>{
+        #[allow(dead_code)]
+        impl $name{
+            pub fn new($($var : $t),*) -> Self{
+                Self{
+                    $($type_name : $type_default,
+                        )*
+                    $($var : $var,
+                        )*
+                }
+            }
+        }
+    }
+}
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! construct_structure {
+    ($name:ident $(, $type_name:ident, $type_type:ty, $type_default:expr)* ;$($var:ident, $t:ty), *) => {
+        define_structure!($name, $(, $type_name, $type_type:)* ;$($var, $t), *);
+
+        impl_structure!($name $(, $type_name, $type_default)* ;$($var, $t), *);
+    };
+}
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! derive_hash{
+    ($name:ident $(, $var:ident) *) => {
+        impl Hash for $name{
+            fn hash<H: Hasher>(&self, state: &mut H){
+                $(self.$var.hash(state);
+                    )*
+            }
+        }
+    }
+}
