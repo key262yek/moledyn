@@ -49,9 +49,9 @@ macro_rules! define_num_args{
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! impl_fn_info {
-    ($($var:ident, $description:expr),*) => {
-        #[allow(unused_variables)]
-        fn info(width : usize) -> String{
+    ($name:ident, $($var:ident, $description:expr),*) => {
+        #[allow(dead_code)]
+        fn $name(width : usize) -> String{
             #[allow(unused_mut)]
             let mut string = String::new();
             $(string.push_str(format!("{}", format_args!("{0:1$}: {2:}\n", stringify!($var), width, $description)).as_str());
@@ -64,9 +64,9 @@ macro_rules! impl_fn_info {
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! impl_fn_brief_info {
-    ($description:expr, $($var:ident),*) => {
-        #[allow(unused_variables)]
-        fn brief_info() -> String{
+    ($name:ident, $description:expr, $($var:ident),*) => {
+        #[allow(dead_code)]
+        fn $name() -> String{
             #[allow(unused_mut)]
             let mut string = String::from(format!("{0:} arguments : ", $description));
             $(string.push_str(format!("({}) ", stringify!($var)).as_str());
@@ -119,7 +119,11 @@ macro_rules! impl_fn_read_args_from_lines{
     ($name:ident, $($var:ident), *) => {
         fn read_args_from_lines(reader : &mut Lines<BufReader<File>>) -> Result<$name, Error>{
             Ok($name{
-                $($var : { let list : String = reader.next().unwrap().unwrap();
+                $($var : {
+                            let list : String = match reader.next(){
+                                Some(x) => x.map_err(Error::make_error_io)?,
+                                None => {return Err(Error::make_error_syntax(ErrorCode::InvalidFile));}
+                            };
                             let split : Vec<String> = list.split(":")
                                                           .map(|s| s.to_string())
                                                           .collect();
@@ -141,13 +145,13 @@ macro_rules! impl_argument_trait{
         $(,$type_name:ident, $type_type:ty, $type_default:expr)*;
         $($var:ident, $t:ty, $description:expr), *) => {
         define_num_args!($num_args);
-        define_structure!($arg_name $(, $type_name, $type_type)* ; $($var, $t), *);
+        define_structure!($arg_name $(, $type_name, $type_type)* ; $($var, $t,) *);
         impl_structure!($arg_name $(, $type_name, $type_default)* ; $($var, $t), *);
 
         impl Argument<$arg_name> for $struct_name{
-            impl_fn_info!($($var, $description), *);
+            impl_fn_info!(info, $($var, $description), *);
 
-            impl_fn_brief_info!($struct_description $(, $var)*);
+            impl_fn_brief_info!(brief_info, $struct_description $(, $var)*);
 
             impl_fn_read_args_from_vec!($arg_name $(,$type_name, $type_default)*; $($var), *);
 
@@ -272,7 +276,7 @@ mod tests{
 
     #[test]
     fn test_define_arguments(){
-        define_structure!(TestArguments ;var1, f64, var2, usize);
+        define_structure!(TestArguments ;var1, f64, var2, usize,);
         let _test = TestArguments{
             var1 : 3.0f64,
             var2 : 15usize,
@@ -281,20 +285,20 @@ mod tests{
 
     #[test]
     fn test_impl_fn_info(){
-        impl_fn_info!(var1, "Test variable 1", var2, "Test variable 2");
+        impl_fn_info!(info, var1, "Test variable 1", var2, "Test variable 2");
         assert_eq!(info(10), String::from("var1      : Test variable 1\nvar2      : Test variable 2\n"));
     }
 
     #[test]
     fn test_impl_fn_breif_info(){
-        impl_fn_brief_info!("Test", var1, var2);
+        impl_fn_brief_info!(brief_info, "Test", var1, var2);
         assert_eq!(brief_info(), String::from("Test arguments : (var1) (var2) "));
     }
 
     #[test]
     fn test_impl_read_args_from_vec(){
         define_num_args!(2);
-        define_structure!(TestArguments ; var1, f64, var2, usize);
+        define_structure!(TestArguments ; var1, f64, var2, usize,);
         impl_fn_read_args_from_vec!(TestArguments ;var1 ,var2);
 
         let test_arg = TestArguments{

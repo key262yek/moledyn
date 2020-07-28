@@ -44,6 +44,7 @@ impl Error{
             | ErrorCode::InvalidNumberOfArguments
             | ErrorCode::InvalidArgumentInput
             | ErrorCode::InvalidFormat
+            | ErrorCode::InvalidFile
             | ErrorCode::TooLargeTimeStep
             | ErrorCode::FeatureNotProvided => Category::Syntax,
         }
@@ -105,6 +106,9 @@ pub enum ErrorCode{
     // Invalid Format
     InvalidFormat,
 
+    // Invalid File
+    InvalidFile,
+
     // Time step is too large
     TooLargeTimeStep,
 
@@ -123,6 +127,7 @@ impl Display for ErrorCode{
             ErrorCode::InvalidNumberOfArguments => f.write_str("Number of Arguments is invalid"),
             ErrorCode::InvalidArgumentInput => f.write_str("Given argument is invalid"),
             ErrorCode::InvalidFormat => f.write_str("Invalid Format"),
+            ErrorCode::InvalidFile => f.write_str("Invalid File"),
             ErrorCode::TooLargeTimeStep => f.write_str("Time step is too large"),
             ErrorCode::FeatureNotProvided => f.write_str("Functionality is not provided yet"),
         }

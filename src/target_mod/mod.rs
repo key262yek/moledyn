@@ -6,7 +6,27 @@
 
 use crate::prelude::*;
 
+
+// =====================================================================================
+// ===  Implement Target ===============================================================
+// =====================================================================================
+
+pub trait TargetCore<T>{
+    // Return the type of target
+    fn target_type(&self) -> TargetType;
+
+    // Check whether a searcher finds the target
+    fn check_find(&self, pos: &Position<T>) -> Result<bool, Error>;
+}
+
+
 pub mod cont_bulk;
+
+
+// =====================================================================================
+// ===  Implement TargetType ===========================================================
+// =====================================================================================
+
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum TargetType{
@@ -31,15 +51,11 @@ impl_fromstr_for_type!(TargetType,
     TargetType::LatticeAtBoundary => "Target at Boundary of Lattice System.",
     TargetType::NetworkSingleNode => "Target is a Single Node in Network.");
 
-pub trait TargetCore<T>{
-    // Return the type of target
-    fn target_type(&self) -> TargetType;
-
-    // Check whether a searcher finds the target
-    fn check_find(&self, pos: &Position<T>) -> Result<bool, Error>;
+impl Default for TargetType{
+    fn default() -> Self{
+        TargetType::ContinuousInBulk
+    }
 }
-
-
 
 #[cfg(test)]
 mod tests{

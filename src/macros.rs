@@ -60,8 +60,7 @@ macro_rules! impl_fromstr_test{
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! define_structure{
-    ($name:ident $(, $type_name:ident, $type_type:ty)* ;$($var:ident, $t:ty), *) =>{
-        #[allow(dead_code)]
+    ($name:ident $(, $type_name:ident, $type_type:ty)* ;$($var:ident, $t:ty,)*) =>{
         #[derive(Clone, Debug, PartialEq, PartialOrd)]
         pub struct $name{
             $(pub $type_name : $type_type,
@@ -86,6 +85,15 @@ macro_rules! impl_structure{
                         )*
                 }
             }
+
+            pub fn clear(&mut self){
+                $(
+                    self.$type_name = $type_default;
+                    )*
+                $(
+                    self.$var = Default::default();
+                    )*
+            }
         }
     }
 }
@@ -94,7 +102,7 @@ macro_rules! impl_structure{
 #[allow(unused_macros)]
 macro_rules! construct_structure {
     ($name:ident $(, $type_name:ident, $type_type:ty, $type_default:expr)* ;$($var:ident, $t:ty), *) => {
-        define_structure!($name, $(, $type_name, $type_type:)* ;$($var, $t), *);
+        define_structure!($name $(, $type_name, $type_type)* ;$($var, $t), *);
 
         impl_structure!($name $(, $type_name, $type_default)* ;$($var, $t), *);
     };
@@ -106,9 +114,152 @@ macro_rules! derive_hash{
     ($name:ident $(, $var:ident) *) => {
         impl Hash for $name{
             fn hash<H: Hasher>(&self, state: &mut H){
-                $(self.$var.hash(state);
+                $((self.$var as usize).hash(state);
                     )*
             }
         }
     }
+}
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! export_form{
+    ($name:ident $(,$var:ident) *) => {
+        fn $name(width: usize) -> String{
+            let mut string = String::new();
+            $(string.push_str(format!("{}", format_args!("{0:<1$}", stringify!($var), width)).as_str());
+                )*
+            return string;
+        }
+    }
+}
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! pub_export_form{
+    ($name:ident $(,$var:ident) *) => {
+        #[allow(dead_code)]
+        pub fn $name(width: usize) -> String{
+            let mut string = String::new();
+            $(string.push_str(format!("{}", format_args!("{0:<1$}", stringify!($var), width)).as_str());
+                )*
+            return string;
+        }
+    }
+}
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! export_data{
+    ($name:ident $(,$var:ident)*; $($float:ident), *) => {
+        #[allow(dead_code)]
+        fn $name(&self, prec: usize) -> String{
+            let mut string = String::new();
+            $(string.push_str(format!("{}", format_args!("{0:<1$}\t", self.$var, prec)).as_str());
+                )*
+            $(string.push_str(format!("{}", format_args!("{0:.1$e}\t", self.$float , prec)).as_str());
+                )*
+            return string;
+        }
+    }
+}
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! pub_export_data{
+    ($name:ident $(,$var:ident)*; $($float:ident), *) => {
+        #[allow(dead_code)]
+        pub fn $name(&self, prec: usize) -> String{
+            let mut string = String::new();
+            $(string.push_str(format!("{}", format_args!("{0:<1$}\t", self.$var, prec)).as_str());
+                )*
+            $(string.push_str(format!("{}", format_args!("{0:.1$e}\t", self.$float , prec)).as_str());
+                )*
+            return string;
+        }
+    }
+}
+
+
+// #[macro_export]
+// #[allow(unused_macros)]
+// macro_rules! recursive_export_float{
+//     ($string:ident, $self:ident, $prec:ident,) => {};
+
+//     ($string:ident, $self:ident, $prec:ident, $float:ident = f64, $($tt:tt),*) => {
+//         $string.push_str(format!("{}", format_args!("{0:.1$e}\t", $self.$float , $prec)).as_str());
+//         recursive_export_float!($string, $self, $prec, $($tt:tt),*);
+//     };
+
+//     ($string:ident, $self:ident, $prec:ident, $var1:ident, $($tt:tt),*) => {
+//         $string.push_str(format!("{}", format_args!("{0:.1$}\t", $self.$var1 , $prec)).as_str());
+//         recursive_export_float!($string, $self, $prec, $($tt:tt),*);
+//     }
+// }
+
+// #[macro_export]
+// #[allow(unused_macros)]
+// macro_rules! pub_export_data2{
+//     ($name:ident, $($tt:tt),*) => {
+//         #[allow(dead_code)]
+//         pub fn $name(&self, prec: usize) -> String{
+//             let mut string = String::new();
+//             recursive_export_float!(string, self, prec, $($tt:tt),*);
+//             return string;
+//         }
+//     }
+// }
+
+
+
+#[cfg(test)]
+mod tests{
+    #[allow(unused_imports)]
+    use super::*;
+
+    #[test]
+    fn test_export_data(){
+        struct Test{
+            num1 : usize,
+            num2 : usize,
+            float1 : f64,
+            name : String,
+        }
+        impl Test{
+            export_data!(test_export, num1, num2, name; float1);
+        }
+
+        let test = Test{
+            num1 : 10,
+            num2 : 5,
+            float1: 0f64,
+            name : String::from("Hello"),
+        };
+
+        assert_eq!(test.test_export(5), "10   \t5    \tHello\t0.00000e0\t".to_string());
+    }
+
+    // #[test]
+    // fn test_export_data2(){
+    //     struct Test{
+    //         num1 : usize,
+    //         num2 : usize,
+    //         float1 : f64,
+    //         name : String,
+    //     }
+    //     impl Test{
+    //         pub_export_data2!(test_export, num1, num2, name, float1 = f64);
+    //     }
+
+    //     let test = Test{
+    //         num1 : 10,
+    //         num2 : 5,
+    //         float1: 0f64,
+    //         name : String::from("Hello"),
+    //     };
+
+    //     assert_eq!(test.test_export(5), "10   \t5    \tHello\t0.00000e0\t".to_string());
+    // }
+
+
 }

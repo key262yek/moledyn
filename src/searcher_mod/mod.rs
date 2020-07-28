@@ -6,37 +6,9 @@
 use crate::prelude::*;
 use std::default::Default;
 
-pub mod cont_passive_indep;     // 연속 시스템에서 Passive하게 움직이는 독립된 searcher
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
-pub enum SearcherType{                          // Type of searcher
-    ContinuousPassiveIndependent,
-    ContinuousPassiveInteracting,
-    ContinuousActiveIndependent,
-    ContinuousActiveInteracting,
-    LatticePassiveIndependent,
-    LatticePassiveInteracting,
-    LatticeActiveIndependent,
-    LatticeActiveInteracting,
-    NetworkPassiveIndependent,
-    NetworkPassiveInteracting,
-    NetworkActiveIndependent,
-    NetworkActiveInteracting,
-}
-
-
-
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
-pub enum MoveType{
-    Brownian(f64),      // Brownian motion with given diffusion coefficient
-    Levy,               // Levy walk. not developed yet.
-}
-
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub enum InitType<T>{
-    SpecificPosition(Position<T>),      // Brownian motion with given diffusion coefficient
-    Uniform,               // Levy walk. not developed yet.
-}
+// =====================================================================================
+// ===  Implement Searcher =============================================================
+// =====================================================================================
 
 pub trait SearcherCore<T>{    // Core functionality of searcher.
 
@@ -63,6 +35,29 @@ pub trait Interaction<T>{
 pub trait Merge{
     // Merge two searchers.
     fn merge(&self, other : &Self);
+}
+
+pub mod cont_passive_indep;     // 연속 시스템에서 Passive하게 움직이는 독립된 searcher
+
+
+// =====================================================================================
+// ===  Implement SearcherType =========================================================
+// =====================================================================================
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
+pub enum SearcherType{                          // Type of searcher
+    ContinuousPassiveIndependent,
+    ContinuousPassiveInteracting,
+    ContinuousActiveIndependent,
+    ContinuousActiveInteracting,
+    LatticePassiveIndependent,
+    LatticePassiveInteracting,
+    LatticeActiveIndependent,
+    LatticeActiveInteracting,
+    NetworkPassiveIndependent,
+    NetworkPassiveInteracting,
+    NetworkActiveIndependent,
+    NetworkActiveInteracting,
 }
 
 impl SearcherType{
@@ -180,6 +175,22 @@ impl_fromstr_for_type!(SearcherType,
     SearcherType::NetworkActiveIndependent => "Active Independent Searcher in Network.",
     SearcherType::NetworkActiveInteracting => "Active Interacting Searcher in Network.");
 
+impl Default for SearcherType{
+    fn default() -> Self{
+        SearcherType::ContinuousPassiveIndependent
+    }
+}
+
+// =====================================================================================
+// ===  Implement MoveType =============================================================
+// =====================================================================================
+
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
+pub enum MoveType{
+    Brownian(f64),      // Brownian motion with given diffusion coefficient
+    Levy,               // Levy walk. not developed yet.
+}
+
 impl Display for MoveType{
     fn fmt(&self, f: &mut Formatter) -> fmt::Result{
         match self{
@@ -190,6 +201,7 @@ impl Display for MoveType{
         }
     }
 }
+
 
 impl FromStr for MoveType{
     type Err = Error;
@@ -212,6 +224,25 @@ impl FromStr for MoveType{
 
     }
 }
+
+impl Default for MoveType{
+    fn default() -> Self{
+        MoveType::Brownian(1f64)
+    }
+}
+
+
+// =====================================================================================
+// ===  Implement InitType =============================================================
+// =====================================================================================
+
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
+pub enum InitType<T>{
+    SpecificPosition(Position<T>),      // Brownian motion with given diffusion coefficient
+    Uniform,               // Levy walk. not developed yet.
+}
+
+
 
 impl<T : Display> Display for InitType<T>{
     fn fmt(&self, f: &mut Formatter) -> fmt::Result{
@@ -244,6 +275,12 @@ impl<T : FromStr + Default + Clone> FromStr for InitType<T>{
                 _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
             }
         }
+    }
+}
+
+impl<T> Default for InitType<T>{
+    fn default() -> Self{
+        InitType::Uniform
     }
 }
 
