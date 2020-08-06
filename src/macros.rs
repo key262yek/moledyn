@@ -74,7 +74,7 @@ macro_rules! define_structure{
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! impl_structure{
-    ($name:ident $(, $type_name:ident, $type_default:expr)* ;$($var:ident, $t:ty), *) =>{
+    ($name:ident $(, $type_name:ident, $type_default:expr)* ;$($var:ident, $t:ty,) *) =>{
         #[allow(dead_code)]
         impl $name{
             pub fn new($($var : $t),*) -> Self{
@@ -102,9 +102,9 @@ macro_rules! impl_structure{
 #[allow(unused_macros)]
 macro_rules! construct_structure {
     ($name:ident $(, $type_name:ident, $type_type:ty, $type_default:expr)* ;$($var:ident, $t:ty), *) => {
-        define_structure!($name $(, $type_name, $type_type)* ;$($var, $t), *);
+        define_structure!($name $(, $type_name, $type_type)* ;$($var, $t,) *);
 
-        impl_structure!($name $(, $type_name, $type_default)* ;$($var, $t), *);
+        impl_structure!($name $(, $type_name, $type_default)* ;$($var, $t,) *);
     };
 }
 

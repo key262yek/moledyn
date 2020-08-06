@@ -5,7 +5,6 @@
 //
 
 
-
 // Public module
 pub mod error;
 pub mod macros;
@@ -16,6 +15,7 @@ pub mod target_mod;
 pub mod searcher_mod;
 pub mod random_mod;
 pub mod position;
+pub mod iterator;
 
 
 pub mod prelude;

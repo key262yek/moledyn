@@ -145,8 +145,7 @@ macro_rules! impl_argument_trait{
         $(,$type_name:ident, $type_type:ty, $type_default:expr)*;
         $($var:ident, $t:ty, $description:expr), *) => {
         define_num_args!($num_args);
-        define_structure!($arg_name $(, $type_name, $type_type)* ; $($var, $t,) *);
-        impl_structure!($arg_name $(, $type_name, $type_default)* ; $($var, $t), *);
+        construct_structure!($arg_name $(, $type_name, $type_type, $type_default)*; $($var, $t), *);
 
         impl Argument<$arg_name> for $struct_name{
             impl_fn_info!(info, $($var, $description), *);

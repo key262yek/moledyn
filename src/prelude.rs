@@ -14,7 +14,8 @@ pub use crate::{
     random_mod::{rng_seed},
     system_mod::{SystemCore, SystemType, BoundaryCond},
     target_mod::{TargetCore, TargetType},
-    searcher_mod::{SearcherCore, SearcherType, MoveType, InitType}
+    searcher_mod::{SearcherCore, SearcherType, MoveType, InitType},
+    iterator::{LinkedList},
 
 };
 
@@ -26,6 +27,9 @@ pub use std::{fmt::{self, Display, Formatter},
             convert::AsRef,
             path::Path,
             hash::{Hash, Hasher},
-            collections::HashMap};
+            collections::HashMap,
+            default::Default};
+pub use streaming_iterator::{StreamingIterator,
+        };
 
 

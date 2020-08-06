@@ -10,6 +10,7 @@ edition = "2018"
 rand = "0.7"
 rand_pcg = "0.2.1"
 rand_distr = "0.2.2"
+streaming-iterator = "0.1.5"
 
 [dev-dependencies]
 criterion = "0.3"
