@@ -79,7 +79,12 @@ impl_argument_trait!(ContPassiveMergeSearcher, "Searcher", ContPassiveMergeSearc
     alpha,  f64,            "Exponent of diffusion decrease. D ~ n^alpha ex) 1.0");
 
 impl SearcherCore<f64> for ContPassiveMergeSearcher{
-
+    fn distance(&self, other : &Self) -> Result<f64, Error>{
+        if self.dim != other.dim{
+            return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
+        }
+        return self.pos.distance(&other.pos);
+    }
 }
 
 impl Passive<f64> for ContPassiveMergeSearcher{
