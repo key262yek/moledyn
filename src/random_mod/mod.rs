@@ -67,7 +67,7 @@ pub fn get_uniform_to_vec_nonstandard(rng: &mut Pcg64, vec: &mut Position<f64>, 
     // max : uniform distribution의 최댓값
 
     for x in &mut vec.coordinate{
-        let r : f64 = rng.sample(StandardNormal);
+        let r : f64 = rng.sample(Open01);
         *x = *x + r * (max - min) + min;
     }
 }
