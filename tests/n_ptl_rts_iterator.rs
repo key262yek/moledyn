@@ -24,7 +24,7 @@ fn test_n_ptl_iterator() -> Result<(), Error>{
     for &data in data_set[..10].iter(){
         let (n, mfpt_c) = data;
         let mfpt = ensemble_n_ptl_fpt(n, num_ensemble, &mut rng)?;
-        assert!(((mfpt - mfpt_c)/mfpt_c).abs() < (num_ensemble as f64).powf(-0.3));
+        assert!(((mfpt - mfpt_c)/mfpt_c).abs() < (num_ensemble as f64).powf(-0.1));
     }
     Ok(())
 }

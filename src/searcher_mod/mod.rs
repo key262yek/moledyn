@@ -34,11 +34,11 @@ pub trait Interaction<T>{
 
 pub trait Merge{
     // Merge two searchers.
-    fn merge(&self, other : &Self);
+    fn merge(&mut self, other : &Self) -> Result<(), Error>;
 }
 
 pub mod cont_passive_indep;     // 연속 시스템에서 Passive하게 움직이는 독립된 searcher
-
+pub mod cont_passive_merge;     // 연속 시스템에서 Passive하게 움직이는 서로 합쳐질 수 있는 searcher
 
 // =====================================================================================
 // ===  Implement SearcherType =========================================================
