@@ -79,11 +79,8 @@ impl_argument_trait!(ContPassiveMergeSearcher, "Searcher", ContPassiveMergeSearc
     alpha,  f64,            "Exponent of diffusion decrease. D ~ n^alpha ex) 1.0");
 
 impl SearcherCore<f64> for ContPassiveMergeSearcher{
-    fn distance(&self, other : &Self) -> Result<f64, Error>{
-        if self.dim != other.dim{
-            return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
-        }
-        return self.pos.distance(&other.pos);
+    fn pos(&self) -> &Position<f64>{
+        &self.pos
     }
 }
 
@@ -132,6 +129,24 @@ impl Merge for ContPassiveMergeSearcher{
         match self.mtype{
             MoveType::Brownian(_c) =>{
                 self.size = self.size + other.size;
+                let coeff = (self.size as f64).powf(-self.alpha);
+                self.mtype = MoveType::Brownian(coeff);
+                Ok(())
+            },
+            _ => {
+                Err(Error::make_error_syntax(ErrorCode::FeatureNotProvided))
+            }
+        }
+    }
+
+    fn size(&self) -> usize{
+        self.size
+    }
+
+    fn add_size(&mut self, size : usize) -> Result<(), Error>{
+        match self.mtype{
+            MoveType::Brownian(_c) =>{
+                self.size = self.size + size;
                 let coeff = (self.size as f64).powf(-self.alpha);
                 self.mtype = MoveType::Brownian(coeff);
                 Ok(())

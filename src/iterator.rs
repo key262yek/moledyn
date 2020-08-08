@@ -1,5 +1,6 @@
 
 use crate::prelude::*;
+use crate::searcher_mod::Merge;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
 pub struct Node{
@@ -52,7 +53,7 @@ pub struct LinkedList<T>{
     pub contents : Vec<T>,
     pub head : Option<usize>,
     pub tail : Option<usize>,
-    pub current : Option<usize>,
+    pub current : [Option<usize>; 3],
 }
 
 impl<T> LinkedList<T>{
@@ -63,19 +64,32 @@ impl<T> LinkedList<T>{
             contents : Vec::<T>::new(),
             head : None,
             tail : None,
-            current : None,
+            current : [None; 3],
         }
     }
 
     #[allow(dead_code)]
     pub fn from(contents : Vec<T>) -> Self{
         let len : usize = contents.len();
+        let head : Option<usize>;
+        let tail : Option<usize>;
+        match len{
+            0 => {
+                head = None;
+                tail = None;
+            },
+            _ => {
+                head = Some(0);
+                tail = Some(len - 1);
+            }
+        }
+
         Self{
             links : Node::list_with_length(len),
             contents : contents,
-            head : Some(0),
-            tail : Some(len - 1),
-            current : None,
+            head : head,
+            tail : tail,
+            current : [None; 3],
         }
     }
 
@@ -122,15 +136,26 @@ impl<T> LinkedList<T>{
 
     #[allow(dead_code)]
     pub fn into_iter(&mut self){
-        self.current = self.head;
+        self.current[0] = self.head;
+    }
+
+    pub fn into_double_iter(&mut self){
+        self.current[0] = self.head;
+        self.current[1] = self.head.map_or(None, |x| self.links[x].next);
+    }
+
+    pub fn into_triple_iter(&mut self){
+        self.current[0] = self.head;
+        self.current[1] = self.head.map_or(None, |x| self.links[x].next);
+        self.current[2] = self.current[1].map_or(None, |x| self.links[x].next);
     }
 
     #[allow(dead_code)]
     pub fn get(&mut self) -> Option<&T>{
-        match self.current{
+        match self.current[0]{
             None => None,
             Some(idx) => {
-                self.current = self.links[idx].next;
+                self.current[0] = self.links[idx].next;
                 Some(&self.contents[idx])
             },
         }
@@ -138,17 +163,115 @@ impl<T> LinkedList<T>{
 
     #[allow(dead_code)]
     pub fn get_mut(&mut self) -> Option<&mut T>{
-        match self.current{
+        match self.current[0]{
             None => None,
             Some(idx) => {
-                self.current = self.links[idx].next;
+                self.current[0] = self.links[idx].next;
                 Some(&mut self.contents[idx])
             },
         }
     }
+
+    #[allow(dead_code)]
+    pub fn enumerate(&mut self) -> Option<(usize, &T)>{
+        match self.current[0]{
+            None => None,
+            Some(idx) => {
+                self.current[0] = self.links[idx].next;
+                Some((idx, &self.contents[idx]))
+            },
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn enumerate_mut(&mut self) -> Option<(usize, &mut T)>{
+        match self.current[0]{
+            None => None,
+            Some(idx) => {
+                self.current[0] = self.links[idx].next;
+                Some((idx, &mut self.contents[idx]))
+            },
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn indicies(&mut self) -> Option<usize>{
+        match self.current[0]{
+            None => None,
+            Some(idx) => {
+                self.current[0] = self.links[idx].next;
+                Some(idx)
+            },
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn get_double(&mut self) -> Option<(&T, &T)>{
+        let idx2 : usize;
+        match self.current[1]{
+            None => {
+                self.current[0] = self.links[self.current[0]?].next;
+                idx2 = self.links[self.current[0]?].next?;
+                self.current[1] = self.links[idx2].next;
+            },
+            Some(idx) => {
+                self.current[1] = self.links[idx].next;
+                idx2 = idx;
+            },
+        }
+        let idx1 = self.current[0]?;
+
+        return Some((&self.contents[idx1], &self.contents[idx2]));
+    }
+
+    #[allow(dead_code)]
+    pub fn enumerate_double(&mut self) -> Option<(usize, &T, usize, &T)>{
+        let idx2 : usize;
+        match self.current[1]{
+            None => {
+                self.current[0] = self.links[self.current[0]?].next;
+                idx2 = self.links[self.current[0]?].next?;
+                self.current[1] = self.links[idx2].next;
+            },
+            Some(idx) => {
+                self.current[1] = self.links[idx].next;
+                idx2 = idx;
+            },
+        }
+        let idx1 = self.current[0]?;
+
+        return Some((idx1, &self.contents[idx1], idx2, &self.contents[idx2]));
+    }
+
+    #[allow(dead_code)]
+    pub fn indicies_double(&mut self) -> Option<(usize, usize)>{
+        let idx2 : usize;
+        match self.current[1]{
+            None => {
+                self.current[0] = self.links[self.current[0]?].next;
+                idx2 = self.links[self.current[0]?].next?;
+                self.current[1] = self.links[idx2].next;
+            },
+            Some(idx) => {
+                self.current[1] = self.links[idx].next;
+                idx2 = idx;
+            },
+        }
+        let idx1 = self.current[0]?;
+
+        return Some((idx1, idx2));
+    }
 }
 
-
+impl<M : Merge> LinkedList<M>{
+    #[allow(dead_code)]
+    pub fn merge(&mut self, idx1 : usize, idx2 : usize) -> Result<(), Error>{
+        let size : usize = self.contents[idx2].size();
+        self.contents[idx1].add_size(size)?;
+        self.del(idx2)?;
+        Ok(())
+    }
+}
 
 
 #[cfg(test)]
@@ -396,7 +519,47 @@ TestType { x: 2.0, n: 2, vec: [10.0, 3.0, 5.0], enu: Var2 }\n");
         assert_eq!(res,
             "TestType { x: 3.0, n: 1, vec: [1.0, 2.0, 3.0], enu: Var1 }
 TestType { x: 2.0, n: 2, vec: [1.0, 3.0, 5.0], enu: Var2 }\n");
+    }
 
+    #[test]
+    fn test_distance() -> Result<(), Error>{
+        use crate::searcher_mod::cont_passive_indep::ContPassiveIndepSearcher;
+
+        // Empty list
+        let mut linkedlist = LinkedList::<ContPassiveIndepSearcher>::from(Vec::new());
+        linkedlist.into_double_iter();
+        let mut res = String::new();
+        while let Some((searcher1, searcher2)) = linkedlist.get_double(){
+            let d : f64 = searcher1.pos().distance(searcher2.pos())?;
+            res.push_str(format!("{} ", d).as_str());
+        }
+        assert_eq!(res, String::new());
+
+
+        let s1 = ContPassiveIndepSearcher::new(MoveType::Brownian(1f64), Position::<f64>::new(vec![0.0, 0.0]));
+        let s2 = ContPassiveIndepSearcher::new(MoveType::Brownian(1f64), Position::<f64>::new(vec![3.0, 0.0]));
+        let s3 = ContPassiveIndepSearcher::new(MoveType::Brownian(1f64), Position::<f64>::new(vec![0.0, 4.0]));
+
+
+        // Single ptl list
+        let mut linkedlist = LinkedList::<ContPassiveIndepSearcher>::from(vec![s1.clone()]);
+        let mut res = String::new();
+        while let Some((searcher1, searcher2)) = linkedlist.get_double(){
+            let d : f64 = searcher1.pos().distance(searcher2.pos())?;
+            res.push_str(format!("{} ", d).as_str());
+        }
+        assert_eq!(res, String::new());
+
+        // More
+        let mut linkedlist = LinkedList::<ContPassiveIndepSearcher>::from(vec![s1, s2, s3]);
+        linkedlist.into_double_iter();
+        let mut res = String::new();
+        while let Some((searcher1, searcher2)) = linkedlist.get_double(){
+            let d : f64 = searcher1.pos().distance(searcher2.pos())?;
+            res.push_str(format!("{} ", d).as_str());
+        }
+        assert_eq!(res, "3 4 5 ");
+        Ok(())
     }
 }
 

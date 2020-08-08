@@ -16,7 +16,7 @@ pub mod searcher_mod;
 pub mod random_mod;
 pub mod position;
 pub mod iterator;
-
+pub mod iterator_mut;
 
 pub mod prelude;
 

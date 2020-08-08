@@ -62,11 +62,8 @@ impl_argument_trait!(ContPassiveIndepSearcher, "Searcher", ContPassiveIndepSearc
     itype, InitType<f64>, "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform");
 
 impl SearcherCore<f64> for ContPassiveIndepSearcher{
-    fn distance(&self, other : &Self) -> Result<f64, Error>{
-        if self.dim != other.dim{
-            return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
-        }
-        return self.pos.distance(&other.pos);
+    fn pos(&self) -> &Position<f64>{
+        &self.pos
     }
 }
 

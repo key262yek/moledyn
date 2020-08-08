@@ -7,6 +7,7 @@ use rts::target_mod::{cont_bulk::ContBulkTarget};
 use rts::searcher_mod::{Passive, cont_passive_indep::ContPassiveIndepSearcher};
 
 #[test]
+#[ignore]
 fn test_n_ptl_iterator() -> Result<(), Error>{
     // n ptl fpt가 iterator를 이용한 계산에서도 잘 나오는지 확인
     let data_set : [(usize, f64); 30] = [(1, 8.00462E+01), (2, 3.85612E+01), (3, 2.48137E+01), (4, 1.81125E+01),

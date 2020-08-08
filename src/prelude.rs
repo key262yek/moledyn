@@ -15,8 +15,7 @@ pub use crate::{
     system_mod::{SystemCore, SystemType, BoundaryCond},
     target_mod::{TargetCore, TargetType},
     searcher_mod::{SearcherCore, SearcherType, MoveType, InitType},
-    iterator::{LinkedList},
-
+    iterator::{Node, LinkedList},
 };
 
 pub use rand_pcg::Pcg64;

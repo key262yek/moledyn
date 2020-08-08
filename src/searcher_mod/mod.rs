@@ -11,7 +11,7 @@ use std::default::Default;
 // =====================================================================================
 
 pub trait SearcherCore<T>{    // Core functionality of searcher.
-
+    fn pos(&self) -> &Position<T>;
 }
 
 pub trait Passive<T>{         // Functions for Passive ptls
@@ -35,6 +35,12 @@ pub trait Interaction<T>{
 pub trait Merge{
     // Merge two searchers.
     fn merge(&mut self, other : &Self) -> Result<(), Error>;
+
+    // Give size info
+    fn size(&self) -> usize;
+
+    // Add size
+    fn add_size(&mut self, size : usize) -> Result<(), Error>;
 }
 
 pub mod cont_passive_indep;     // 연속 시스템에서 Passive하게 움직이는 독립된 searcher
