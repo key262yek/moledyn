@@ -17,7 +17,7 @@ criterion = "0.3"
 plotlib = "0.5.1"
 
 [[bench]]
-name = "bench_iterator3"
+name = "bench_merge"
 harness = false
 
 [profile.release]

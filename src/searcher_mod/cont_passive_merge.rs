@@ -68,6 +68,35 @@ impl ContPassiveMergeSearcher{
             alpha   : alpha,
         })
     }
+
+    pub fn renew_uniform(&mut self, sys : &dyn SystemCore<f64>, target : &dyn TargetCore<f64>,
+                   rng : &mut Pcg64) -> Result<(), Error>{
+        // 매번 searcher를 새로 정의하는 것 역시 상당한 memory 낭비이다.
+        // 있는 searcher를 재활용하도록 하자.
+        // independent searcher와 다르게 mergeable searcher는 size도 변할 수 있고, diffusion coefficient도 변한다.
+        // 이들을 모두 바꿔줘야함
+
+        sys.position_out_of_system_to_vec(&mut self.pos)?;
+        loop{
+            sys.random_pos_to_vec(rng, &mut self.pos)?;   // System 내부의 random position을 받는다
+            if !target.check_find(&self.pos)?{            // 그 random position이 target과 이미 만났는가 확인
+                break;
+            }
+        }
+
+        self.size = 1;
+        match self.mtype{
+            MoveType::Brownian(_c) =>{
+                let coeff = (self.size as f64).powf(-self.alpha);
+                self.mtype = MoveType::Brownian(coeff);
+            },
+            _ => {
+                return Err(Error::make_error_syntax(ErrorCode::FeatureNotProvided));
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl_argument_trait!(ContPassiveMergeSearcher, "Searcher", ContPassiveMergeSearcherArguments, 2,
@@ -126,9 +155,9 @@ impl Passive<f64> for ContPassiveMergeSearcher{
 
 impl Merge for ContPassiveMergeSearcher{
     fn merge(&mut self, other : &Self) -> Result<(), Error>{
+        self.size = self.size + other.size;
         match self.mtype{
             MoveType::Brownian(_c) =>{
-                self.size = self.size + other.size;
                 let coeff = (self.size as f64).powf(-self.alpha);
                 self.mtype = MoveType::Brownian(coeff);
                 Ok(())
@@ -144,9 +173,9 @@ impl Merge for ContPassiveMergeSearcher{
     }
 
     fn add_size(&mut self, size : usize) -> Result<(), Error>{
+        self.size = self.size + size;
         match self.mtype{
             MoveType::Brownian(_c) =>{
-                self.size = self.size + size;
                 let coeff = (self.size as f64).powf(-self.alpha);
                 self.mtype = MoveType::Brownian(coeff);
                 Ok(())
