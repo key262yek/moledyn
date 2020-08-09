@@ -135,6 +135,41 @@ impl<T> LinkedList<T>{
     }
 
     #[allow(dead_code)]
+    pub fn connect_all(&mut self) -> Result<(), Error>{
+        let len : usize = self.contents.len();
+        match len{
+            0 => {
+                self.head = None;
+                self.tail = None;
+                return Ok(());
+            }
+            1 => {
+                self.head = Some(0);
+                self.tail = Some(0);
+                self.links[0].prev = None;
+                self.links[0].next = None;
+                return Ok(());
+            }
+            length =>{
+                self.head = Some(0);
+                self.tail = Some(length - 1);
+
+                self.links[0].prev = None;
+                self.links[0].next = Some(1);
+
+                self.links[length - 1].prev = Some(0);
+                self.links[length - 1].next = None;
+
+                for i in 1..=length-2 {
+                    self.links[i].prev = Some(i - 1);
+                    self.links[i].next = Some(i + 1);
+                }
+                return Ok(());
+            }
+        }
+    }
+
+    #[allow(dead_code)]
     pub fn into_iter(&mut self){
         self.current[0] = self.head;
     }
@@ -142,12 +177,6 @@ impl<T> LinkedList<T>{
     pub fn into_double_iter(&mut self){
         self.current[0] = self.head;
         self.current[1] = self.head.map_or(None, |x| self.links[x].next);
-    }
-
-    pub fn into_triple_iter(&mut self){
-        self.current[0] = self.head;
-        self.current[1] = self.head.map_or(None, |x| self.links[x].next);
-        self.current[2] = self.current[1].map_or(None, |x| self.links[x].next);
     }
 
     #[allow(dead_code)]
