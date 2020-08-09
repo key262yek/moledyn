@@ -54,6 +54,22 @@ impl ContPassiveIndepSearcher{
             pos : pos,
         })
     }
+
+    pub fn renew_uniform(&mut self, sys : &dyn SystemCore<f64>, target : &dyn TargetCore<f64>,
+                   rng : &mut Pcg64) -> Result<(), Error>{
+        // 매번 searcher를 새로 정의하는 것 역시 상당한 memory 낭비이다.
+        // 있는 searcher를 재활용하도록 하자.
+
+        sys.position_out_of_system_to_vec(&mut self.pos)?;
+        loop{
+            sys.random_pos_to_vec(rng, &mut self.pos)?;   // System 내부의 random position을 받는다
+            if !target.check_find(&self.pos)?{            // 그 random position이 target과 이미 만났는가 확인
+                break;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl_argument_trait!(ContPassiveIndepSearcher, "Searcher", ContPassiveIndepSearcherArguments, 2,

@@ -17,7 +17,7 @@ criterion = "0.3"
 plotlib = "0.5.1"
 
 [[bench]]
-name = "rts_benchmark_2"
+name = "bench_iterator3"
 harness = false
 
 [profile.release]
