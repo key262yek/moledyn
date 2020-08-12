@@ -153,7 +153,7 @@ pub trait Analysis{
     fn export<W: Write>(&self, prec: usize, brief_data : &mut W, export_dir: &String, filename: &String) -> Result<(), Error>;
 
     // analysis
-    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &Vec<String>, width : usize) -> Result<(), Error>;
+    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &[String], width : usize) -> Result<(), Error>;
 }
 
 
@@ -222,7 +222,7 @@ impl Analysis for MFPTAnalysis{
         Ok(())
     }
 
-    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &Vec<String>, width : usize) -> Result<(), Error>{
+    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &[String], width : usize) -> Result<(), Error>{
         use chrono::offset::Utc;
 
         let min_time : f64;

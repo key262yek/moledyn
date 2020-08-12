@@ -74,7 +74,7 @@ macro_rules! setup_simulation{
         define_total_num_args!($($struct_type),*);
 
         if $args.len() - NUM_SKIP == <$analysis>::NUM_ARGS || $args.len() - NUM_SKIP == <$analysis>::NUM_ARGS + 1{
-                return <$analysis>::analyze::<$dataset>(&$args, WIDTH);
+                return <$analysis>::analyze::<$dataset>(&$args[NUM_SKIP..], WIDTH);
         }
         else if $args.len() - NUM_SKIP != TOTAL_NUM_ARGS{
             read_simulation_info!($args, $analysis $(, $struct_type)*);
