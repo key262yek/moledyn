@@ -28,7 +28,7 @@ pub mod cont_bulk;
 // =====================================================================================
 
 
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub enum TargetType{
     ContinuousInBulk,
     ContinuousAtBoundary,

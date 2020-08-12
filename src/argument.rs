@@ -13,6 +13,7 @@ use crate::prelude::*;
 
 // Argument Trait
 pub trait Argument<T>{
+    const NUM_ARGS : usize;
 
     // 해당 structure를 정의하기 위해서
     // 어떤 값들이 주어져야 하는지, 그 값들의 type이 무엇인지, 값들의 의미는 무엇인지
@@ -24,7 +25,7 @@ pub trait Argument<T>{
     fn brief_info() -> String;
 
     // args 벡터로부터 structure_arguments를 읽어서 반환해주는 함수
-    fn read_args_from_vec(args: Vec<String>) -> Result<T, Error>;
+    fn read_args_from_vec(args: &[String]) -> Result<T, Error>;
 
     // structure의 정보가 담긴 string을 반환해주는 함수
     // simulation result file을 만들 때 맨 위에 적히게 될 것이다.
@@ -38,11 +39,35 @@ pub trait Argument<T>{
     fn read_args_from_lines(reader : &mut Lines<BufReader<File>>) -> Result<T, Error>;
 }
 
+pub trait Convert<T>
+    where Self : Sized{
+
+    fn convert_from(argument : &T) -> Self;
+}
+
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! define_num_args{
     ($var:expr) => {
+        const NUM_ARGS : usize = $var;
+    }
+}
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! define_pub_num_args{
+    ($var:expr) => {
         pub const NUM_ARGS : usize = $var;
+    }
+}
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! define_num_args_of_structure{
+    ($name:ident, $var:expr) =>{
+        impl $name{
+            pub const NUM_ARGS : usize = $var;
+        }
     }
 }
 
@@ -80,8 +105,8 @@ macro_rules! impl_fn_brief_info {
 #[allow(unused_macros)]
 macro_rules! impl_fn_read_args_from_vec{
     ($name:ident $(, $type_name:ident, $type_default:expr)* ; $($var:ident), *) => {
-        fn read_args_from_vec(args: Vec<String>) -> Result<$name, Error>{
-            if args.len() != NUM_ARGS{
+        fn read_args_from_vec(args: &[String]) -> Result<$name, Error>{
+            if args.len() != Self::NUM_ARGS{
                 return Err(Error::make_error_syntax(ErrorCode::InvalidNumberOfArguments));
             }
             #[allow(unused_variables)]
@@ -138,16 +163,19 @@ macro_rules! impl_fn_read_args_from_lines{
     }
 }
 
+
+
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! impl_argument_trait{
     ($struct_name:ident, $struct_description:expr, $arg_name:ident, $num_args:expr
         $(,$type_name:ident, $type_type:ty, $type_default:expr)*;
         $($var:ident, $t:ty, $description:expr), *) => {
-        define_num_args!($num_args);
-        construct_structure!($arg_name $(, $type_name, $type_type, $type_default)*; $($var, $t), *);
+        construct_structure!($arg_name, $num_args $(, $type_name, $type_type, $type_default)*; $($var, $t), *);
 
         impl Argument<$arg_name> for $struct_name{
+            define_num_args!($num_args);
+
             impl_fn_info!(info, $($var, $description), *);
 
             impl_fn_brief_info!(brief_info, $struct_description $(, $var)*);
@@ -296,16 +324,20 @@ mod tests{
 
     #[test]
     fn test_impl_read_args_from_vec(){
-        define_num_args!(2);
         define_structure!(TestArguments ; var1, f64, var2, usize,);
-        impl_fn_read_args_from_vec!(TestArguments ;var1 ,var2);
+        impl TestArguments{
+            pub const NUM_ARGS : usize = 2;
+
+            impl_fn_read_args_from_vec!(TestArguments ;var1 ,var2);
+        }
+
 
         let test_arg = TestArguments{
             var1 : 3.0f64,
             var2 : 15usize,
         };
         let test_args = vec!["3.0".to_string(), "15".to_string()];
-        assert_eq!(read_args_from_vec(test_args), Ok(test_arg));
+        assert_eq!(TestArguments::read_args_from_vec(&test_args), Ok(test_arg));
     }
 
     #[test]
@@ -350,7 +382,7 @@ mod tests{
         let test_args = vec!["10.0".to_string(), "2".to_string()];
 
         assert_eq!(ContCircSystem::info(10), String::from("sys_size  : Size of System\ndim       : Dimension of System\n"));
-        assert_eq!(ContCircSystem::read_args_from_vec(test_args), Ok(test2.clone()));
+        assert_eq!(ContCircSystem::read_args_from_vec(&test_args), Ok(test2.clone()));
         assert_eq!(test1.print_configuration(10), String::from("sys_type  : Continuous Circular system.\nbctype    : Reflective Boundary Condtion\nsys_size  : 10\ndim       : 2\n"));
         assert_eq!(ContCircSystem::read_args_from_lines(&mut lines), Ok(test2));
     }

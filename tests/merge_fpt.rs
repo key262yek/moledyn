@@ -7,6 +7,7 @@ use rts::target_mod::{cont_bulk::ContBulkTarget};
 use rts::searcher_mod::{Passive, cont_passive_merge::ContPassiveMergeSearcher};
 
 #[test]
+#[ignore]
 fn test_mergeable_searcher() -> Result<(), Error>{
     // n ptl fpt가 iterator를 이용한 계산에서도 잘 나오는지 확인
     let data_set : [(usize, f64, f64, f64); 12] = [(1, 0.05, 1.0, 8.20877E+01),

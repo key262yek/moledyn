@@ -31,6 +31,18 @@ impl_argument_trait!(ContCircSystem, "System", ContCircSystemArguments, 2,
     sys_size, f64, "Size of System",
     dim, usize, "Dimension of System");
 
+impl Convert<ContCircSystemArguments> for ContCircSystem{
+    fn convert_from(argument : &ContCircSystemArguments) -> Self{
+        Self{
+            sys_type    : argument.sys_type,
+            bctype      : argument.bctype,
+            sys_size    : argument.sys_size,
+            dim         : argument.dim,
+        }
+    }
+}
+
+
 impl SystemCore<f64> for ContCircSystem{
     fn check_inclusion(&self, pos: &Position<f64>) -> Result<bool, Error>{
         // Return whether a position vector is in the system

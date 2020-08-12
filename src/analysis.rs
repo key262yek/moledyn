@@ -7,24 +7,45 @@
 
 use crate::prelude::*;
 
+pub trait DataSet{
+    // Read data set info fromfile
+    fn from_file<P>(path : P) -> Result<(Self, Lines<BufReader<File>>), Error>
+        where Self : Sized, P : AsRef<Path>;
+
+    // File name corresponding to dataset
+    fn export_file(&self, prefix : &str) -> String;
+
+    // Explaination of each column in data file
+    fn export_form(width: usize) -> String;
+
+    // Data value export
+    fn export_data(&self, prec : usize) -> Result<String, Error>;
+}
+
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! construct_dataset {
-    ( $( $struct_type:ty, $arg_name:ident, $arg_type:ty, [$($var:ident, $t:ty),*] );*) => {
-        define_structure!(DataSet; $($($var, $t,)*)*);
-        impl DataSet{
-            #[allow(dead_code)]
+    ( $name:ident, $( $struct_type:ty, $arg_name:ident, $arg_type:ty, [$($var:ident, $t:ty),*] );*) => {
+
+        define_structure!($name; $($($var, $t,)*)*);
+
+        impl $name{
+            // Since argument infos are different for different data form
+            // we should define a function 'new' out of trait
+            #[allow(dead_code, unused_variables)]
             pub fn new($($arg_name : &$arg_type), *) -> Self{
-                DataSet{
+                $name{
                     $(
                         $($var : $arg_name.$var,
                             )*
                     )*
                 }
             }
+        }
 
+        impl DataSet for $name{
             #[allow(dead_code)]
-            pub fn from_file<P>(path : P) -> Result<(Self, Lines<BufReader<File>>), Error>
+            fn from_file<P>(path : P) -> Result<(Self, Lines<BufReader<File>>), Error>
                 where P : AsRef<Path>{
                 let f = File::open(path).map_err(Error::make_error_io)?;
                 let f = BufReader::new(f);
@@ -35,11 +56,11 @@ macro_rules! construct_dataset {
                     let $arg_name = <$struct_type>::read_args_from_lines(&mut lines)?;
                     )*
 
-                Ok((DataSet::new($(&$arg_name),*), lines))
+                Ok(($name::new($(&$arg_name),*), lines))
             }
 
             #[allow(dead_code)]
-            pub fn export_file(&self, prefix : &str) -> String{
+            fn export_file(&self, prefix : &str) -> String{
                 let mut string = String::from(prefix);
                 $(
                     $(
@@ -50,12 +71,17 @@ macro_rules! construct_dataset {
                 return string;
             }
 
-            pub_export_form!(dataset_export_form $($(, $var)*)*);
-            // pub_export_data!(dataset_export_data $($(, $int)*)* $($(,$var)*)*; $($($float),*),*);
+            export_form!(export_form $($(, $var)*)*);
+            export_data!(export_data $($(, $var)*)*);
         }
 
-        impl Eq for DataSet{
+        impl Eq for $name{
         }
+
+        impl Copy for $name{
+        }
+
+        derive_hash!($name $($(, $var)*)*);
     }
 }
 
@@ -108,7 +134,27 @@ pub trait MFPT
     export_form!(mfpt_export_form, mfpt, stddev, ensemble);
 }
 
+pub trait Analysis{
+    const NUM_ARGS : usize;
 
+    // Clear data
+    fn clear(&mut self);
+
+    // Export analysis info - needed inputs
+    fn info(width : usize) -> String;
+
+    // Brief info for analysis
+    fn brief_info() -> String;
+
+    // export form for summary file (explaination of each column in summary file)
+    fn export_form(width : usize) -> String;
+
+    // export data to summary file
+    fn export<W: Write>(&self, prec: usize, brief_data : &mut W, export_dir: &String, filename: &String) -> Result<(), Error>;
+
+    // analysis
+    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &Vec<String>, width : usize) -> Result<(), Error>;
+}
 
 
 // =====================================================================================
@@ -130,31 +176,34 @@ pub struct MFPTAnalysis{
     lhist : Vec<f64>,       // Logarithmic Histogram
 }
 
-impl MFPTAnalysis{
+impl Analysis for MFPTAnalysis{
+    const NUM_ARGS : usize = 4;
+
     #[allow(dead_code)]
-    pub fn clear(&mut self){
+    fn clear(&mut self){
         self.clear_mfpt_data();
     }
 
-    pub fn info(width : usize) -> String{
+    fn info(width : usize) -> String{
         let mut string = String::new();
         string.push_str(format!("{}", MFPTAnalysis::mpft_info(width)).as_str());
+        string.push_str("You can give only number of bin instead of bin sizes\n");
         return string;
     }
 
-    pub fn brief_info() -> String{
+    fn brief_info() -> String{
         let mut string = String::new();
         string.push_str(format!("{}\n", MFPTAnalysis::mfpt_breif_info()).as_str());
         return string;
     }
 
-    pub fn export_form(width: usize) -> String{
+    fn export_form(width: usize) -> String{
         let mut string = String::new();
         string.push_str(format!("{}", MFPTAnalysis::mfpt_export_form(width)).as_str());
         return string;
     }
 
-    pub fn export<W: Write>(&self, prec: usize, brief_data : &mut W, export_dir: &String, filename: &String) -> Result<(), Error>{
+    fn export<W: Write>(&self, prec: usize, brief_data : &mut W, export_dir: &String, filename: &String) -> Result<(), Error>{
         // Export mfpt datas
         brief_data.write(format!("{}\n", self.export_mean_stddev(prec)?).as_bytes()).map_err(Error::make_error_io)?;
 
@@ -172,6 +221,106 @@ impl MFPTAnalysis{
 
         Ok(())
     }
+
+    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &Vec<String>, width : usize) -> Result<(), Error>{
+        use chrono::offset::Utc;
+
+        let min_time : f64;
+        let max_time : f64;
+        let num_bin : usize;
+        let bin_size : f64;
+        let lbin_size : f64;
+        let data_dir : String;
+
+        match args.len(){
+            4 => {
+                let mut idx : usize = 0;
+                min_time = args[idx].parse().unwrap();      idx+=1;
+                max_time = args[idx].parse().unwrap();      idx+=1;
+                num_bin  = args[idx].parse().unwrap();      idx+=1;
+                data_dir = args[idx].clone();
+
+                let bin_info =  Self::convert_num_bin_to_bin_size(min_time, max_time, num_bin)?;
+                bin_size = bin_info.0;
+                lbin_size = bin_info.1;
+            },
+            5 => {
+                let mut idx : usize = 0;
+                min_time = args[idx].parse().unwrap();      idx+=1;
+                max_time = args[idx].parse().unwrap();      idx+=1;
+                bin_size = args[idx].parse().unwrap();      idx+=1;
+                lbin_size= args[idx].parse().unwrap();      idx+=1;
+                data_dir = args[idx].clone();
+            },
+            _ => {
+                return Err(Error::make_error_syntax(ErrorCode::InvalidNumberOfArguments))
+            }
+        }
+
+        let mut hashmap : HashMap<H, Self> = HashMap::new();
+        let summary_dir : String = format!("{}", format_args!("{}/analysis_{}",
+                                    data_dir, Utc::today().format("%Y%m%d").to_string()));
+        let summary_file : String = format!("{}/analysis_fpt.dat", summary_dir);
+
+        fs::create_dir_all(&summary_dir).map_err(Error::make_error_io)?;
+        fs::create_dir_all(format!("{}/linear_distribution", &summary_dir)).map_err(Error::make_error_io)?;
+        fs::create_dir_all(format!("{}/logarithmic_distribution", &summary_dir)).map_err(Error::make_error_io)?;
+
+        let summary = File::create(summary_file).map_err(Error::make_error_io)?;
+        let mut summary = BufWriter::new(summary);
+
+        summary.write_fmt(format_args!("{}{}\n", H::export_form(width), Self::export_form(width)))
+               .map_err(Error::make_error_io)?;
+
+        for entry in fs::read_dir(&data_dir).map_err(Error::make_error_io)?{
+            let entry = entry.map_err(Error::make_error_io)?;
+            let path = entry.path();
+            if path.is_dir(){
+                continue;
+            }
+
+            let (dataset, mut lines) : (H, Lines<BufReader<File>>) = match H::from_file(path){
+                Ok(ds) => ds,
+                Err(_err) => {continue;},
+            };
+
+            let analysis = match hashmap.get_mut(&dataset){
+                Some(x) => x,
+                None => {
+                    let x = Self::from_bin_size(min_time, max_time, bin_size, lbin_size)?;
+                    hashmap.insert(dataset, x);
+                    hashmap.get_mut(&dataset).unwrap()
+                },
+            };
+            lines.next();
+
+            for line in lines{
+                let line = line.map_err(Error::make_error_io)?;
+                let fpt : f64 = line.trim().parse().unwrap();
+                analysis.add_ensemble(fpt);
+            }
+        }
+
+        for (dataset, analysis) in hashmap.iter_mut(){
+            analysis.draw();
+
+            summary.write_fmt(format_args!("{}{}\n", dataset.export_data(width)?, analysis.export_mean_stddev(width)?))
+                    .map_err(Error::make_error_io)?;
+
+            let hist_filename = dataset.export_file("RTS_N_PTL_INDEP_SEARCHER");
+
+            let linear = File::create(format!("{}", format_args!("{}/linear_distribution/{}",
+                                        summary_dir, hist_filename))).map_err(Error::make_error_io)?;
+            let mut linear = BufWriter::new(linear);
+            analysis.export_distribution(width, linear.get_mut())?;
+            let log = File::create(format!("{}", format_args!("{}/logarithmic_distribution/{}",
+                                        summary_dir, hist_filename))).map_err(Error::make_error_io)?;
+            let mut log = BufWriter::new(log);
+            analysis.export_distribution(width, log.get_mut())?;
+        }
+        return Ok(());
+    }
+
 }
 
 impl MFPT for MFPTAnalysis{
@@ -192,7 +341,7 @@ impl MFPT for MFPTAnalysis{
         let num_bin : usize = ((max_time - time) / bin_size + 0.5f64).ceil() as usize;
         let num_lbin : usize = ((max_time / time).log2() / lbin_size.log2() + 0.5f64).ceil() as usize;
 
-        Ok(MFPTAnalysis{
+        Ok(Self{
             sum_fpt : 0f64,
             square_fpt : 0f64,
             ensemble : 0usize,
@@ -221,9 +370,9 @@ impl MFPT for MFPTAnalysis{
             time = min_time;
         }
 
-        let (bin_size, lbin_size) : (f64, f64) = MFPTAnalysis::convert_num_bin_to_bin_size(time, max_time, num_bin)?;
+        let (bin_size, lbin_size) : (f64, f64) = Self::convert_num_bin_to_bin_size(time, max_time, num_bin)?;
 
-        Ok(MFPTAnalysis{
+        Ok(Self{
             sum_fpt : 0f64,
             square_fpt : 0f64,
             ensemble : 0usize,
@@ -319,8 +468,9 @@ impl MFPT for MFPTAnalysis{
         }
     }
 
+    #[allow(dead_code)]
     fn export_mean_stddev(&self, prec : usize) -> Result<String, Error>{
-        Ok(format!("{}", format_args!("{1:0$e}\t{2:0$e}\t{3:0$}", prec, self.mfpt(), self.stddev(), self.ensemble)))
+        Ok(format!("{}", format_args!("{1:<0$e}\t{2:<0$e}\t{3:<0$}", prec, self.mfpt(), self.stddev(), self.ensemble)))
     }
 
     #[allow(dead_code)]
@@ -410,7 +560,7 @@ mod tests{
     #[test]
     fn test_construct_dataset2(){
         // Dataset
-        construct_dataset!(ContCircSystem, _sys_arg, ContCircSystemArguments,
+        construct_dataset!(TestData, ContCircSystem, _sys_arg, ContCircSystemArguments,
                         [];
                         ContBulkTarget, target_arg, ContBulkTargetArguments,
                         [target_size, f64]);
@@ -419,16 +569,16 @@ mod tests{
     #[test]
     fn test_new(){
 
-        construct_dataset!( ContCircSystem, sys_arg, ContCircSystemArguments,
+        construct_dataset!(TestData, ContCircSystem, sys_arg, ContCircSystemArguments,
                             [sys_size, f64, dim, usize];
                             ContBulkTarget, target_arg, ContBulkTargetArguments,
                             [target_size, f64]);
 
         let sys_arg = ContCircSystemArguments::new(10f64, 2usize);
         let target_arg = ContBulkTargetArguments::new(Position::<f64>::new(vec![0f64,0f64]), 1f64);
-        let test = DataSet::new(&sys_arg, &target_arg);
+        let test = TestData::new(&sys_arg, &target_arg);
 
-        let res = DataSet{
+        let res = TestData{
             sys_size : 10f64,
             dim : 2usize,
             target_size : 1f64,
@@ -458,7 +608,7 @@ mod tests{
 
     #[test]
     fn test_export_file(){
-        construct_dataset!(  ContCircSystem, sys_arg, ContCircSystemArguments,
+        construct_dataset!(TestData, ContCircSystem, sys_arg, ContCircSystemArguments,
                             [sys_size, f64, dim, usize];
                             ContBulkTarget, target_arg, ContBulkTargetArguments,
                             [target_size, f64]);
@@ -466,7 +616,7 @@ mod tests{
         let sys_arg = ContCircSystemArguments::new(10f64, 2);
         let target_arg = ContBulkTargetArguments::new(Position::<f64>::new(vec![0f64;2]), 1f64);
 
-        let dataset = DataSet::new(&sys_arg, &target_arg);
+        let dataset = TestData::new(&sys_arg, &target_arg);
         let filename = dataset.export_file("Test_file");
 
         assert_eq!(filename, "Test_file_sys_size_10_dim_2_target_size_1.dat");
@@ -474,13 +624,12 @@ mod tests{
 
     #[test]
     fn test_hashmap(){
-        construct_dataset!(  ContCircSystem, sys_arg, ContCircSystemArguments,
+        construct_dataset!(TestData, ContCircSystem, sys_arg, ContCircSystemArguments,
                             [sys_size, f64, dim, usize];
                             ContBulkTarget, target_arg, ContBulkTargetArguments,
                             [target_size, f64]);
-        derive_hash!(DataSet, sys_size, dim, target_size);
 
-        let mut hashmap : HashMap<DataSet, usize> = HashMap::new();
+        let mut hashmap : HashMap<TestData, usize> = HashMap::new();
 
         let sys1 = ContCircSystemArguments::new(10f64, 2);
         let sys2 = ContCircSystemArguments::new(10f64, 3);
@@ -490,13 +639,13 @@ mod tests{
         let target1 = ContBulkTargetArguments::new(pos.clone(), 1f64);
         let target2 = ContBulkTargetArguments::new(pos, 2f64);
 
-        let key1 = DataSet::new(&sys1, &target1);
-        let key1_rep = DataSet::new(&sys1, &target1);
-        let key2 = DataSet::new(&sys1, &target2);
-        let key3 = DataSet::new(&sys2, &target1);
-        let key4 = DataSet::new(&sys2, &target2);
-        let key5 = DataSet::new(&sys3, &target1);
-        let key6 = DataSet::new(&sys3, &target2);
+        let key1 = TestData::new(&sys1, &target1);
+        let key1_rep = TestData::new(&sys1, &target1);
+        let key2 = TestData::new(&sys1, &target2);
+        let key3 = TestData::new(&sys2, &target1);
+        let key4 = TestData::new(&sys2, &target2);
+        let key5 = TestData::new(&sys3, &target1);
+        let key6 = TestData::new(&sys3, &target2);
 
         assert_eq!(hashmap.len(), 0);
         hashmap.insert(key1, 1);

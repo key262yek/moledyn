@@ -77,6 +77,31 @@ impl_argument_trait!(ContPassiveIndepSearcher, "Searcher", ContPassiveIndepSearc
     mtype, MoveType, "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype, InitType<f64>, "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform");
 
+impl Convert<ContPassiveIndepSearcherArguments> for ContPassiveIndepSearcher{
+    fn convert_from(argument : &ContPassiveIndepSearcherArguments) -> Self{
+        let dim : usize;
+        let pos : Position<f64>;
+
+        match &argument.itype{
+            InitType::<f64>::Uniform => {
+                dim = 0;
+                pos = Position::new(vec![]);
+            },
+            InitType::<f64>::SpecificPosition(p) =>{
+                dim = p.dim();
+                pos = p.clone();
+            }
+        }
+        Self{
+            searcher_type   : argument.searcher_type,
+            mtype           : argument.mtype,
+            itype           : argument.itype.clone(),
+            dim             : dim,
+            pos             : pos,
+        }
+    }
+}
+
 impl SearcherCore<f64> for ContPassiveIndepSearcher{
     fn pos(&self) -> &Position<f64>{
         &self.pos

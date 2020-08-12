@@ -7,9 +7,9 @@
 use std::fs;
 use std::io::{BufWriter, Write};
 use rts::prelude::*;
-use rts::system_mod::cont_circ::{self, ContCircSystem, ContCircSystemArguments};
-use rts::target_mod::cont_bulk::{self, ContBulkTarget, ContBulkTargetArguments};
-use rts::searcher_mod::{Passive, cont_passive_indep::{self, ContPassiveIndepSearcher, ContPassiveIndepSearcherArguments}};
+use rts::system_mod::cont_circ::{ContCircSystem, ContCircSystemArguments};
+use rts::target_mod::cont_bulk::{ContBulkTarget, ContBulkTargetArguments};
+use rts::searcher_mod::{Passive, cont_passive_indep::{ContPassiveIndepSearcher, ContPassiveIndepSearcherArguments}};
 
 pub struct Simulation{
     num_searcher : usize,
@@ -45,8 +45,8 @@ impl SimulationArguments{
 fn test_arguments() -> Result<(), Error>{
     let args: [&str; 12] = ["10", "2", "0:0", "1", "1", "Uniform", "100", "1e-3", "10", "1", "12314", "tests/images/"];
     let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
-    const TOTAL_NUM_ARGS : usize = NUM_ARGS + cont_circ::NUM_ARGS + cont_bulk::NUM_ARGS
-                                    + cont_passive_indep::NUM_ARGS;
+    const TOTAL_NUM_ARGS : usize = Simulation::NUM_ARGS + ContCircSystem::NUM_ARGS + ContBulkTarget::NUM_ARGS
+                                    + ContPassiveIndepSearcher::NUM_ARGS;
     const WIDTH : usize = 15;
     const NUM_SKIP : usize = 0;
 
@@ -73,35 +73,35 @@ fn test_arguments() -> Result<(), Error>{
     let idx = NUM_SKIP;
 
     // System arguments
-    let sys_args        : Vec<String>               = args[idx..idx+cont_circ::NUM_ARGS].to_vec();
-    let sys_args        : ContCircSystemArguments   = ContCircSystem::read_args_from_vec(sys_args)?;
+    let sys_args        : Vec<String>               = args[idx..idx+ContCircSystem::NUM_ARGS].to_vec();
+    let sys_args        : ContCircSystemArguments   = ContCircSystem::read_args_from_vec(&sys_args)?;
     let _sys_type       : SystemType                = sys_args.sys_type;
     let sys_size        : f64                       = sys_args.sys_size;
     let dim             : usize                     = sys_args.dim;
 
-    let idx = idx + cont_circ::NUM_ARGS;
+    let idx = idx + ContCircSystem::NUM_ARGS;
 
     // Target arguments
-    let target_args : Vec<String>               = args[idx..idx+cont_bulk::NUM_ARGS].to_vec();
-    let target_args : ContBulkTargetArguments   = ContBulkTarget::read_args_from_vec(target_args)?;
+    let target_args : Vec<String>               = args[idx..idx+ContBulkTarget::NUM_ARGS].to_vec();
+    let target_args : ContBulkTargetArguments   = ContBulkTarget::read_args_from_vec(&target_args)?;
     let _target_type: TargetType                = target_args.target_type;
     let target_pos  : Position<f64>             = target_args.target_pos.clone();
     let target_size : f64                       = target_args.target_size;
 
-    let idx = idx + cont_bulk::NUM_ARGS;
+    let idx = idx + ContBulkTarget::NUM_ARGS;
 
     // Searcher arguments
-    let searcher_args   : Vec<String>                       = args[idx..idx+cont_passive_indep::NUM_ARGS].to_vec();
-    let searcher_args   : ContPassiveIndepSearcherArguments = ContPassiveIndepSearcher::read_args_from_vec(searcher_args)?;
+    let searcher_args   : Vec<String>                       = args[idx..idx+ContPassiveIndepSearcher::NUM_ARGS].to_vec();
+    let searcher_args   : ContPassiveIndepSearcherArguments = ContPassiveIndepSearcher::read_args_from_vec(&searcher_args)?;
     let _searcher_type  : SearcherType                      = searcher_args.searcher_type;
     let mtype           : MoveType                          = searcher_args.mtype.clone();
     let itype           : InitType<f64>                     = searcher_args.itype.clone();
 
-    let idx = idx + cont_passive_indep::NUM_ARGS;
+    let idx = idx + ContPassiveIndepSearcher::NUM_ARGS;
 
     // Simulation arguments
     let simulation_args : Vec<String>           = args[idx..].to_vec();
-    let simulation_args : SimulationArguments   = Simulation::read_args_from_vec(simulation_args)?;
+    let simulation_args : SimulationArguments   = Simulation::read_args_from_vec(&simulation_args)?;
     let num_searcher    : usize                 = simulation_args.num_searcher;
     let dt              : f64                   = simulation_args.dt;
     let num_ensemble    : usize                 = simulation_args.num_ensemble;

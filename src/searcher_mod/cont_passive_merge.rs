@@ -99,13 +99,41 @@ impl ContPassiveMergeSearcher{
     }
 }
 
-impl_argument_trait!(ContPassiveMergeSearcher, "Searcher", ContPassiveMergeSearcherArguments, 2,
+impl_argument_trait!(ContPassiveMergeSearcher, "Searcher", ContPassiveMergeSearcherArguments, 4,
     searcher_type, SearcherType, SearcherType::ContinuousPassiveInteracting,
     size,   usize,          1;
     mtype,  MoveType,       "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype,  InitType<f64>,  "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform",
     radius, f64,            "Radius of particle. When they collide, they merge. ex) 0.1",
     alpha,  f64,            "Exponent of diffusion decrease. D ~ n^alpha ex) 1.0");
+
+impl Convert<ContPassiveMergeSearcherArguments> for ContPassiveMergeSearcher{
+    fn convert_from(argument : &ContPassiveMergeSearcherArguments) -> Self{
+        let dim : usize;
+        let pos : Position<f64>;
+
+        match &argument.itype{
+            InitType::<f64>::Uniform => {
+                dim = 0;
+                pos = Position::new(vec![]);
+            },
+            InitType::<f64>::SpecificPosition(p) =>{
+                dim = p.dim();
+                pos = p.clone();
+            }
+        }
+        Self{
+            searcher_type   : argument.searcher_type,
+            mtype           : argument.mtype,
+            itype           : argument.itype.clone(),
+            dim             : dim,
+            pos             : pos,
+            radius          : argument.radius,
+            size            : 1,
+            alpha           : argument.alpha,
+        }
+    }
+}
 
 impl SearcherCore<f64> for ContPassiveMergeSearcher{
     fn pos(&self) -> &Position<f64>{
