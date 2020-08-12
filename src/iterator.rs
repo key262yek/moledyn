@@ -120,6 +120,11 @@ impl<T> LinkedList<T>{
         self.links[idx].alive = false;
         let node = self.links[idx];
 
+        for c in &mut self.current{
+            if *c == Some(idx){
+                *c = node.next;
+            }
+        }
 
         match node.prev{
             Some(prev) => {self.links[prev].next = node.next;},
@@ -148,6 +153,7 @@ impl<T> LinkedList<T>{
                 self.tail = Some(0);
                 self.links[0].prev = None;
                 self.links[0].next = None;
+                self.links[0].alive = true;
                 return Ok(());
             }
             length =>{
@@ -156,13 +162,16 @@ impl<T> LinkedList<T>{
 
                 self.links[0].prev = None;
                 self.links[0].next = Some(1);
+                self.links[0].alive = true;
 
-                self.links[length - 1].prev = Some(0);
+                self.links[length - 1].prev = Some(length - 2);
                 self.links[length - 1].next = None;
+                self.links[length - 1].alive = true;
 
                 for i in 1..=length-2 {
                     self.links[i].prev = Some(i - 1);
                     self.links[i].next = Some(i + 1);
+                    self.links[i].alive = true;
                 }
                 return Ok(());
             }
@@ -268,7 +277,6 @@ impl<T> LinkedList<T>{
             },
         }
         let idx1 = self.current[0]?;
-
         return Some((idx1, &self.contents[idx1], idx2, &self.contents[idx2]));
     }
 
@@ -588,6 +596,23 @@ TestType { x: 2.0, n: 2, vec: [1.0, 3.0, 5.0], enu: Var2 }\n");
             res.push_str(format!("{} ", d).as_str());
         }
         assert_eq!(res, "3 4 5 ");
+        Ok(())
+    }
+
+    #[test]
+    fn test_enumerate_mut() -> Result<(),Error>{
+        let mut linkedlist = LinkedList::<usize>::from(vec![0;5]);
+
+        linkedlist.into_double_iter();
+        let mut result = String::new();
+        while let Some((idx1, idx2)) = linkedlist.indicies_double(){
+            result.push_str(format!("{}", format_args!("{} {}\n", idx1, idx2)).as_str());
+            if idx2 % 3 == 0{
+                linkedlist.del(idx2)?;
+            }
+        }
+
+        assert_eq!(result, "0 1\n0 2\n0 3\n0 4\n1 2\n1 4\n2 4\n");
         Ok(())
     }
 }
