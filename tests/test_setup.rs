@@ -2,55 +2,29 @@ use rts::prelude::*;
 use rts::system_mod::cont_circ::{ContCircSystem, ContCircSystemArguments};
 use rts::target_mod::cont_bulk::{ContBulkTarget, ContBulkTargetArguments};
 use rts::searcher_mod::{Passive, cont_passive_indep::{ContPassiveIndepSearcher, ContPassiveIndepSearcherArguments}};
-
-pub struct Simulation{
-    num_searcher : usize,
-    dt : f64,
-    num_ensemble : usize,
-    idx_set : usize,
-    seed : u128,
-    output_dir : String,
-}
-
-impl_argument_trait!(Simulation, "Simulation", SimulationArguments, 6;
-    num_searcher, usize, "Number of Searcher",
-    dt, f64, "Dimensionless Time Step Size",
-    num_ensemble, usize, "Number of Ensemble",
-    idx_set, usize, "Index of Ensemble Set",
-    seed, u128, "Initial Seed for Random Number Generator",
-    output_dir, String, "Directory containing output file");
-
-impl Convert<SimulationArguments> for Simulation{
-    fn convert_from(argument : &SimulationArguments) -> Self{
-        Self{
-            num_searcher    : argument.num_searcher,
-            dt              : argument.dt,
-            num_ensemble    : argument.num_ensemble,
-            idx_set         : argument.idx_set,
-            seed            : argument.seed,
-            output_dir      : argument.output_dir.clone(),
-        }
-    }
-}
-
+use rts::time_mod::{ConstStep, ConstStepArguments};
 
 // Dataset
 construct_dataset!(SimulationData, ContCircSystem, sys_arg, ContCircSystemArguments,
                 [sys_size, f64, dim, usize ];
                 ContBulkTarget, target_arg, ContBulkTargetArguments,
                 [target_size, f64];
-                ContPassiveIndepSearcher, searcher_arg, ContPassiveIndepSearcherArguments, [];
+                ContPassiveIndepSearcher, searcher_arg, ContPassiveIndepSearcherArguments,
+                [num_searcher, usize];
+                ConstStep, time_arg, ConstStepArguments,
+                [dt, f64];
                 Simulation, sim_arg, SimulationArguments,
-                [num_searcher, usize]);
+                [idx_set, usize]);
 
 #[test]
 fn test_setup() -> Result<(), Error>{
     // let args: Vec<String> = vec!["10", "2", "0,0", "1", "1.0", "Uniform", "100", "1e-3", "100", "1", "12314", "tests/images/test_setup"].iter().map(|x| x.to_string()).collect();
     let args : Vec<String> = vec!["1e-10", "1", "100", "tests/images/test_setup"].iter().map(|x| x.to_string()).collect();
 
-    setup_simulation_fixed!(args, 15, 0, MFPTAnalysis, SimulationData,
+    setup_simulation_fixed!(args, 15, 0, MFPTAnalysis, dataset, SimulationData,
         sys_arg, ContCircSystem, target_arg, ContBulkTarget,
-        searcher_arg, ContPassiveIndepSearcher, sim_arg, Simulation);
+        searcher_arg, ContPassiveIndepSearcher,
+        time_arg, ConstStep, sim_arg, Simulation);
 
     let sys_size    = sys_arg.sys_size;
     let dim         = sys_arg.dim;
@@ -60,9 +34,10 @@ fn test_setup() -> Result<(), Error>{
 
     let mtype       = searcher_arg.mtype;
     let _itype       = searcher_arg.itype.clone();
+    let num_searcher= searcher_arg.num_searcher;
 
-    let num_searcher= sim_arg.num_searcher;
-    let dt          = sim_arg.dt;
+    let dt          = time_arg.dt;
+
     let num_ensemble= sim_arg.num_ensemble;
     let idx_set     = sim_arg.idx_set;
     let seed        = sim_arg.seed;
@@ -76,14 +51,9 @@ fn test_setup() -> Result<(), Error>{
                               570_914_867f64 * idx_set as f64).floor() as u128;
     let mut rng : Pcg64 = rng_seed(seed);
 
-    // Create output directory, file
-    fs::create_dir_all(&output_dir).map_err(Error::make_error_io)?;
-    let filename : String = format!("{}", format_args!("RTS_N_PTL_INDEP_SEARCHER_SYS_SIZE_{}_DIM_{}_TARGET_SIZE_{}_NUMBER_OF_SEARCHER_{}_SET_{}.dat", sys_size, dim, target_size, num_searcher, idx_set));
-    let output = fs::File::create(format!("{}/{}", output_dir, filename)).map_err(Error::make_error_io)?;
-    let mut writer = BufWriter::new(&output);
-
     // System initiation
-    export_simulation_info!(writer, WIDTH, ContCircSystem, sys, sys_arg,
+    export_simulation_info!(dataset, output_dir, writer, WIDTH, "RTS_N_PTL_INDEP_SEARCHER_SYS_SIZE",
+                            ContCircSystem, sys, sys_arg,
                             ContBulkTarget, target, target_arg,
                             ContPassiveIndepSearcher, searcher, searcher_arg,
                             Simulation, simulation, sim_arg);

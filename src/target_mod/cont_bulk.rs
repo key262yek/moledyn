@@ -30,8 +30,9 @@ impl_argument_trait!(ContBulkTarget, "Target", ContBulkTargetArguments, 2,
     target_pos, Position::<f64>, "Position of Target",
     target_size, f64, "Size of Target");
 
-impl Convert<ContBulkTargetArguments> for ContBulkTarget{
-    fn convert_from(argument : &ContBulkTargetArguments) -> Self{
+impl ContBulkTarget{
+    #[allow(dead_code)]
+    pub fn convert_from(argument : &ContBulkTargetArguments) -> Self{
         Self{
             target_type : argument.target_type,
             target_pos  : argument.target_pos.clone(),

@@ -1,4 +1,5 @@
 
+use crate::prelude::*;
 
 #[macro_export]
 // #[allow(unused_macros)]
@@ -45,16 +46,22 @@ macro_rules! read_arguments {
 #[macro_export]
 // #[allow(unused_macros)]
 macro_rules! export_simulation_info {
-    ($writer:ident, $width:ident $(, $struct_type:ty, $struct_name:ident, $argument_name:ident)*) => {
+    ($dataset:ident, $dir:ident, $writer:ident, $width:ident, $prefix:expr  $(, $struct_type:ty, $struct_name:ident, $argument_name:ident)*) => {
 
         $(
             let $struct_name = <$struct_type>::convert_from(&$argument_name);
             )*
 
+
+        fs::create_dir_all(&$dir).map_err(Error::make_error_io)?;
+        let filename : String = $dataset.export_file($prefix);
+        let output = fs::File::create(format!("{}/{}", $dir, filename)).map_err(Error::make_error_io)?;
+        let mut $writer = BufWriter::new(&output);
+
         write!(&mut $writer, "========================    DESCRIPTIONS    ==========================\n")
                     .map_err(Error::make_error_io)?;
         $(
-            write!(&mut $writer, "{}", $struct_name.print_configuration($width)).map_err(Error::make_error_io)?;
+            write!(&mut $writer, "{}", $argument_name.print_configuration($width)).map_err(Error::make_error_io)?;
             )*
         write!(&mut $writer, "{}", "========================     DATA STARTS    ==========================\n")
                     .map_err(Error::make_error_io)?;
@@ -62,10 +69,11 @@ macro_rules! export_simulation_info {
     };
 }
 
+
 #[macro_export]
 // #[allow(unused_macros)]
 macro_rules! setup_simulation{
-    ($args:ident, $width:expr, $skip:expr, $analysis:ty, $dataset:ty $(, $arg_name:ident, $struct_type:ty)*) =>{
+    ($args:ident, $width:expr, $skip:expr, $analysis:ty, $ds_name:ident, $dataset:ty $(, $arg_name:ident, $struct_type:ty)*) =>{
 
         let $args : Vec<String> = std::env::args().collect();
         const WIDTH : usize = $width;
@@ -81,13 +89,15 @@ macro_rules! setup_simulation{
         }
 
         read_arguments!($args $(, $arg_name, $struct_type)*);
+
+        let $ds_name = <$dataset>::new($(&$arg_name),*);
     }
 }
 
 #[macro_export]
 // #[allow(unused_macros)]
 macro_rules! setup_simulation_fixed{
-    ($args:ident, $width:expr, $skip:expr, $analysis:ty, $dataset:ty $(, $arg_name:ident, $struct_type:ty)*) =>{
+    ($args:ident, $width:expr, $skip:expr, $analysis:ty, $ds_name:ident, $dataset:ty $(, $arg_name:ident, $struct_type:ty)*) =>{
 
         const WIDTH : usize = $width;
         const NUM_SKIP : usize = $skip;
@@ -102,7 +112,32 @@ macro_rules! setup_simulation_fixed{
         }
 
         read_arguments!($args $(, $arg_name, $struct_type)*);
+        let $ds_name = <$dataset>::new($(&$arg_name),*);
     }
 }
 
+pub struct Simulation{
+    pub num_ensemble : usize,
+    pub idx_set : usize,
+    pub seed : u128,
+    pub output_dir : String,
+}
+
+impl_argument_trait!(Simulation, "Simulation", SimulationArguments, 4;
+    num_ensemble, usize, "Number of Ensemble",
+    idx_set, usize, "Index of Ensemble Set",
+    seed, u128, "Initial Seed for Random Number Generator",
+    output_dir, String, "Directory containing output file");
+
+impl Simulation{
+    #[allow(dead_code)]
+    pub fn convert_from(argument : &SimulationArguments) -> Self{
+        Self{
+            num_ensemble    : argument.num_ensemble,
+            idx_set         : argument.idx_set,
+            seed            : argument.seed,
+            output_dir      : argument.output_dir.clone(),
+        }
+    }
+}
 

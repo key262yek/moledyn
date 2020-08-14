@@ -31,8 +31,9 @@ impl_argument_trait!(ContCircSystem, "System", ContCircSystemArguments, 2,
     sys_size, f64, "Size of System",
     dim, usize, "Dimension of System");
 
-impl Convert<ContCircSystemArguments> for ContCircSystem{
-    fn convert_from(argument : &ContCircSystemArguments) -> Self{
+impl ContCircSystem{
+    #[allow(dead_code)]
+    pub fn convert_from(argument : &ContCircSystemArguments) -> Self{
         Self{
             sys_type    : argument.sys_type,
             bctype      : argument.bctype,

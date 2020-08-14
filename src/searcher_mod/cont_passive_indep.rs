@@ -72,13 +72,15 @@ impl ContPassiveIndepSearcher{
     }
 }
 
-impl_argument_trait!(ContPassiveIndepSearcher, "Searcher", ContPassiveIndepSearcherArguments, 2,
+impl_argument_trait!(ContPassiveIndepSearcher, "Searcher", ContPassiveIndepSearcherArguments, 3,
     searcher_type, SearcherType, SearcherType::ContinuousPassiveIndependent;
     mtype, MoveType, "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
-    itype, InitType<f64>, "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform");
+    itype, InitType<f64>, "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform",
+    num_searcher, usize, "Number of Searchers");
 
-impl Convert<ContPassiveIndepSearcherArguments> for ContPassiveIndepSearcher{
-    fn convert_from(argument : &ContPassiveIndepSearcherArguments) -> Self{
+impl ContPassiveIndepSearcher{
+    #[allow(dead_code)]
+    pub fn convert_from(argument : &ContPassiveIndepSearcherArguments) -> Vec<Self>{
         let dim : usize;
         let pos : Position<f64>;
 
@@ -92,13 +94,14 @@ impl Convert<ContPassiveIndepSearcherArguments> for ContPassiveIndepSearcher{
                 pos = p.clone();
             }
         }
-        Self{
+        vec![Self{
             searcher_type   : argument.searcher_type,
             mtype           : argument.mtype,
             itype           : argument.itype.clone(),
             dim             : dim,
             pos             : pos,
-        }
+        }; argument.num_searcher]
+
     }
 }
 
