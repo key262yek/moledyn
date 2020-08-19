@@ -18,8 +18,7 @@ construct_dataset!(SimulationData, ContCircSystem, sys_arg, ContCircSystemArgume
 
 #[test]
 fn test_setup() -> Result<(), Error>{
-    // let args: Vec<String> = vec!["10", "2", "0,0", "1", "1.0", "Uniform", "100", "1e-3", "100", "1", "12314", "tests/images/test_setup"].iter().map(|x| x.to_string()).collect();
-    let args : Vec<String> = vec!["1e-10", "1", "100", "tests/images/test_setup"].iter().map(|x| x.to_string()).collect();
+    let args: Vec<String> = vec!["10", "2", "0:0", "1", "1.0", "Uniform", "10", "1e-3", "100", "10", "1", "12314", "tests/images/test_setup"].iter().map(|x| x.to_string()).collect();
 
     setup_simulation_fixed!(args, 15, 0, MFPTAnalysis, dataset, SimulationData,
         sys_arg, ContCircSystem, target_arg, ContBulkTarget,

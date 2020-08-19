@@ -27,7 +27,7 @@ impl ContBulkTarget{
 
 impl_argument_trait!(ContBulkTarget, "Target", ContBulkTargetArguments, 2,
     target_type, TargetType, TargetType::ContinuousInBulk;
-    target_pos, Position::<f64>, "Position of Target",
+    target_pos, Position::<f64>, "Position of Target ex) 0:0 = (0,0), 1.0:2.0 = (1.0, 2.0)",
     target_size, f64, "Size of Target");
 
 impl ContBulkTarget{

@@ -18,7 +18,7 @@ criterion = "0.3"
 plotlib = "0.5.1"
 
 [[bench]]
-name = "bench_merge"
+name = "bench_enum_vs_struct"
 harness = false
 
 [profile.release]

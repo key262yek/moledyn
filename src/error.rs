@@ -46,7 +46,8 @@ impl Error{
             | ErrorCode::InvalidFormat
             | ErrorCode::InvalidFile
             | ErrorCode::TooLargeTimeStep
-            | ErrorCode::FeatureNotProvided => Category::Syntax,
+            | ErrorCode::FeatureNotProvided
+            | ErrorCode::UnexpectedEnd => Category::Syntax,
         }
     }
 
@@ -114,6 +115,9 @@ pub enum ErrorCode{
 
     // Functionality is not developed yet
     FeatureNotProvided,
+
+    // Function ends unexpectedly
+    UnexpectedEnd
 }
 
 impl Display for ErrorCode{
@@ -130,6 +134,7 @@ impl Display for ErrorCode{
             ErrorCode::InvalidFile => f.write_str("Invalid File"),
             ErrorCode::TooLargeTimeStep => f.write_str("Time step is too large"),
             ErrorCode::FeatureNotProvided => f.write_str("Functionality is not provided yet"),
+            ErrorCode::UnexpectedEnd => f.write_str("Function ends unexpectedly"),
         }
     }
 }
