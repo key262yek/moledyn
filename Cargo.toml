@@ -1,6 +1,6 @@
 [package]
 name = "rts"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Myeongseon Choi"]
 edition = "2018"
 
