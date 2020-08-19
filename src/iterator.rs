@@ -245,56 +245,67 @@ impl<T> LinkedList<T>{
 
     #[allow(dead_code)]
     pub fn get_double(&mut self) -> Option<(&T, &T)>{
-        let idx2 : usize;
-        match self.current[1]{
+        let idx1 = self.current[0]?;
+        let idx2 : usize = match self.current[1]{
             None => {
-                self.current[0] = self.links[self.current[0]?].next;
-                idx2 = self.links[self.current[0]?].next?;
-                self.current[1] = self.links[idx2].next;
+                return None;
             },
             Some(idx) => {
-                self.current[1] = self.links[idx].next;
-                idx2 = idx;
+                if idx == self.tail.unwrap(){
+                    self.current[0] = self.links[idx1].next;
+                    self.current[1] = self.current[0].map_or(None, |x| self.links[x].next);
+                }
+                else{
+                    self.current[1] = self.links[idx].next;
+                }
+                idx
             },
-        }
-        let idx1 = self.current[0]?;
+        };
+
 
         return Some((&self.contents[idx1], &self.contents[idx2]));
     }
 
     #[allow(dead_code)]
     pub fn enumerate_double(&mut self) -> Option<(usize, &T, usize, &T)>{
-        let idx2 : usize;
-        match self.current[1]{
+        let idx1 = self.current[0]?;
+        let idx2 : usize = match self.current[1]{
             None => {
-                self.current[0] = self.links[self.current[0]?].next;
-                idx2 = self.links[self.current[0]?].next?;
-                self.current[1] = self.links[idx2].next;
+                return None;
             },
             Some(idx) => {
-                self.current[1] = self.links[idx].next;
-                idx2 = idx;
+                if idx == self.tail.unwrap(){
+                    self.current[0] = self.links[idx1].next;
+                    self.current[1] = self.current[0].map_or(None, |x| self.links[x].next);
+                }
+                else{
+                    self.current[1] = self.links[idx].next;
+                }
+                idx
             },
-        }
-        let idx1 = self.current[0]?;
+        };
+
         return Some((idx1, &self.contents[idx1], idx2, &self.contents[idx2]));
     }
 
     #[allow(dead_code)]
     pub fn indicies_double(&mut self) -> Option<(usize, usize)>{
-        let idx2 : usize;
-        match self.current[1]{
+        let idx1 = self.current[0]?;
+        let idx2 : usize = match self.current[1]{
             None => {
-                self.current[0] = self.links[self.current[0]?].next;
-                idx2 = self.links[self.current[0]?].next?;
-                self.current[1] = self.links[idx2].next;
+                return None;
             },
             Some(idx) => {
-                self.current[1] = self.links[idx].next;
-                idx2 = idx;
+                if idx == self.tail.unwrap(){
+                    self.current[0] = self.links[idx1].next;
+                    self.current[1] = self.current[0].map_or(None, |x| self.links[x].next);
+                }
+                else{
+                    self.current[1] = self.links[idx].next;
+                }
+                idx
             },
-        }
-        let idx1 = self.current[0]?;
+        };
 
         return Some((idx1, idx2));
     }

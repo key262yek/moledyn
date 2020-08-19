@@ -2,7 +2,7 @@
 
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use rts::time_mod::{TimeIterator, ExponentialStep};
+use rts::time_mod::{TimeIterator, ExponentialStep, TimeDiffIterator};
 use rts::error::{Error, ErrorCode};
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
@@ -74,6 +74,21 @@ impl TimeIterator for Exp{
         self.current = 0f64;
         self.count = 0;
         self.dt = self.dt_min;
+    }
+
+    fn dt(&self) -> f64{
+        self.dt
+    }
+
+    fn set_tmax(&mut self, tmax : f64) -> Result<(), Error>{
+        self.tmax = tmax;
+        Ok(())
+    }
+
+    fn into_diff(&self) -> TimeDiffIterator<Self>{
+        TimeDiffIterator{
+            timeiter : self.clone(),
+        }
     }
 }
 

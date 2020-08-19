@@ -10,21 +10,21 @@ use rts::searcher_mod::{Passive, cont_passive_merge::ContPassiveMergeSearcher};
 
 fn n_ptl_fpt(n : usize, sys: &ContCircSystem, target : &ContBulkTarget, list_searchers : &mut LinkedList<ContPassiveMergeSearcher>, rng : &mut Pcg64) -> Result<f64, Error>{
     // merge 기능을 포함한 시뮬레이션의 benchmark
-    // 10ptl : 5050ensemble 690.39 us 733.25 us 782.35 us / Performance has regressed +607.77% +681.97% +763.81%
-    // 100ptl : 10k ensemble 677.08 us 742.02 us 858.97 us
-    // 1000ptl : 5050 ensemble 742.64 us 780.28 us 824.42 us
+    // 10ptl : 847.19 us
+    // 100ptl : 1.8697 ms
+    // 1000ptl : 4.3767 ms
 
     // C code 결과 : 1set 당 1000ensemble (10set 평균)
     // 10ptl : 4.45ms per iteration
     // 100ptl : 5.8ms per iteration
     // 1000ptl (100번 1set만 돌림) : 44ms per iteration
 
-    let dt : f64 = 5e-3;                                    // Time step
-
+    let dt : f64 = 5e-3;                                                    // Time step
+    let mut time : f64 = 0f64;
     for i in 0..n{
         list_searchers.contents[i].renew_uniform(sys, target, rng)?;
     }
-    let mut time : f64 = 0f64;
+    list_searchers.connect_all()?;
     let mut single_move = Position::<f64>::new(vec![0.0; sys.dim]);
 
     'outer : loop{
@@ -41,14 +41,12 @@ fn n_ptl_fpt(n : usize, sys: &ContCircSystem, target : &ContBulkTarget, list_sea
 
         list_searchers.into_double_iter();
         while let Some((idx1, s1, idx2, s2)) = list_searchers.enumerate_double(){
-            let d : f64 = s1.pos().distance(s2.pos())?;
+            let d : f64 = s1.pos.distance(&s2.pos)?;
             if d < 2f64 * s1.radius{
                 list_searchers.merge(idx1, idx2)?;
             }
         }
     }
-
-
 
     Ok(time)
 }

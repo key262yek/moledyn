@@ -107,7 +107,7 @@ macro_rules! setup_simulation_fixed{
                 return <$analysis>::analyze::<$dataset>(&$args, WIDTH);
         }
         else if $args.len() - NUM_SKIP != TOTAL_NUM_ARGS{
-            read_simulation_info!($args, $analysis $(, $struct_type)*);
+            export_simulation_item!($args, $analysis $(, $struct_type)*);
         }
 
         read_arguments!($args $(, $arg_name, $struct_type)*);

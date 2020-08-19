@@ -211,11 +211,23 @@ impl ExponentialStep{
         if dt_min < 1e-15 || dt_min > dt_max || length == 0{
             return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
         }
+
+        let inc : f64;
+        if length == 1{
+            inc = 1.2f64;
+        }
+        else if length < 10{
+            inc = (length as f64) / 2f64;
+        }
+        else{
+            inc = 10f64;            // default
+        }
+
         Ok(Self{
             titype : TimeType::Exponential(dt_min, dt_max, length),
             current : 0f64,
             dt      : dt_min,
-            inc     : 1.2f64,   // default
+            inc     : inc,
             tmax    : std::f64::MAX,
             count   : 0,
         })
@@ -226,8 +238,18 @@ impl ExponentialStep{
         if inc <= 1f64{
             return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
         }
-        else {
-            self.inc = inc;
+        match self.titype{
+            TimeType::Exponential(_min, _max, length) =>{
+                if inc * 2f64 > length as f64{
+                    self.inc = (length as f64) / 2f64;
+                }
+                else{
+                    self.inc = inc;
+                }
+            }
+            _ => {
+                return Err(Error::make_error_syntax(ErrorCode::InvalidType));
+            }
         }
 
         Ok(())
