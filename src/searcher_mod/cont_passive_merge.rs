@@ -80,6 +80,7 @@ impl ContPassiveMergeSearcher{
             Ok(()) => (),
             Err(_) => {
                 self.pos = sys.position_out_of_system();
+                self.dim = self.pos.dim();
             }
         }
         loop{
