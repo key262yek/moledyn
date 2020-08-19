@@ -7,7 +7,7 @@ pub use crate::{
         impl_fn_read_args_from_vec, impl_fn_read_args_from_lines, impl_argument_trait,
         impl_fmt_for_type, impl_fmt_test, impl_fromstr_for_type, impl_fromstr_test,
         construct_dataset, derive_hash, export_form, pub_export_form, export_data, pub_export_data,
-        read_simulation_info, define_total_num_args, read_arguments, export_simulation_info,
+        export_simulation_item, define_total_num_args, read_arguments, export_simulation_info,
         setup_simulation, setup_simulation_fixed
     },
     error::{Error, ErrorCode},

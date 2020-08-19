@@ -3,7 +3,7 @@ use crate::prelude::*;
 
 #[macro_export]
 // #[allow(unused_macros)]
-macro_rules! read_simulation_info{
+macro_rules! export_simulation_item{
     ($name_args:ident, $analysis:ty $(,$var:ty)*) =>{
         eprint!("{} arguments given.\nGiven Arguments : ", $name_args.len() - NUM_SKIP);
         for x in $name_args.iter().skip(NUM_SKIP){
@@ -85,11 +85,10 @@ macro_rules! setup_simulation{
                 return <$analysis>::analyze::<$dataset>(&$args[NUM_SKIP..], WIDTH);
         }
         else if $args.len() - NUM_SKIP != TOTAL_NUM_ARGS{
-            read_simulation_info!($args, $analysis $(, $struct_type)*);
+            export_simulation_item!($args, $analysis $(, $struct_type)*);
         }
 
         read_arguments!($args $(, $arg_name, $struct_type)*);
-
         let $ds_name = <$dataset>::new($(&$arg_name),*);
     }
 }

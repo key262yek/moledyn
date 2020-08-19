@@ -76,7 +76,12 @@ impl ContPassiveMergeSearcher{
         // independent searcher와 다르게 mergeable searcher는 size도 변할 수 있고, diffusion coefficient도 변한다.
         // 이들을 모두 바꿔줘야함
 
-        sys.position_out_of_system_to_vec(&mut self.pos)?;
+        match sys.position_out_of_system_to_vec(&mut self.pos){
+            Ok(()) => (),
+            Err(_) => {
+                self.pos = sys.position_out_of_system();
+            }
+        }
         loop{
             sys.random_pos_to_vec(rng, &mut self.pos)?;   // System 내부의 random position을 받는다
             if !target.check_find(&self.pos)?{            // 그 random position이 target과 이미 만났는가 확인
