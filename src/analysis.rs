@@ -437,7 +437,7 @@ impl MFPT for MFPTAnalysis{
             return None;
         }
         else{
-            return Some(((fpt - self.min_time) / self.bin_size).ceil() as usize - 1);
+            return Some(((fpt - self.min_time) / self.bin_size).floor() as usize);
         }
     }
 
@@ -447,7 +447,7 @@ impl MFPT for MFPTAnalysis{
             return None;
         }
         else{
-            return Some(((fpt / self.min_time).log2() / self.lbin_size.log2()).ceil() as usize - 1);
+            return Some(((fpt / self.min_time).log2() / self.lbin_size.log2()).floor() as usize);
         }
     }
 
