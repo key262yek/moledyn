@@ -303,8 +303,6 @@ impl Analysis for MFPTAnalysis{
                 Err(_err) => {continue;},
             };
 
-            println!("{:?}", path);
-            println!("{:?}", dataset.export_file("RTS_N_PTL_MERGEABLE_SEARCHER"));
             let analysis = match hashmap.get_mut(&dataset){
                 Some(x) => x,
                 None => {
