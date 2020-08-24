@@ -2,7 +2,7 @@
 
 pub use crate::{
     {define_num_args, define_pub_num_args, define_num_args_of_structure,
-        define_structure, impl_structure, construct_structure,
+        define_structure, define_structure_wo_eq, impl_structure, construct_structure,
         impl_fn_info, impl_fn_brief_info, impl_fn_print_configuration,
         impl_fn_read_args_from_vec, impl_fn_read_args_from_lines, impl_argument_trait,
         impl_fmt_for_type, impl_fmt_test, impl_fromstr_for_type, impl_fromstr_test,

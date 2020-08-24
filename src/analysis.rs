@@ -28,7 +28,7 @@ macro_rules! construct_dataset {
     ( $name:ident, $( $struct_type:ty, $arg_name:ident, $arg_type:ty, [$($var:ident, $t:ty),*] );*
         $(;{$sim_type:ty, $sim_arg_name:ident, $sim_arg_type:ty, [$($sim_var:ident, $sim_t:ty),*]})?) => {
 
-        define_structure!($name; $($($var, $t,)*)* $($($sim_var, $sim_t,)*)?);
+        define_structure_wo_eq!($name; $($($var, $t,)*)* $($($sim_var, $sim_t,)*)?);
 
         impl $name{
             // Since argument infos are different for different data form
@@ -83,13 +83,19 @@ macro_rules! construct_dataset {
             export_data!(export_data $($(, $var)*)*);
         }
 
-        impl Eq for $name{
-        }
-
         impl Copy for $name{
         }
 
         derive_hash!($name $($(, $var)*)*);
+
+        impl PartialEq for $name{
+            fn eq(&self, other: &Self) -> bool {
+                self.hash(&mut std::collections::hash_map::DefaultHasher::new()) == other.hash(&mut std::collections::hash_map::DefaultHasher::new())
+            }
+        }
+
+        impl Eq for $name{
+        }
     }
 }
 

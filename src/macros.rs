@@ -75,6 +75,21 @@ macro_rules! define_structure{
 
 #[macro_export]
 // #[allow(unused_macros)]
+macro_rules! define_structure_wo_eq{
+    ($name:ident $(, $type_name:ident, $type_type:ty)* ;$($var:ident, $t:ty,)*) =>{
+        #[derive(Clone, Debug, PartialOrd)]
+        pub struct $name{
+            $(pub $type_name : $type_type,
+                )*
+            $(pub $var : $t,
+                )*
+        }
+    }
+}
+
+
+#[macro_export]
+// #[allow(unused_macros)]
 macro_rules! impl_structure{
     ($name:ident, $num_args:expr $(, $type_name:ident, $type_default:expr)* ;$($var:ident, $t:ty,) *) =>{
         #[allow(dead_code)]
@@ -118,7 +133,7 @@ macro_rules! derive_hash{
     ($name:ident $(, $var:ident) *) => {
         impl Hash for $name{
             fn hash<H: Hasher>(&self, state: &mut H){
-                $((self.$var as usize).hash(state);
+                $(((self.$var as f64 * 1e10) as usize).hash(state);
                     )*
             }
         }
@@ -258,4 +273,66 @@ mod tests{
         Ok(())
     }
 
+    #[test]
+    fn test_hash() -> Result<(), Error>{
+        use crate::system_mod::cont_circ::{ContCircSystem, ContCircSystemArguments};
+        use crate::target_mod::cont_bulk::{ContBulkTarget, ContBulkTargetArguments};
+        use crate::searcher_mod::{cont_passive_merge::{ContPassiveMergeSearcher, ContPassiveMergeSearcherArguments}};
+        use crate::time_mod::{ExponentialStep, ExponentialStepArguments};
+
+        // Dataset
+        construct_dataset!(SimulationData, ContCircSystem, sys_arg, ContCircSystemArguments,
+                        [sys_size, f64, dim, usize ];
+                        ContBulkTarget, target_arg, ContBulkTargetArguments,
+                        [target_size, f64];
+                        ContPassiveMergeSearcher, searcher_arg, ContPassiveMergeSearcherArguments,
+                        [num_searcher, usize, radius, f64, alpha, f64];
+                        ExponentialStep, time_arg, ExponentialStepArguments,
+                        [dt_min, f64, dt_max, f64, length, usize];
+                        {Simulation, sim_arg, SimulationArguments,
+                        [idx_set, usize]});
+
+        let dataset1 = SimulationData{
+            sys_size : 10f64,
+            dim : 2,
+            target_size : 1f64,
+            num_searcher : 10,
+            radius : 0.1f64,
+            alpha : 1.0f64,
+            dt_min : 1e-10f64,
+            dt_max : 1e-5f64,
+            length : 10,
+            idx_set : 1,
+        };
+
+        let dataset2 = SimulationData{
+            sys_size : 10f64,
+            dim : 2,
+            target_size : 1f64,
+            num_searcher : 10,
+            radius : 0.1f64,
+            alpha : 1.0f64,
+            dt_min : 1e-10f64,
+            dt_max : 1e-5f64,
+            length : 10,
+            idx_set : 2,
+        };
+
+        fn calculate_hash<T: Hash>(t: &T) -> u64 {
+            let mut s = std::collections::hash_map::DefaultHasher::new();
+            t.hash(&mut s);
+            s.finish()
+        }
+
+        println!("{} {}", calculate_hash(&dataset1), calculate_hash(&dataset2));
+
+        let mut hashmap : HashMap<SimulationData, usize> = HashMap::new();
+        hashmap.insert(dataset1, 0);
+        match hashmap.get_mut(&dataset2){
+            Some(x) => {*x = *x + 1},
+            None => {panic!("Still different");},
+        }
+
+        Ok(())
+    }
 }
