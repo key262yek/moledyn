@@ -25,20 +25,24 @@ pub trait DataSet{
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! construct_dataset {
-    ( $name:ident, $( $struct_type:ty, $arg_name:ident, $arg_type:ty, [$($var:ident, $t:ty),*] );*) => {
+    ( $name:ident, $( $struct_type:ty, $arg_name:ident, $arg_type:ty, [$($var:ident, $t:ty),*] );*
+        $(;{$sim_type:ty, $sim_arg_name:ident, $sim_arg_type:ty, [$($sim_var:ident, $sim_t:ty),*]})?) => {
 
-        define_structure!($name; $($($var, $t,)*)*);
+        define_structure!($name; $($($var, $t,)*)* $($($sim_var, $sim_t,)*)?);
 
         impl $name{
             // Since argument infos are different for different data form
             // we should define a function 'new' out of trait
             #[allow(dead_code, unused_variables)]
-            pub fn new($($arg_name : &$arg_type), *) -> Self{
+            pub fn new($($arg_name : &$arg_type), * $(,$sim_arg_name : &$sim_arg_type)?) -> Self{
                 $name{
                     $(
                         $($var : $arg_name.$var,
                             )*
                     )*
+                    $($(
+                        $sim_var : $sim_arg_name.$sim_var,
+                    )*)?
                 }
             }
         }
@@ -54,9 +58,10 @@ macro_rules! construct_dataset {
 
                 $(
                     let $arg_name = <$struct_type>::read_args_from_lines(&mut lines)?;
-                    )*
+                )*
+                $(let $sim_arg_name = <$sim_type>::read_args_from_lines(&mut lines)?;)?
 
-                Ok(($name::new($(&$arg_name),*), lines))
+                Ok(($name::new($(&$arg_name),* $(,&$sim_arg_name)?), lines))
             }
 
             #[allow(dead_code)]
@@ -67,6 +72,9 @@ macro_rules! construct_dataset {
                         string.push_str(format!("{}", format_args!("_{}_{}", stringify!($var), self.$var)).as_str());
                     )*
                 )*
+                $($(
+                    string.push_str(format!("{}", format_args!("_{}_{}", stringify!($sim_var), self.$sim_var)).as_str());
+                )*)?
                 string.push_str(".dat");
                 return string;
             }
@@ -80,6 +88,8 @@ macro_rules! construct_dataset {
 
         impl Copy for $name{
         }
+
+        derive_hash!($name $($(, $var)*)*);
     }
 }
 
