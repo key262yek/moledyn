@@ -300,6 +300,7 @@ impl Analysis for MFPTAnalysis{
 
             println!("{:?}", path);
             println!("{:?}", dataset.export_file("RTS_N_PTL_MERGEABLE_SEARCHER"));
+            println!("{:?}", dataset.hash(&mut std::collections::hash_map::DefaultHasher::new()));
             let analysis = match hashmap.get_mut(&dataset){
                 Some(x) => x,
                 None => {
