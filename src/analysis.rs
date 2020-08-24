@@ -90,7 +90,12 @@ macro_rules! construct_dataset {
 
         impl PartialEq for $name{
             fn eq(&self, other: &Self) -> bool {
-                self.hash(&mut std::collections::hash_map::DefaultHasher::new()) == other.hash(&mut std::collections::hash_map::DefaultHasher::new())
+                fn calculate_hash<T: Hash>(t: &T) -> u64 {
+                    let mut s = std::collections::hash_map::DefaultHasher::new();
+                    t.hash(&mut s);
+                    s.finish()
+                }
+                calculate_hash(&self) == calculate_hash(other)
             }
         }
 
@@ -300,7 +305,6 @@ impl Analysis for MFPTAnalysis{
 
             println!("{:?}", path);
             println!("{:?}", dataset.export_file("RTS_N_PTL_MERGEABLE_SEARCHER"));
-            println!("{:?}", dataset.hash(&mut std::collections::hash_map::DefaultHasher::new()));
             let analysis = match hashmap.get_mut(&dataset){
                 Some(x) => x,
                 None => {
