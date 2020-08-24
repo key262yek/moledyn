@@ -80,8 +80,6 @@ macro_rules! construct_dataset {
 
         impl Copy for $name{
         }
-
-        derive_hash!($name $($(, $var)*)*);
     }
 }
 
