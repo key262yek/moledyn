@@ -293,11 +293,13 @@ impl Analysis for MFPTAnalysis{
                 continue;
             }
 
-            let (dataset, mut lines) : (H, Lines<BufReader<File>>) = match H::from_file(path){
+            let (dataset, mut lines) : (H, Lines<BufReader<File>>) = match H::from_file(path.clone()){
                 Ok(ds) => ds,
                 Err(_err) => {continue;},
             };
 
+            println!("{:?}", path);
+            println!("{:?}", dataset.export_file("RTS_N_PTL_MERGEABLE_SEARCHER"));
             let analysis = match hashmap.get_mut(&dataset){
                 Some(x) => x,
                 None => {
