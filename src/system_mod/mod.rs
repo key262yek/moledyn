@@ -33,7 +33,7 @@ pub trait SystemCore<T>{
 }
 
 pub mod cont_circ;
-
+pub mod cont_cubic;
 
 
 // =====================================================================================
@@ -86,11 +86,26 @@ impl_fmt_for_type!(BoundaryCond,
     BoundaryCond::Periodic => "Periodic Boundary Condition",
     BoundaryCond::Reflection => "Reflective Boundary Condtion");
 
-// From String to Type
-impl_fromstr_for_type!(BoundaryCond,
-    BoundaryCond::Periodic => "Periodic Boundary Condition",
-    BoundaryCond::Reflection => "Reflective Boundary Condtion");
 
+impl FromStr for BoundaryCond{
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let split : Vec<&str> = s.split_whitespace().collect();
+        match split[0]{
+            "Reflective"    => Ok(BoundaryCond::Reflection),
+            "Periodic"      => Ok(BoundaryCond::Periodic),
+            string => {
+                let x = string.parse::<usize>().map_err(|_y| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
+                match x{
+                    0 => Ok(BoundaryCond::Reflection),
+                    1 => Ok(BoundaryCond::Periodic),
+                    _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
+                }
+            },
+        }
+    }
+}
 impl Default for BoundaryCond{
     fn default() -> Self{
         BoundaryCond::Reflection
