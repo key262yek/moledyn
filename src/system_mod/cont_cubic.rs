@@ -16,6 +16,16 @@ impl ContCubicSystem{
         // length : length, width, height of system
         // dim : dimension of system
 
+        if length <= 0f64 || dim ==0 {
+            panic!("{:?}", ErrorCode::InvalidArgumentInput);
+        }
+
+        if let BoundaryCond::Mixed(d) = bctype{
+            if d > dim{
+                panic!("{}", ErrorCode::InvalidArgumentInput);
+            }
+        }
+
         ContCubicSystem{
             sys_type : SystemType::ContinuousRectangular,
             bctype : bctype,
@@ -27,13 +37,24 @@ impl ContCubicSystem{
 
 impl_argument_trait!(ContCubicSystem, "System", ContCubicSystemArguments, 3,
     sys_type, SystemType, SystemType::ContinuousRectangular;
-    bctype, BoundaryCond, "Boundary condition. ex) Reflection Periodic, or 0 indicate Reflection, 1 indicate Periodic",
+    bctype, BoundaryCond, "Boundary condition. ex) Reflective, Periodic, integer indicates Mixed",
     sys_size, f64, "Size of System",
     dim, usize, "Dimension of System");
 
 impl ContCubicSystem{
     #[allow(dead_code)]
     pub fn convert_from(argument : &ContCubicSystemArguments) -> Self{
+
+        if argument.sys_size <= 0f64 || argument.dim == 0{
+            panic!("{:?}", ErrorCode::InvalidArgumentInput);
+        }
+
+        if let BoundaryCond::Mixed(d) = argument.bctype{
+            if d > argument.dim{
+                panic!("{}", ErrorCode::InvalidArgumentInput);
+            }
+        }
+
         Self{
             sys_type    : argument.sys_type,
             bctype      : argument.bctype,
@@ -79,7 +100,7 @@ impl SystemCore<f64> for ContCubicSystem{
             BoundaryCond::Reflection => {
                 let length : f64 = self.sys_size;
                 for x in &mut pos.coordinate{
-                    if (*x).abs() < length{
+                    if (*x).abs() <= length{
                         continue;
                     }
 
@@ -97,7 +118,7 @@ impl SystemCore<f64> for ContCubicSystem{
             BoundaryCond::Periodic => {
                 let length : f64 = self.sys_size;
                 for x in &mut pos.coordinate{
-                    if (*x).abs() < length{
+                    if (*x).abs() <= length{
                         continue;
                     }
 
@@ -108,6 +129,45 @@ impl SystemCore<f64> for ContCubicSystem{
                         *x = - 2f64 * length + *x;
                     }
                 }
+                if self.check_inclusion(pos)?{              // 지금은 안에 있는가?
+                    return Ok(());
+                }
+            },
+            BoundaryCond::Mixed(d) =>{
+                let length : f64 = self.sys_size;
+
+                // Reflection
+                // for i in 0..d{
+                //     let x = &mut pos.coordinate[i];
+                for x in &mut pos.coordinate[..d]{
+                    if (*x).abs() <= length{
+                        continue;
+                    }
+
+                    if *x < 0f64{
+                        *x = - 2f64 * length - *x;
+                    }
+                    else{
+                        *x = 2f64 * length - *x;
+                    }
+                }
+
+                // Periodic
+                // for i in d..self.dim{
+                //     let x = &mut pos.coordinate[i];
+                for x in &mut pos.coordinate[d..]{
+                    if (*x).abs() <= length{
+                        continue;
+                    }
+
+                    if *x < 0f64{
+                        *x = 2f64 * length + *x;
+                    }
+                    else{
+                        *x = - 2f64 * length + *x;
+                    }
+                }
+
                 if self.check_inclusion(pos)?{              // 지금은 안에 있는가?
                     return Ok(());
                 }
@@ -233,14 +293,14 @@ mod tests{
             let x : f64 = 4.05f64 + i as f64 * 0.1f64;
             let pos : Position<f64> = Position::new(vec![x]);
 
-            for j in 0..50{
+            for j in 0..100{
                 let y : f64 = j as f64 * 0.001f64;
                 let mut dp : Position<f64> = Position::new(vec![y]);
 
                 let mut pos2 = pos.clone();
                 sys.check_bc(&mut pos2, &mut dp)?;
 
-                let res = if x + y < 5.0 {x + y} else {10f64 - (x + y)};
+                let res = if x + y <= 5.0 {x + y} else {10f64 - (x + y)};
                 assert_eq!(pos2.coordinate[0], res);
             }
         }
@@ -252,15 +312,40 @@ mod tests{
             let x : f64 = 4.05f64 + i as f64 * 0.1f64;
             let pos : Position<f64> = Position::new(vec![x]);
 
-            for j in 0..50{
+            for j in 0..100{
                 let y : f64 = j as f64 * 0.001f64;
                 let mut dp : Position<f64> = Position::new(vec![y]);
 
                 let mut pos2 = pos.clone();
                 sys.check_bc(&mut pos2, &mut dp)?;
 
-                let res = if x + y < 5.0 {x + y} else {-10f64 + x + y};
+                let res = if x + y <= 5.0 {x + y} else {-10f64 + x + y};
                 assert_eq!(pos2.coordinate[0], res);
+            }
+        }
+
+        // Mixed boundary condition
+        let sys : ContCubicSystem = ContCubicSystem::new(BoundaryCond::Mixed(2), 5.0, 4);
+
+        for i in 0..10{
+            let x : f64 = 4.05f64 + i as f64 * 0.1f64;
+            let pos : Position<f64> = Position::new(vec![x, 0f64,x,0f64]);
+
+            for j in 0..100{
+                let y : f64 = j as f64 * 0.001f64;
+
+                for k in 0..100{
+                    let z : f64 = k as f64 * 0.001f64;
+                    let mut dp : Position<f64> = Position::new(vec![y, 0f64, z, 0f64]);
+
+                    let mut pos2 = pos.clone();
+                    sys.check_bc(&mut pos2, &mut dp)?;
+
+                    let x1 = if x + y <= 5.0 {x + y} else {10f64 - x - y};
+                    let x2 = if x + z <= 5.0 {x + z} else {-10f64 + x + z};
+                    let res : Position<f64> = Position::new(vec![x1, 0f64, x2, 0f64]);
+                    assert_eq!(pos2, res);
+                }
             }
         }
         return Ok(());

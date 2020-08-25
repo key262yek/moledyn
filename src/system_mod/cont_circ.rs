@@ -16,6 +16,10 @@ impl ContCircSystem{
         // r : radius of system
         // dim : dimension of system
 
+        if r <= 0f64 || dim == 0{
+            panic!("{:?}", ErrorCode::InvalidArgumentInput);
+        }
+
         ContCircSystem{
             sys_type : SystemType::ContinuousCircular,
             bctype : BoundaryCond::Reflection,
@@ -34,6 +38,11 @@ impl_argument_trait!(ContCircSystem, "System", ContCircSystemArguments, 2,
 impl ContCircSystem{
     #[allow(dead_code)]
     pub fn convert_from(argument : &ContCircSystemArguments) -> Self{
+
+        if argument.sys_size <= 0f64 || argument.dim == 0{
+            panic!("{:?}", ErrorCode::InvalidArgumentInput);
+        }
+
         Self{
             sys_type    : argument.sys_type,
             bctype      : argument.bctype,
