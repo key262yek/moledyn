@@ -17,6 +17,56 @@ impl<T : Clone> Position<T>{
             coordinate : vec.clone()    // 벡터는 copy가 되지 않으므로, clone을 해야함.
         }                               // 그래서 T도 clone trait이 정의된 type이어야 하는 것.
     }
+
+    pub fn push(&mut self, x : T){
+        self.coordinate.push(x.clone());
+    }
+}
+
+impl<T : Clone> std::iter::Extend<T> for Position<T>{
+    fn extend<Iter : IntoIterator<Item=T>>(&mut self, iter : Iter){
+        for elem in iter{
+            self.push(elem);
+        }
+    }
+}
+
+impl<T> std::ops::Index<usize> for Position<T>{
+    type Output = T;
+
+    fn index(&self, idx : usize) -> &T{
+        &self.coordinate[idx]
+    }
+}
+
+impl<T> std::ops::IndexMut<usize> for Position<T>{
+    fn index_mut(&mut self, idx : usize) -> &mut T{
+        &mut self.coordinate[idx]
+    }
+}
+
+impl<T> std::ops::Index<std::ops::Range<usize>> for Position<T>{
+    type Output = [T];
+
+    fn index(&self, idx : std::ops::Range<usize>) -> &[T]{
+        &self.coordinate[idx]
+    }
+}
+
+impl<T> std::ops::Index<std::ops::RangeTo<usize>> for Position<T>{
+    type Output = [T];
+
+    fn index(&self, idx : std::ops::RangeTo<usize>) -> &[T]{
+        &self.coordinate[idx]
+    }
+}
+
+impl<T> std::ops::Index<std::ops::RangeFrom<usize>> for Position<T>{
+    type Output = [T];
+
+    fn index(&self, idx : std::ops::RangeFrom<usize>) -> &[T]{
+        &self.coordinate[idx]
+    }
 }
 
 impl<T> Position<T>{                    // 일반적인 position vector가 가져야 하는 함수들
@@ -24,7 +74,27 @@ impl<T> Position<T>{                    // 일반적인 position vector가 가�
         // dimension을 출력해주는 함수
         self.coordinate.len()
     }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T>{
+        self.coordinate.iter_mut()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T>{
+        self.coordinate.iter()
+    }
 }
+
+impl<T> IntoIterator for Position<T>{
+    type Item = T;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.coordinate.into_iter()
+    }
+}
+
+
+
 
 impl<T : Default> Position<T>{
     pub fn clear(&mut self){
@@ -33,7 +103,7 @@ impl<T : Default> Position<T>{
         // rust에서는 정수형에서의 0과 실수형에서의 0이 다르다.
         // 따라서 default trait을 이용해 0으로 바꿔주는 함수
 
-        for x in &mut self.coordinate{
+        for x in self.iter_mut(){
             *x = Default::default();
         }
     }
@@ -58,7 +128,7 @@ impl Position<f64>{                                 // 실수형 벡터의 함�
     pub fn norm(&self) -> f64{
         // Norm function
         let mut res : f64 = 0f64;
-        for &x in self.coordinate.iter(){
+        for &x in self.iter(){
             res += x * x;
         }
         return res.sqrt();
@@ -74,9 +144,7 @@ impl Position<f64>{                                 // 실수형 벡터의 함�
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
         let mut r : f64 = 0.0f64;
-        for i in 0..self.dim(){
-            let x : f64 = self.coordinate[i];
-            let y : f64 = other.coordinate[i];
+        for (&x, &y) in self.iter().zip(other.iter()){
             r += (x - y) *  (x - y);
         }
         return Ok(r.sqrt());
@@ -89,8 +157,7 @@ impl Position<f64>{                                 // 실수형 벡터의 함�
         }
 
         let mut res : f64 = 0.0;
-        for (i, &x) in self.coordinate.iter().enumerate(){
-            let y = other.coordinate[i];
+        for (&x, &y) in self.iter().zip(other.iter()){
             res += x * y;
         }
         return Ok(res);
@@ -100,7 +167,7 @@ impl Position<f64>{                                 // 실수형 벡터의 함�
 impl Position<i32>{
     pub fn norm(&self) -> f64{
         let mut res : f64 = 0f64;
-        for &x in self.coordinate.iter(){
+        for &x in self.iter(){
             res += x as f64 * x as f64;
         }
         return res.sqrt();
@@ -112,10 +179,8 @@ impl Position<i32>{
         }
 
         let mut r : f64 = 0.0f64;
-        for i in 0..self.dim(){
-            let x : f64 = self.coordinate[i] as f64;
-            let y : f64 = other.coordinate[i] as f64;
-            r += (x - y) *  (x - y);
+        for (&x, &y) in self.iter().zip(other.iter()){
+            r += ((x - y) *  (x - y)) as f64;
         }
         return Ok(r.sqrt());
     }
@@ -126,9 +191,7 @@ impl Position<i32>{
         }
 
         let mut r : i32 = 0;
-        for i in 0..self.dim(){
-            let x : i32 = self.coordinate[i];
-            let y : i32 = other.coordinate[i];
+        for (&x, &y) in self.iter().zip(other.iter()){
             r += (x - y).abs();
         }
         return Ok(r);
@@ -149,9 +212,7 @@ impl<'a, 'b, T> Add<&'b Position<T>> for &'b Position<T>
         }
 
         let mut vec : Vec<T> = Vec::<T>::new();
-        for i in 0..self.dim(){
-            let x : T = self.coordinate[i];
-            let y : T = other.coordinate[i];
+        for (&x, &y) in self.iter().zip(other.iter()){
             vec.push(x + y);
         }
 
@@ -170,9 +231,7 @@ impl<'a, 'b, T> Add<&'b mut Position<T>> for &'b mut Position<T>
         }
 
         let mut vec : Vec<T> = Vec::<T>::new();
-        for i in 0..self.dim(){
-            let x : T = self.coordinate[i];
-            let y : T = other.coordinate[i];
+        for (&x, &y) in self.iter().zip(other.iter()){
             vec.push(x + y);
         }
 
@@ -195,9 +254,7 @@ impl<'a, 'b, T> Sub<&'b Position<T>> for &'b Position<T>
 
         let mut vec : Vec<T> = Vec::<T>::new();
 
-        for i in 0..self.dim(){
-            let x : T = self.coordinate[i];
-            let y : T = other.coordinate[i];
+        for (&x, &y) in self.iter().zip(other.iter()){
             vec.push(x - y);
         }
         return Position::new(vec.clone());
@@ -216,9 +273,7 @@ impl<'a, 'b, T> Sub<&'b mut Position<T>> for &'b mut Position<T>
 
         let mut vec : Vec<T> = Vec::<T>::new();
 
-        for i in 0..self.dim(){
-            let x : T = self.coordinate[i];
-            let y : T = other.coordinate[i];
+        for (&x, &y) in self.iter().zip(other.iter()){
             vec.push(x - y);
         }
         return Position::new(vec.clone());
@@ -250,7 +305,7 @@ impl<T> Numerics<T> for Position<T>
     fn scalar_mul(&self, scalar : T) -> Position<T>{
         let mut vec : Vec<T> = Vec::new();
 
-        for x in self.coordinate.iter(){
+        for x in self.iter(){
             vec.push(*x * scalar);
         }
 
@@ -258,7 +313,7 @@ impl<T> Numerics<T> for Position<T>
     }
 
     fn mut_scalar_mul(&mut self, scalar : T){
-        for x in &mut self.coordinate{
+        for x in self.iter_mut(){
             *x = *x * scalar;
         }
     }
@@ -268,8 +323,8 @@ impl<T> Numerics<T> for Position<T>
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
 
-        for i in 0..self.dim(){
-            self.coordinate[i] += other.coordinate[i];
+        for (x, &y) in self.iter_mut().zip(other.iter()){
+            *x += y;
         }
 
         Ok(())
@@ -280,8 +335,8 @@ impl<T> Numerics<T> for Position<T>
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
 
-        for i in 0..self.dim(){
-            self.coordinate[i] -= other.coordinate[i];
+        for (x, &y) in self.iter_mut().zip(other.iter()){
+            *x -= y;
         }
 
         Ok(())
@@ -293,7 +348,7 @@ impl<T: Display> Display for Position<T>{
         let mut string = String::new();
 
         write!(&mut string, "{}", self.coordinate[0])?;
-        for x in self.coordinate.iter().skip(1){
+        for x in self.iter().skip(1){
             write!(&mut string, ",{}", x)?;
         }
         write!(f, "{}", string)
@@ -304,7 +359,7 @@ impl<T: LowerExp> LowerExp for Position<T>{
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result{
         // write!(f, "(")?;
         LowerExp::fmt(&self.coordinate[0], f)?;
-        for x in self.coordinate.iter().skip(1){
+        for x in self.iter().skip(1){
             write!(f, ",")?;
             LowerExp::fmt(x, f)?;
         }
@@ -327,6 +382,61 @@ mod tests{
         }
         assert_eq!(format!("{}", pos), "0,0");
     }
+
+    #[test]
+    fn test_push_extend(){
+        let mut pos : Position<f64> = Position::new(vec![3f64, 2f64]);
+        let pos2 : Position<f64> = Position::new(vec![10f64, 11f64]);
+
+        pos.push(4f64);
+        assert_eq!(pos.clone(), Position::<f64>::new(vec![3f64, 2f64, 4f64]));
+
+        pos.extend(vec![5f64, 1f64]);
+        assert_eq!(pos.clone(), Position::<f64>::new(vec![3f64, 2f64, 4f64, 5f64, 1f64]));
+
+        pos.extend(pos2);
+        assert_eq!(pos.clone(), Position::<f64>::new(vec![3f64, 2f64, 4f64, 5f64, 1f64, 10f64, 11f64]));
+    }
+
+    #[test]
+    fn test_index(){
+        let mut pos : Position<f64> = Position::new(vec![3f64, 2f64, 4f64, 5f64, 1f64]);
+
+        assert_eq!(pos[0], 3f64);
+        assert_eq!(pos[1], 2f64);
+        assert_eq!(pos[2], 4f64);
+        assert_eq!(pos[3], 5f64);
+        assert_eq!(pos[4], 1f64);
+
+        pos[3] = 10f64;
+        assert_eq!(pos[3], 10f64);
+
+        assert_eq!(pos[0..2], [3f64, 2f64]);
+    }
+
+    #[test]
+    fn test_iter(){
+        let mut pos : Position<f64> = Position::new(vec![3f64, 2f64, 4f64, 5f64, 1f64]);
+
+        // test iterator
+        let mut res = String::new();
+        for x in pos.iter(){
+            res.push_str(format!("{} ", x).as_str());
+        }
+        assert_eq!(res, "3 2 4 5 1 ");
+
+        // test iter_mut
+        for x in pos.iter_mut(){
+            *x = 2f64;
+        }
+
+        let mut res = String::new();
+        for x in pos.into_iter(){
+            res.push_str(format!("{} ", x).as_str());
+        }
+        assert_eq!(res, "2 2 2 2 2 ");
+    }
+
 
     #[test]
     fn test_fmt(){
