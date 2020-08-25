@@ -34,6 +34,7 @@ pub trait SystemCore<T>{
 
 pub mod cont_circ;
 pub mod cont_cubic;
+pub mod cont_cyl;
 
 
 // =====================================================================================
@@ -45,23 +46,58 @@ pub mod cont_cubic;
 pub enum SystemType{                        // System type
     ContinuousCircular,
     ContinuousRectangular,
+    ContinuousCylindrical(usize),
     Lattice,
     Network,
 }
 
 // Formatting
-impl_fmt_for_type!(SystemType,
-    SystemType::ContinuousCircular => "Continuous Circular system.",
-    SystemType::ContinuousRectangular => "Continuous Rectangular system.",
-    SystemType::Lattice => "Lattice system.",
-    SystemType::Network => "Network system.");
+impl Display for SystemType{
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result{
+        match self{
+            SystemType::ContinuousCircular => write!(f, "Continuous Circular system."),
+            SystemType::ContinuousRectangular => write!(f, "Continuous Rectangular system."),
+            SystemType::ContinuousCylindrical(d) => write!(f, "Continuous Cylindrical system. 0..{0:} : Circular, {0:}.. : Rectangular", d),
+            SystemType::Lattice => write!(f, "Lattice system."),
+            SystemType::Network => write!(f, "Network system."),
+        }
+    }
+}
 
 // From String to Type
-impl_fromstr_for_type!(SystemType,
-    SystemType::ContinuousCircular => "Continuous Circular system.",
-    SystemType::ContinuousRectangular => "Continuous Rectangular system.",
-    SystemType::Lattice => "Lattice system.",
-    SystemType::Network => "Network system.");
+impl FromStr for SystemType{
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let split : Vec<&str> = s.split_whitespace().collect();
+        match split[0]{
+            "Continuous" => {
+                match split[1]{
+                    "Circular" => Ok(SystemType::ContinuousCircular),
+                    "Rectangular" => Ok(SystemType::ContinuousRectangular),
+                    "Cylindrical" => {
+                        let d = split[3][3..].parse::<usize>().map_err(|_y| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
+                        Ok(SystemType::ContinuousCylindrical(d))
+                    }
+                    _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
+                }
+            },
+            "Lattice" => Ok(SystemType::Lattice),
+            "Network" => Ok(SystemType::Network),
+            "Circular" => Ok(SystemType::ContinuousCircular),
+            "Rectangular" => Ok(SystemType::ContinuousRectangular),
+            string =>{
+                let d = string.parse::<usize>().map_err(|_y| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
+                if d <= 0{
+                    Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput))
+                }
+                else{
+                    Ok(SystemType::ContinuousCylindrical(d))
+                }
+            }
+        }
+    }
+}
 
 impl Default for SystemType{
     fn default() -> Self{
@@ -78,13 +114,21 @@ impl Default for SystemType{
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
 pub enum BoundaryCond{                      // Boundary condition
     Periodic,                               // Only valid for Rectanuglar system or Lattice
-    Reflection,
+    Reflection,                             //
+    Mixed(usize),                           // Cylindrical system 등에서 각 dimension마다 boundary condition이 다를 수도 있다
 }
 
 // Formatting
-impl_fmt_for_type!(BoundaryCond,
-    BoundaryCond::Periodic => "Periodic Boundary Condition",
-    BoundaryCond::Reflection => "Reflective Boundary Condtion");
+impl Display for BoundaryCond{
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result{
+        match self{
+            BoundaryCond::Periodic => write!(f, "Periodic Boundary Condition"),
+            BoundaryCond::Reflection => write!(f, "Reflective Boundary Condtion"),
+            BoundaryCond::Mixed(dim) => write!(f, "Mixed Boundary Condition. 0..{0:} : Reflection, {0:}.. : Periodic", dim),
+        }
+    }
+}
+
 
 
 impl FromStr for BoundaryCond{
@@ -95,12 +139,17 @@ impl FromStr for BoundaryCond{
         match split[0]{
             "Reflective"    => Ok(BoundaryCond::Reflection),
             "Periodic"      => Ok(BoundaryCond::Periodic),
+            "Mixed"         => {
+                let x = split[3][3..].parse::<usize>().map_err(|_y| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
+                Ok(BoundaryCond::Mixed(x))
+            },
             string => {
                 let x = string.parse::<usize>().map_err(|_y| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
-                match x{
-                    0 => Ok(BoundaryCond::Reflection),
-                    1 => Ok(BoundaryCond::Periodic),
-                    _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
+                if x <= 0{
+                    Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput))
+                }
+                else{
+                    Ok(BoundaryCond::Mixed(x))
                 }
             },
         }
@@ -120,24 +169,28 @@ mod tests{
     impl_fmt_test!(test_fmt_systemtype,
         SystemType::ContinuousCircular => "Continuous Circular system.",
         SystemType::ContinuousRectangular => "Continuous Rectangular system.",
+        SystemType::ContinuousCylindrical(1) => "Continuous Cylindrical system. 0..1 : Circular, 1.. : Rectangular",
         SystemType::Lattice => "Lattice system.",
         SystemType::Network => "Network system.");
 
     impl_fmt_test!(test_fmt_boundarycond,
         BoundaryCond::Periodic => "Periodic Boundary Condition",
-        BoundaryCond::Reflection => "Reflective Boundary Condtion");
+        BoundaryCond::Reflection => "Reflective Boundary Condtion",
+        BoundaryCond::Mixed(1) => "Mixed Boundary Condition. 0..1 : Reflection, 1.. : Periodic");
 
     impl_fromstr_test!(test_fromstr_systemtype,
         SystemType,
         SystemType::ContinuousCircular => "Continuous Circular system.",
         SystemType::ContinuousRectangular => "Continuous Rectangular system.",
+        SystemType::ContinuousCylindrical(1) => "Continuous Cylindrical system. 0..1 : Circular, 1.. : Rectangular",
         SystemType::Lattice => "Lattice system.",
         SystemType::Network => "Network system.");
 
     impl_fromstr_test!(test_fromstr_boundarycond,
         BoundaryCond,
         BoundaryCond::Periodic => "Periodic Boundary Condition",
-        BoundaryCond::Reflection => "Reflective Boundary Condtion");
+        BoundaryCond::Reflection => "Reflective Boundary Condtion",
+        BoundaryCond::Mixed(1) => "Mixed Boundary Condition. 0..1 : Reflection, 1.. : Periodic");
 }
 
 
