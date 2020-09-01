@@ -73,7 +73,7 @@ macro_rules! export_simulation_info {
 #[macro_export]
 // #[allow(unused_macros)]
 macro_rules! setup_simulation{
-    ($args:ident, $width:expr, $skip:expr, $analysis:ty, $ds_name:ident, $dataset:ty $(, $arg_name:ident, $struct_type:ty)*) =>{
+    ($args:ident, $width:expr, $skip:expr, $analysis:ty, $prefix:expr, $ds_name:ident, $dataset:ty $(, $arg_name:ident, $struct_type:ty)*) =>{
 
         let $args : Vec<String> = std::env::args().collect();
         const WIDTH : usize = $width;
@@ -82,7 +82,7 @@ macro_rules! setup_simulation{
         define_total_num_args!($($struct_type),*);
 
         if $args.len() - NUM_SKIP == <$analysis>::NUM_ARGS || $args.len() - NUM_SKIP == <$analysis>::NUM_ARGS + 1{
-                return <$analysis>::analyze::<$dataset>(&$args[NUM_SKIP..], WIDTH);
+                return <$analysis>::analyze::<$dataset>(&$args[NUM_SKIP..], WIDTH, $prefix);
         }
         else if $args.len() - NUM_SKIP != TOTAL_NUM_ARGS{
             export_simulation_item!($args, $analysis $(, $struct_type)*);
@@ -96,7 +96,7 @@ macro_rules! setup_simulation{
 #[macro_export]
 // #[allow(unused_macros)]
 macro_rules! setup_simulation_fixed{
-    ($args:ident, $width:expr, $skip:expr, $analysis:ty, $ds_name:ident, $dataset:ty $(, $arg_name:ident, $struct_type:ty)*) =>{
+    ($args:ident, $width:expr, $skip:expr, $analysis:ty, $prefix:expr, $ds_name:ident, $dataset:ty $(, $arg_name:ident, $struct_type:ty)*) =>{
 
         const WIDTH : usize = $width;
         const NUM_SKIP : usize = $skip;
@@ -104,7 +104,7 @@ macro_rules! setup_simulation_fixed{
         define_total_num_args!($($struct_type),*);
 
         if $args.len() - NUM_SKIP == <$analysis>::NUM_ARGS || $args.len() - NUM_SKIP == <$analysis>::NUM_ARGS + 1{
-                return <$analysis>::analyze::<$dataset>(&$args, WIDTH);
+                return <$analysis>::analyze::<$dataset>(&$args, WIDTH, $prefix);
         }
         else if $args.len() - NUM_SKIP != TOTAL_NUM_ARGS{
             export_simulation_item!($args, $analysis $(, $struct_type)*);

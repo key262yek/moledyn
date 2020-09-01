@@ -172,7 +172,7 @@ pub trait Analysis{
     fn export<W: Write>(&self, prec: usize, brief_data : &mut W, export_dir: &String, filename: &String) -> Result<(), Error>;
 
     // analysis
-    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &[String], width : usize) -> Result<(), Error>;
+    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &[String], width : usize, prefix : &str) -> Result<(), Error>;
 }
 
 
@@ -241,7 +241,7 @@ impl Analysis for MFPTAnalysis{
         Ok(())
     }
 
-    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &[String], width : usize) -> Result<(), Error>{
+    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &[String], width : usize, prefix : &str) -> Result<(), Error>{
         use chrono::offset::Utc;
 
         let min_time : f64;
@@ -326,7 +326,7 @@ impl Analysis for MFPTAnalysis{
             summary.write_fmt(format_args!("{}{}\n", dataset.export_data(width)?, analysis.export_mean_stddev(width)?))
                     .map_err(Error::make_error_io)?;
 
-            let hist_filename = dataset.export_file("RTS_N_PTL_INDEP_SEARCHER");
+            let hist_filename = dataset.export_file(prefix);
 
             let linear = File::create(format!("{}", format_args!("{}/linear_distribution/{}",
                                         summary_dir, hist_filename))).map_err(Error::make_error_io)?;
@@ -339,7 +339,6 @@ impl Analysis for MFPTAnalysis{
         }
         return Ok(());
     }
-
 }
 
 impl MFPT for MFPTAnalysis{
