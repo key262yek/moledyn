@@ -459,7 +459,7 @@ mod tests{
             titype : TimeType::Exponential(1f64, 100f64, 10),
             current : 0f64,
             dt      : 1f64,
-            inc     : 1.2f64,
+            inc     : 10f64,
             tmax    : std::f64::MAX,
             count   : 0,
         }));
@@ -474,14 +474,17 @@ mod tests{
         timeiter.set_tmax(100f64)?;
         assert_eq!(timeiter.tmax, 100f64);
 
-        timeiter.set_inc(10f64)?;
-        assert_eq!(timeiter.inc, 10f64);
+        timeiter.set_inc(1.2f64)?;
+        assert_eq!(timeiter.inc, 1.2f64);
+
+        timeiter.set_inc(10f64)?;           // Too large increment
+        assert_eq!(timeiter.inc, 5f64);
 
         let mut res = String::new();
         for time in timeiter{
             res.push_str(format!("{} ", time).as_str());
         }
-        assert_eq!(res, "0 1 2 3 4 5 6 7 8 9 10 20 30 40 50 60 70 80 90 100 ");
+        assert_eq!(res, "0 1 2 3 4 5 6 7 8 9 10 15 20 25 30 35 40 45 50 55 60 85 ");
 
         Ok(())
     }
