@@ -335,7 +335,7 @@ impl Analysis for MFPTAnalysis{
             let log = File::create(format!("{}", format_args!("{}/logarithmic_distribution/{}",
                                         summary_dir, hist_filename))).map_err(Error::make_error_io)?;
             let mut log = BufWriter::new(log);
-            analysis.export_distribution(width, log.get_mut())?;
+            analysis.export_log_scaled_distribution(width, log.get_mut())?;
         }
         return Ok(());
     }
@@ -743,5 +743,15 @@ mod tests{
         Ok(())
     }
 
+    #[test]
+    fn test_convert_num_bin_to_bin_size() -> Result<(), Error>{
+        let min : f64 = 1f64;
+        let max : f64 = 101f64;
+        let num_bin : usize = 100;
 
+        let bs : (f64, f64) = MFPTAnalysis::convert_num_bin_to_bin_size(min, max, num_bin)?;
+        assert_eq!(bs, (1f64, 1.0472327459898225));
+
+        Ok(())
+    }
 }
