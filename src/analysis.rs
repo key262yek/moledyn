@@ -283,7 +283,7 @@ impl Analysis for MFPTAnalysis{
                                     data_dir, Utc::today().format("%Y%m%d").to_string()));
 
         if Path::new(&summary_dir).exists(){
-            let mut i : usize = 1;
+            let mut i : usize = 2;
             let mut new : String;
             loop{
                 new = format!("{}", format_args!("{}_{}", summary_dir, i));
