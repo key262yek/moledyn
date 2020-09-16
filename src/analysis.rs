@@ -279,8 +279,24 @@ impl Analysis for MFPTAnalysis{
         }
 
         let mut hashmap : HashMap<H, Self> = HashMap::new();
-        let summary_dir : String = format!("{}", format_args!("{}/analysis_{}",
+        let mut summary_dir : String = format!("{}", format_args!("{}/analysis_{}",
                                     data_dir, Utc::today().format("%Y%m%d").to_string()));
+
+        if Path::new(&summary_dir).exists(){
+            let mut i : usize = 1;
+            let mut new : String;
+            loop{
+                new = format!("{}", format_args!("{}_{}", summary_dir, i));
+                if Path::new(&new).exists(){
+                    i += 1;
+                }
+                else{
+                    break;
+                }
+            }
+            summary_dir = new.clone();
+        }
+
         let summary_file : String = format!("{}/analysis_fpt.dat", summary_dir);
 
         fs::create_dir_all(&summary_dir).map_err(Error::make_error_io)?;
