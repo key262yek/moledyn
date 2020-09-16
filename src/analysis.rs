@@ -195,6 +195,8 @@ pub struct MFPTAnalysis{
     num_lbin : usize,       // Number of bin for logarithmic histogram
     hist : Vec<f64>,        // Linear Histogram
     lhist : Vec<f64>,       // Logarithmic Histogram
+    count : Vec<usize>,     // Count of ensemble in linear range
+    lcount : Vec<usize>,    // Count of ensemble in logarithmic range
 }
 
 impl Analysis for MFPTAnalysis{
@@ -389,6 +391,8 @@ impl MFPT for MFPTAnalysis{
             num_lbin : num_lbin,
             hist : vec![0.0f64; num_bin],
             lhist : vec![0.0f64; num_lbin],
+            count : vec![0; num_bin],
+            lcount : vec![0; num_lbin],
         })
     }
 
@@ -420,6 +424,8 @@ impl MFPT for MFPTAnalysis{
             num_lbin : num_bin,
             hist : vec![0.0f64; num_bin],
             lhist : vec![0.0f64; num_bin],
+            count : vec![0; num_bin],
+            lcount : vec![0; num_bin],
         })
     }
 
@@ -448,11 +454,11 @@ impl MFPT for MFPTAnalysis{
         self.square_fpt += fpt * fpt;
 
         match self.bin_pos(fpt){
-            Some(idx) => {self.hist[idx] += 1f64;},
+            Some(idx) => {self.count[idx] += 1;},
             None => ()
         }
         match self.lbin_pos(fpt){
-            Some(idx) => {self.lhist[idx] += 1f64;},
+            Some(idx) => {self.lcount[idx] += 1;},
             None => ()
         }
     }
@@ -494,12 +500,12 @@ impl MFPT for MFPTAnalysis{
         let lbin : f64 = self.lbin_size;
         let mut d_lbin : f64 = self.min_time * en * (lbin - 1f64);
 
-        for x in &mut self.hist{
-            *x /= d_bin;
+        for (i, &x) in self.count.iter().enumerate(){
+            self.hist[i] = (x as f64) / d_bin;
         }
 
-        for x in &mut self.lhist{
-            *x /= d_lbin;
+        for (i, &x) in self.lcount.iter().enumerate(){
+            self.lhist[i] = (x as f64) / d_lbin;
             d_lbin *= lbin;
         }
     }
@@ -513,12 +519,13 @@ impl MFPT for MFPTAnalysis{
     fn export_distribution<W: Write>(&self, prec : usize, writer : &mut W) -> Result<(), Error>{
         let bin_size = self.bin_size;
         let mut time = self.min_time - bin_size / 2f64;
-        for x in &self.hist{
+        for (i, &x) in self.hist.iter().enumerate(){
             time += bin_size;
             if x.abs() < 1e-15{
                 continue;
             }
-            writer.write_fmt(format_args!("{1:0$e}\t{2:0$e}\n", prec, time, x)).map_err(Error::make_error_io)?;
+            let n = self.count[i];
+            writer.write_fmt(format_args!("{1:0$e}\t{2:0$}\t{3:0$e}\n", prec, time, n, x)).map_err(Error::make_error_io)?;
         }
         Ok(())
     }
@@ -528,12 +535,13 @@ impl MFPT for MFPTAnalysis{
         let r = self.lbin_size;
         let mut time = self.min_time / r.sqrt();
 
-        for x in &self.lhist{
+        for (i, &x) in self.lhist.iter().enumerate(){
             time *= r;
             if x.abs() < 1e-15{
                 continue;
             }
-            writer.write_fmt(format_args!("{1:0$e}\t{2:0$e}\n", prec, time, x)).map_err(Error::make_error_io)?;
+            let n = self.lcount[i];
+            writer.write_fmt(format_args!("{1:0$e}\t{2:0$}\t{3:0$e}\n", prec, time, n, x)).map_err(Error::make_error_io)?;
         }
         Ok(())
     }
@@ -563,6 +571,8 @@ impl Default for MFPTAnalysis{
             num_lbin : 355,
             hist : vec![0.0f64; 1001],
             lhist : vec![0.0f64; 355],
+            count : vec![0; 1001],
+            lcount : vec![0; 355],
         }
     }
 }
