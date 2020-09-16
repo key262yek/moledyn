@@ -72,9 +72,9 @@ macro_rules! construct_dataset {
                         string.push_str(format!("{}", format_args!("_{}_{}", stringify!($var), self.$var)).as_str());
                     )*
                 )*
-                $($(
-                    string.push_str(format!("{}", format_args!("_{}_{}", stringify!($sim_var), self.$sim_var)).as_str());
-                )*)?
+                // $($(
+                //     string.push_str(format!("{}", format_args!("_{}_{}", stringify!($sim_var), self.$sim_var)).as_str());
+                // )*)?
                 string.push_str(".dat");
                 return string;
             }
@@ -153,6 +153,7 @@ pub trait MFPT
     export_form!(mfpt_export_form, mfpt, stddev, ensemble);
 }
 
+
 pub trait Analysis{
     const NUM_ARGS : usize;
 
@@ -174,6 +175,7 @@ pub trait Analysis{
     // analysis
     fn analyze<H : Hash + Eq + Copy + DataSet>(args : &[String], width : usize, prefix : &str) -> Result<(), Error>;
 }
+
 
 
 // =====================================================================================
