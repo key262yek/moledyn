@@ -15,6 +15,9 @@ pub trait DataSet{
     // File name corresponding to dataset
     fn export_file(&self, prefix : &str) -> String;
 
+    // File name corresponding to dataset
+    fn export_file_removed_idx(&self, prefix : &str) -> String;
+
     // Explaination of each column in data file
     fn export_form(width: usize) -> String;
 
@@ -72,9 +75,21 @@ macro_rules! construct_dataset {
                         string.push_str(format!("{}", format_args!("_{}_{}", stringify!($var), self.$var)).as_str());
                     )*
                 )*
-                // $($(
-                //     string.push_str(format!("{}", format_args!("_{}_{}", stringify!($sim_var), self.$sim_var)).as_str());
-                // )*)?
+                $($(
+                    string.push_str(format!("{}", format_args!("_{}_{}", stringify!($sim_var), self.$sim_var)).as_str());
+                )*)?
+                string.push_str(".dat");
+                return string;
+            }
+
+            #[allow(dead_code)]
+            fn export_file_removed_idx(&self, prefix : &str) -> String{
+                let mut string = String::from(prefix);
+                $(
+                    $(
+                        string.push_str(format!("{}", format_args!("_{}_{}", stringify!($var), self.$var)).as_str());
+                    )*
+                )*
                 string.push_str(".dat");
                 return string;
             }
@@ -346,7 +361,7 @@ impl Analysis for MFPTAnalysis{
             summary.write_fmt(format_args!("{}{}\n", dataset.export_data(width)?, analysis.export_mean_stddev(width)?))
                     .map_err(Error::make_error_io)?;
 
-            let hist_filename = dataset.export_file(prefix);
+            let hist_filename = dataset.export_file_removed_idx(prefix);
 
             let linear = File::create(format!("{}", format_args!("{}/linear_distribution/{}",
                                         summary_dir, hist_filename))).map_err(Error::make_error_io)?;
