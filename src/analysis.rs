@@ -691,6 +691,9 @@ impl VarN for MergeTimeAnalysis{
             self.num_var = values.len();
             self.allocate_vectors();
         }
+        else if self.num_var != values.len(){
+            panic!("Invalid Data File");
+        }
 
         self.ensemble += 1;
         for (idx, &time) in values.iter().enumerate(){
