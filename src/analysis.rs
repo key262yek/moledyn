@@ -950,6 +950,9 @@ impl Analysis for MergeTimeAnalysis{
         }
 
         for (dataset, analysis) in hashmap.iter_mut(){
+            if analysis.ensemble == 0{
+                continue;
+            }
             analysis.draw();
 
             let hist_filename = dataset.export_file_removed_idx(prefix);
