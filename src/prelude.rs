@@ -8,12 +8,12 @@ pub use crate::{
         impl_fmt_for_type, impl_fmt_test, impl_fromstr_for_type, impl_fromstr_test,
         construct_dataset, derive_hash, export_form, pub_export_form, export_data, pub_export_data,
         export_simulation_item, define_total_num_args, read_arguments, export_simulation_info,
-        setup_simulation, setup_simulation_fixed
+        setup_simulation, setup_simulation_fixed, construct_trait_bin
     },
     error::{Error, ErrorCode},
     position::{Position, Numerics},
     argument::{Argument},
-    analysis::{MFPT, Analysis, MFPTAnalysis, DataSet},
+    analysis::{Bin, Var1, Analysis, MFPTAnalysis, MergeTimeAnalysis, DataSet},
     random_mod::{rng_seed},
     system_mod::{SystemCore, SystemType, BoundaryCond},
     target_mod::{TargetCore, TargetType},

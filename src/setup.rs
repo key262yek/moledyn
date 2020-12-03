@@ -80,7 +80,6 @@ macro_rules! setup_simulation{
         const NUM_SKIP : usize = $skip;
 
         define_total_num_args!($($struct_type),*);
-
         if $args.len() - NUM_SKIP == <$analysis>::NUM_ARGS || $args.len() - NUM_SKIP == <$analysis>::NUM_ARGS + 1{
                 return <$analysis>::analyze::<$dataset>(&$args[NUM_SKIP..], WIDTH, $prefix);
         }

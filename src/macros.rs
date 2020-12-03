@@ -144,6 +144,7 @@ macro_rules! derive_hash{
 // #[allow(unused_macros)]
 macro_rules! export_form{
     ($name:ident $(,$var:ident) *) => {
+        #[allow(dead_code)]
         fn $name(width: usize) -> String{
             let mut string = String::new();
             $(string.push_str(format!("{}", format_args!("{0:<1$}", stringify!($var), width)).as_str());

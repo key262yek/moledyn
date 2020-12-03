@@ -64,6 +64,7 @@ macro_rules! construct_dataset {
                 )*
                 $(let $sim_arg_name = <$sim_type>::read_args_from_lines(&mut lines)?;)?
 
+
                 Ok(($name::new($(&$arg_name),* $(,&$sim_arg_name)?), lines))
             }
 
@@ -123,49 +124,139 @@ macro_rules! construct_dataset {
 // ===  Trait for Analysis =============================================================
 // =====================================================================================
 
-pub trait MFPT
+pub trait Bin
     where Self : Sized{
     // Define Analysis from bin sizes
-    fn from_bin_size(min_time : f64, max_time : f64, bin_size : f64, lbin_size : f64) -> Result<Self, Error>;
+    fn update_from_bin_size(&mut self, min_time : f64, max_time : f64, bin_size : f64, lbin_size : f64) -> Result<(), Error>;
 
     // Define Analysis from number of bin
-    fn from_num_bin(min_time : f64, max_time : f64, num_bin : usize) -> Result<Self, Error>;
+    fn update_from_num_bin(&mut self, min_time : f64, max_time : f64, num_bin : usize) -> Result<(), Error>;
 
     // Convert number of bins to bin sizes
     fn convert_num_bin_to_bin_size(min_time : f64, max_time : f64, num_bin : usize) -> Result<(f64, f64), Error>;
 
-    // Add ensemble data
-    fn add_ensemble(&mut self, fpt : f64);
-
-    // return Mean First Passage Time
-    fn mfpt(&self) -> f64;
-
-    // return Standard Deviation of First Passage Time
-    fn stddev(&self) -> f64;
-
     // Find binning position of data
-    fn bin_pos(&self, fpt : f64) -> Option<usize>;
-    fn lbin_pos(&self, fpt : f64) -> Option<usize>;
+    fn bin_pos(&self, value : f64) -> Option<usize>;
+    fn lbin_pos(&self, value : f64) -> Option<usize>;
+
+    // Allocate vectors
+    fn allocate_vectors(&mut self);
+}
+
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! construct_trait_bin {
+() => {
+        #[allow(dead_code)]
+        fn update_from_bin_size(&mut self, min_time : f64, max_time : f64, bin_size : f64, lbin_size : f64) -> Result<(), Error>{
+            if min_time < 0f64 || max_time < min_time || bin_size < 0f64 || lbin_size < 0f64{
+                return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+            }
+
+            let time : f64;
+            if min_time < 1e-15{
+                time = 1e-15;
+            }
+            else{
+                time = min_time;
+            }
+
+            let num_bin : usize = ((max_time - time) / bin_size + 0.5f64).ceil() as usize;
+            let num_lbin : usize = ((max_time / time).log2() / lbin_size.log2() + 0.5f64).ceil() as usize;
+
+            self.min_time = time;
+            self.max_time = max_time;
+            self.bin_size = bin_size;
+            self.lbin_size = lbin_size;
+            self.num_bin = num_bin;
+            self.num_lbin = num_lbin;
+            return Ok(());
+        }
+
+        #[allow(dead_code)]
+        fn update_from_num_bin(&mut self, min_time : f64, max_time : f64, num_bin : usize) -> Result<(), Error>{
+            if min_time < 0f64 || max_time < min_time || num_bin < 10{
+                return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+            }
+
+            let time : f64;
+            if min_time < 1e-15{
+                time = 1e-15;
+            }
+            else{
+                time = min_time;
+            }
+
+            let (bin_size, lbin_size) : (f64, f64) = Self::convert_num_bin_to_bin_size(time, max_time, num_bin)?;
+
+            self.min_time = time;
+            self.max_time = max_time;
+            self.bin_size = bin_size;
+            self.lbin_size = lbin_size;
+            self.num_bin = num_bin;
+            self.num_lbin = num_bin;
+            return Ok(());
+        }
+
+        fn convert_num_bin_to_bin_size(min_time : f64, max_time : f64, num_bin : usize) -> Result<(f64, f64), Error>{
+            if min_time < 0f64 || max_time < min_time || num_bin < 10{
+                return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+            }
+
+            let time : f64;
+            if min_time < 1e-15{
+                time = 1e-15;
+            }
+            else{
+                time = min_time;
+            }
+
+            let bin_size : f64 = (max_time - time) / (num_bin as f64);
+            let lbin_size : f64 = (max_time / time).powf(1f64 / (num_bin as f64));
+            return Ok((bin_size, lbin_size));
+        }
+
+        #[allow(dead_code)]
+        fn bin_pos(&self, fpt : f64) -> Option<usize>{
+            if fpt < self.min_time || self.max_time < fpt{
+                return None;
+            }
+            else{
+                return Some(((fpt - self.min_time) / self.bin_size).floor() as usize);
+            }
+        }
+
+        #[allow(dead_code)]
+        fn lbin_pos(&self, fpt : f64) -> Option<usize>{
+            if fpt < self.min_time || self.max_time < fpt{
+                return None;
+            }
+            else{
+                return Some(((fpt / self.min_time).log2() / self.lbin_size.log2()).floor() as usize);
+            }
+        }
+    }
+}
+
+pub trait Var1
+    where Self : Sized + Bin{
+
+    // Add ensemble data
+    fn add_ensemble(&mut self, value : f64);
 
     // Draw distribution from histogram
     fn draw(&mut self);
+}
 
-    // Export datas
-    fn export_mean_stddev(&self, prec: usize) -> Result<String, Error>;
-    fn export_distribution<W: Write>(&self, prec : usize, writer : &mut W) -> Result<(), Error>;
-    fn export_log_scaled_distribution<W: Write>(&self, prec : usize, writer: &mut W) -> Result<(), Error>;
+pub trait VarN
+    where Self : Sized + Bin{
 
-    // clear analysis
-    fn clear_mfpt_data(&mut self);
+    // Add ensemble data
+    fn add_ensemble(&mut self, values : Vec<f64>);
 
-    impl_fn_brief_info!(mfpt_breif_info, "MFPT", min_time, max_time, bin_size, lbin_size, output_dir);
-    impl_fn_info!(mpft_info,
-                  min_time, "Minimal time for Histogram",
-                  max_time, "Maximal time for Histogram",
-                  bin_size, "Bin size for Linear Histogram",
-                  lbin_size, "Bin size for Logarithmic Histogram",
-                  output_dir, "Directory for data files");
-    export_form!(mfpt_export_form, mfpt, stddev, ensemble);
+    // Draw distribution from histogram
+    fn draw(&mut self);
 }
 
 
@@ -184,6 +275,11 @@ pub trait Analysis{
     // export form for summary file (explaination of each column in summary file)
     fn export_form(width : usize) -> String;
 
+    // Export datas
+    fn export_mean_stddev(&self, prec: usize) -> Result<String, Error>;
+    fn export_distribution<W: Write>(&self, prec : usize, writer : &mut W) -> Result<(), Error>;
+    fn export_log_scaled_distribution<W: Write>(&self, prec : usize, writer: &mut W) -> Result<(), Error>;
+
     // export data to summary file
     fn export<W: Write>(&self, prec: usize, brief_data : &mut W, export_dir: &String, filename: &String) -> Result<(), Error>;
 
@@ -191,16 +287,14 @@ pub trait Analysis{
     fn analyze<H : Hash + Eq + Copy + DataSet>(args : &[String], width : usize, prefix : &str) -> Result<(), Error>;
 }
 
-
-
 // =====================================================================================
-// ===  Implement Analysis =============================================================
+// ===  Implement MFPTAnalysis =========================================================
 // =====================================================================================
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MFPTAnalysis{
-    sum_fpt : f64,          // Sum of fpt data
-    square_fpt : f64,       // Sum of fpt squares
+    mean : f64,             // Sum of fpt data
+    stddev : f64,           // Sum of fpt stddevs
     ensemble : usize,       // Number of ensemble
     min_time : f64,         // Minimal time for logarithmic histogram
     max_time : f64,         // Maximal time for storing
@@ -214,36 +308,162 @@ pub struct MFPTAnalysis{
     lcount : Vec<usize>,    // Count of ensemble in logarithmic range
 }
 
+impl MFPTAnalysis{
+    #[allow(dead_code)]
+    fn new() -> Self{
+        Self{
+            mean : 0f64,
+            stddev : 0f64,
+            ensemble : 0usize,
+            min_time : 0f64,
+            max_time : 0f64,
+            bin_size : 0f64,
+            lbin_size : 0f64,
+            num_bin : 0usize,
+            num_lbin : 0usize,
+            hist : Vec::new(),
+            lhist : Vec::new(),
+            count : Vec::new(),
+            lcount : Vec::new(),
+        }
+    }
+}
+
+impl Default for MFPTAnalysis{
+    fn default() -> Self{
+        MFPTAnalysis{
+            mean : 0f64,
+            stddev : 0f64,
+            ensemble : 0usize,
+            min_time : 1e-15f64,
+            max_time : 1e13f64,
+            bin_size : 1e10f64,
+            lbin_size : 1.2f64,
+            num_bin : 1001usize,
+            num_lbin : 355,
+            hist : vec![0.0f64; 1001],
+            lhist : vec![0.0f64; 355],
+            count : vec![0; 1001],
+            lcount : vec![0; 355],
+        }
+    }
+}
+
+impl Bin for MFPTAnalysis{
+    construct_trait_bin!();
+
+    fn allocate_vectors(&mut self){
+        self.hist = vec![0.0f64; self.num_bin];
+        self.lhist = vec![0.0f64; self.num_lbin];
+        self.count = vec![0; self.num_bin];
+        self.lcount = vec![0; self.num_lbin];
+    }
+}
+
+
+
+impl Var1 for MFPTAnalysis{
+    #[allow(dead_code)]
+    fn add_ensemble(&mut self, fpt: f64){
+
+        self.ensemble += 1;
+        self.mean += fpt;
+        self.stddev += fpt * fpt;
+
+        match self.bin_pos(fpt){
+            Some(idx) => {self.count[idx] += 1;},
+            None => ()
+        }
+        match self.lbin_pos(fpt){
+            Some(idx) => {self.lcount[idx] += 1;},
+            None => ()
+        }
+    }
+
+    #[allow(dead_code)]
+    fn draw(&mut self){
+        let en : f64= self.ensemble as f64;
+
+        self.mean = self.mean / en;
+        self.stddev = ((self.stddev / en) - self.mean.powi(2)).sqrt();
+
+        let d_bin : f64 = en * (self.bin_size as f64);
+        let lbin : f64 = self.lbin_size;
+        let mut d_lbin : f64 = self.min_time * en * (lbin - 1f64);
+
+        for (i, &x) in self.count.iter().enumerate(){
+            self.hist[i] = (x as f64) / d_bin;
+        }
+
+        for (i, &x) in self.lcount.iter().enumerate(){
+            self.lhist[i] = (x as f64) / d_lbin;
+            d_lbin *= lbin;
+        }
+    }
+}
+
+
 impl Analysis for MFPTAnalysis{
     const NUM_ARGS : usize = 4;
 
     #[allow(dead_code)]
     fn clear(&mut self){
-        self.clear_mfpt_data();
+        self.mean = 0f64;
+        self.stddev = 0f64;
+        self.ensemble = 0usize;
+        self.count = vec![0; self.num_bin];
+        self.lcount = vec![0; self.num_lbin];
     }
 
-    fn info(width : usize) -> String{
-        let mut string = String::new();
-        string.push_str(format!("{}", MFPTAnalysis::mpft_info(width)).as_str());
-        string.push_str("You can give only number of bin instead of bin sizes\n");
-        return string;
+    impl_fn_brief_info!(brief_info, "MFPT", min_time, max_time, bin_size, lbin_size, output_dir);
+    impl_fn_info!(info,
+                  min_time, "Minimal time for Histogram",
+                  max_time, "Maximal time for Histogram",
+                  bin_size, "Bin size for Linear Histogram",
+                  lbin_size, "Bin size for Logarithmic Histogram",
+                  output_dir, "Directory for data files");
+    export_form!(export_form, ensemble, mfpt, stddev);
+
+
+    #[allow(dead_code)]
+    fn export_mean_stddev(&self, prec : usize) -> Result<String, Error>{
+        Ok(format!("{}", format_args!("{1:<0$e}\t{2:<0$e}\t{3:<0$}", prec, self.mean, self.stddev, self.ensemble)))
     }
 
-    fn brief_info() -> String{
-        let mut string = String::new();
-        string.push_str(format!("{}\n", MFPTAnalysis::mfpt_breif_info()).as_str());
-        return string;
+    #[allow(dead_code)]
+    fn export_distribution<W: Write>(&self, prec : usize, writer : &mut W) -> Result<(), Error>{
+        let bin_size = self.bin_size;
+        let mut time = self.min_time - bin_size / 2f64;
+        for (i, &x) in self.hist.iter().enumerate(){
+            time += bin_size;
+            if x.abs() < 1e-15{
+                continue;
+            }
+            let n = self.count[i];
+            writer.write_fmt(format_args!("{1:0$e}\t{2:0$}\t{3:0$e}\n", prec, time, n, x)).map_err(Error::make_error_io)?;
+        }
+        Ok(())
     }
 
-    fn export_form(width: usize) -> String{
-        let mut string = String::new();
-        string.push_str(format!("{}", MFPTAnalysis::mfpt_export_form(width)).as_str());
-        return string;
+    #[allow(dead_code)]
+    fn export_log_scaled_distribution<W: Write>(&self, prec : usize, writer: &mut W) -> Result<(), Error>{
+        let r = self.lbin_size;
+        let mut time = self.min_time / r.sqrt();
+
+        for (i, &x) in self.lhist.iter().enumerate(){
+            time *= r;
+            if x.abs() < 1e-15{
+                continue;
+            }
+            let n = self.lcount[i];
+            writer.write_fmt(format_args!("{1:0$e}\t{2:0$}\t{3:0$e}\n", prec, time, n, x)).map_err(Error::make_error_io)?;
+        }
+        Ok(())
     }
 
     fn export<W: Write>(&self, prec: usize, brief_data : &mut W, export_dir: &String, filename: &String) -> Result<(), Error>{
         // Export mfpt datas
-        brief_data.write(format!("{}\n", self.export_mean_stddev(prec)?).as_bytes()).map_err(Error::make_error_io)?;
+        brief_data.write(format!("{}", format_args!("{}\n", self.export_mean_stddev(prec)?)).as_bytes()).map_err(Error::make_error_io)?;
 
         // Export linear histogram
         let linear_filename = format!("{}", format_args!("{}/linear_distribution/{}", export_dir, filename));
@@ -252,7 +472,7 @@ impl Analysis for MFPTAnalysis{
         self.export_distribution(prec, linear.get_mut())?;
 
         // Export logarithmic histogram
-        let log_filename = format!("{}", format_args!("{}/linear_distribution/{}", export_dir, filename));
+        let log_filename = format!("{}", format_args!("{}/logarithmic_distribution/{}", export_dir, filename));
         let log = File::create(log_filename).map_err(Error::make_error_io)?;
         let mut log = BufWriter::new(log);
         self.export_log_scaled_distribution(prec, log.get_mut())?;
@@ -341,7 +561,9 @@ impl Analysis for MFPTAnalysis{
             let analysis = match hashmap.get_mut(&dataset){
                 Some(x) => x,
                 None => {
-                    let x = Self::from_bin_size(min_time, max_time, bin_size, lbin_size)?;
+                    let mut x = Self::new();
+                    x.update_from_bin_size(min_time, max_time, bin_size, lbin_size)?;
+                    x.allocate_vectors();
                     hashmap.insert(dataset, x);
                     hashmap.get_mut(&dataset).unwrap()
                 },
@@ -358,225 +580,94 @@ impl Analysis for MFPTAnalysis{
         for (dataset, analysis) in hashmap.iter_mut(){
             analysis.draw();
 
-            summary.write_fmt(format_args!("{}{}\n", dataset.export_data(width)?, analysis.export_mean_stddev(width)?))
-                    .map_err(Error::make_error_io)?;
-
             let hist_filename = dataset.export_file_removed_idx(prefix);
 
-            let linear = File::create(format!("{}", format_args!("{}/linear_distribution/{}",
-                                        summary_dir, hist_filename))).map_err(Error::make_error_io)?;
-            let mut linear = BufWriter::new(linear);
-            analysis.export_distribution(width, linear.get_mut())?;
-            let log = File::create(format!("{}", format_args!("{}/logarithmic_distribution/{}",
-                                        summary_dir, hist_filename))).map_err(Error::make_error_io)?;
-            let mut log = BufWriter::new(log);
-            analysis.export_log_scaled_distribution(width, log.get_mut())?;
+            summary.write_fmt(format_args!("{}", dataset.export_data(width)?)).map_err(Error::make_error_io)?;
+            analysis.export(width, &mut summary, &summary_dir, &hist_filename)?;
+
+            // summary.write_fmt(format_args!("{}{}\n", dataset.export_data(width)?, analysis.export_mean_stddev(width)?))
+            //         .map_err(Error::make_error_io)?;
+
+            // let linear = File::create(format!("{}", format_args!("{}/linear_distribution/{}",
+            //                             summary_dir, hist_filename))).map_err(Error::make_error_io)?;
+            // let mut linear = BufWriter::new(linear);
+            // analysis.export_distribution(width, linear.get_mut())?;
+            // let log = File::create(format!("{}", format_args!("{}/logarithmic_distribution/{}",
+            //                             summary_dir, hist_filename))).map_err(Error::make_error_io)?;
+            // let mut log = BufWriter::new(log);
+            // analysis.export_log_scaled_distribution(width, log.get_mut())?;
         }
         return Ok(());
     }
 }
 
-impl MFPT for MFPTAnalysis{
-    #[allow(dead_code)]
-    fn from_bin_size(min_time : f64, max_time : f64, bin_size : f64, lbin_size : f64) -> Result<Self, Error>{
-        if min_time < 0f64 || max_time < min_time || bin_size < 0f64 || lbin_size < 0f64{
-            return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
-        }
 
-        let time : f64;
-        if min_time < 1e-15{
-            time = 1e-15;
-        }
-        else{
-            time = min_time;
-        }
 
-        let num_bin : usize = ((max_time - time) / bin_size + 0.5f64).ceil() as usize;
-        let num_lbin : usize = ((max_time / time).log2() / lbin_size.log2() + 0.5f64).ceil() as usize;
+// =====================================================================================
+// ===  Implement MergeTimeAnalysis ====================================================
+// =====================================================================================
 
-        Ok(Self{
-            sum_fpt : 0f64,
-            square_fpt : 0f64,
-            ensemble : 0usize,
-            min_time : time,
-            max_time : max_time,
-            bin_size : bin_size,
-            lbin_size : lbin_size,
-            num_bin : num_bin,
-            num_lbin : num_lbin,
-            hist : vec![0.0f64; num_bin],
-            lhist : vec![0.0f64; num_lbin],
-            count : vec![0; num_bin],
-            lcount : vec![0; num_lbin],
-        })
-    }
-
-    #[allow(dead_code)]
-    fn from_num_bin(min_time : f64, max_time : f64, num_bin : usize) -> Result<Self, Error>{
-        if min_time < 0f64 || max_time < min_time || num_bin < 10{
-            return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
-        }
-
-        let time : f64;
-        if min_time < 1e-15{
-            time = 1e-15;
-        }
-        else{
-            time = min_time;
-        }
-
-        let (bin_size, lbin_size) : (f64, f64) = Self::convert_num_bin_to_bin_size(time, max_time, num_bin)?;
-
-        Ok(Self{
-            sum_fpt : 0f64,
-            square_fpt : 0f64,
-            ensemble : 0usize,
-            min_time : time,
-            max_time : max_time,
-            bin_size : bin_size,
-            lbin_size : lbin_size,
-            num_bin : num_bin,
-            num_lbin : num_bin,
-            hist : vec![0.0f64; num_bin],
-            lhist : vec![0.0f64; num_bin],
-            count : vec![0; num_bin],
-            lcount : vec![0; num_bin],
-        })
-    }
-
-    fn convert_num_bin_to_bin_size(min_time : f64, max_time : f64, num_bin : usize) -> Result<(f64, f64), Error>{
-        if min_time < 0f64 || max_time < min_time || num_bin < 10{
-            return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
-        }
-
-        let time : f64;
-        if min_time < 1e-15{
-            time = 1e-15;
-        }
-        else{
-            time = min_time;
-        }
-
-        let bin_size : f64 = (max_time - time) / (num_bin as f64);
-        let lbin_size : f64 = (max_time / time).powf(1f64 / (num_bin as f64));
-        return Ok((bin_size, lbin_size));
-    }
-
-    #[allow(dead_code)]
-    fn add_ensemble(&mut self, fpt : f64){
-        self.ensemble += 1;
-        self.sum_fpt += fpt;
-        self.square_fpt += fpt * fpt;
-
-        match self.bin_pos(fpt){
-            Some(idx) => {self.count[idx] += 1;},
-            None => ()
-        }
-        match self.lbin_pos(fpt){
-            Some(idx) => {self.lcount[idx] += 1;},
-            None => ()
-        }
-    }
-
-    #[allow(dead_code)]
-    fn mfpt(&self) -> f64{
-        self.sum_fpt / (self.ensemble as f64)
-    }
-
-    #[allow(dead_code)]
-    fn stddev(&self) -> f64{
-        (self.square_fpt / (self.ensemble as f64) - self.mfpt().powi(2)).sqrt()
-    }
-
-    #[allow(dead_code)]
-    fn bin_pos(&self, fpt : f64) -> Option<usize>{
-        if fpt < self.min_time || self.max_time < fpt{
-            return None;
-        }
-        else{
-            return Some(((fpt - self.min_time) / self.bin_size).floor() as usize);
-        }
-    }
-
-    #[allow(dead_code)]
-    fn lbin_pos(&self, fpt : f64) -> Option<usize>{
-        if fpt < self.min_time || self.max_time < fpt{
-            return None;
-        }
-        else{
-            return Some(((fpt / self.min_time).log2() / self.lbin_size.log2()).floor() as usize);
-        }
-    }
-
-    #[allow(dead_code)]
-    fn draw(&mut self){
-        let en : f64= self.ensemble as f64;
-        let d_bin : f64 = en * (self.bin_size as f64);
-        let lbin : f64 = self.lbin_size;
-        let mut d_lbin : f64 = self.min_time * en * (lbin - 1f64);
-
-        for (i, &x) in self.count.iter().enumerate(){
-            self.hist[i] = (x as f64) / d_bin;
-        }
-
-        for (i, &x) in self.lcount.iter().enumerate(){
-            self.lhist[i] = (x as f64) / d_lbin;
-            d_lbin *= lbin;
-        }
-    }
-
-    #[allow(dead_code)]
-    fn export_mean_stddev(&self, prec : usize) -> Result<String, Error>{
-        Ok(format!("{}", format_args!("{1:<0$e}\t{2:<0$e}\t{3:<0$}", prec, self.mfpt(), self.stddev(), self.ensemble)))
-    }
-
-    #[allow(dead_code)]
-    fn export_distribution<W: Write>(&self, prec : usize, writer : &mut W) -> Result<(), Error>{
-        let bin_size = self.bin_size;
-        let mut time = self.min_time - bin_size / 2f64;
-        for (i, &x) in self.hist.iter().enumerate(){
-            time += bin_size;
-            if x.abs() < 1e-15{
-                continue;
-            }
-            let n = self.count[i];
-            writer.write_fmt(format_args!("{1:0$e}\t{2:0$}\t{3:0$e}\n", prec, time, n, x)).map_err(Error::make_error_io)?;
-        }
-        Ok(())
-    }
-
-    #[allow(dead_code)]
-    fn export_log_scaled_distribution<W: Write>(&self, prec : usize, writer: &mut W) -> Result<(), Error>{
-        let r = self.lbin_size;
-        let mut time = self.min_time / r.sqrt();
-
-        for (i, &x) in self.lhist.iter().enumerate(){
-            time *= r;
-            if x.abs() < 1e-15{
-                continue;
-            }
-            let n = self.lcount[i];
-            writer.write_fmt(format_args!("{1:0$e}\t{2:0$}\t{3:0$e}\n", prec, time, n, x)).map_err(Error::make_error_io)?;
-        }
-        Ok(())
-    }
-
-    #[allow(dead_code)]
-    fn clear_mfpt_data(&mut self){
-        self.sum_fpt = 0f64;
-        self.square_fpt = 0f64;
-        self.ensemble = 0usize;
-        self.hist = vec![0.0; self.num_bin];
-        self.lhist = vec![0.0; self.num_lbin];
-    }
+#[derive(Clone, Debug, PartialEq)]
+pub struct MergeTimeAnalysis{       // Merge Time Analysis
+    means : Vec<f64>,                     // Sum of data
+    stddevs : Vec<f64>,                  // Sum of squares
+    ensemble : usize,               // Number of ensemble
+    min_time : f64,                 // Minimal time for logarithmic histogram
+    max_time : f64,                 // Maximal time for storing
+    bin_size : f64,                 // Size of bin for linear histogram
+    lbin_size : f64,                // Size of bin for logarithmic histogram
+    num_bin : usize,                // Number of bin for linear histogram
+    num_lbin : usize,               // Number of bin for logarithmic histogram
+    num_var : usize,                // Number of variables to record
+    hist : Vec<Vec<f64>>,           // Linear Histogram
+    lhist : Vec<Vec<f64>>,          // Logarithmic Histogram
+    count : Vec<Vec<usize>>,        // Count of ensemble in linear range
+    lcount : Vec<Vec<usize>>,       // Count of ensemble in logarithmic range
 }
 
 
-impl Default for MFPTAnalysis{
+
+impl MergeTimeAnalysis{
+    #[allow(dead_code)]
+    fn new() -> Self{
+        Self{
+            means : Vec::new(),
+            stddevs : Vec::new(),
+            ensemble : 0usize,
+            min_time : 0f64,
+            max_time : 0f64,
+            bin_size : 0f64,
+            lbin_size : 0f64,
+            num_bin : 0usize,
+            num_lbin : 0usize,
+            num_var : 0usize,
+            hist : Vec::new(),
+            lhist : Vec::new(),
+            count : Vec::new(),
+            lcount : Vec::new(),
+        }
+    }
+}
+
+impl Bin for MergeTimeAnalysis{
+    construct_trait_bin!();
+
+    fn allocate_vectors(&mut self){
+        self.means = vec![0f64; self.num_var];
+        self.stddevs = vec![0f64; self.num_var];
+
+        self.hist = vec![vec![0.0f64; self.num_bin]; self.num_var];
+        self.lhist = vec![vec![0.0f64; self.num_lbin]; self.num_var];
+        self.count = vec![vec![0; self.num_bin]; self.num_var];
+        self.lcount = vec![vec![0; self.num_lbin]; self.num_var];
+    }
+}
+
+impl Default for MergeTimeAnalysis{
     fn default() -> Self{
-        MFPTAnalysis{
-            sum_fpt : 0f64,
-            square_fpt : 0f64,
+        Self{
+            means : vec![0f64; 10],
+            stddevs : vec![0f64; 10],
             ensemble : 0usize,
             min_time : 1e-15f64,
             max_time : 1e13f64,
@@ -584,13 +675,299 @@ impl Default for MFPTAnalysis{
             lbin_size : 1.2f64,
             num_bin : 1001usize,
             num_lbin : 355,
-            hist : vec![0.0f64; 1001],
-            lhist : vec![0.0f64; 355],
-            count : vec![0; 1001],
-            lcount : vec![0; 355],
+            num_var : 10,
+            hist : vec![vec![0.0f64; 1001]; 10],
+            lhist : vec![vec![0.0f64; 355]; 10],
+            count : vec![vec![0; 1001]; 10],
+            lcount : vec![vec![0; 355]; 10],
         }
     }
 }
+
+impl VarN for MergeTimeAnalysis{
+     // Add ensemble data
+    fn add_ensemble(&mut self, values : Vec<f64>){
+        if self.num_var == 0{
+            self.num_var = values.len();
+            self.allocate_vectors();
+        }
+
+        self.ensemble += 1;
+        for (idx, &time) in values.iter().enumerate(){
+            self.means[idx] += time;
+            self.stddevs[idx] += time * time;
+
+            match self.bin_pos(time){
+                Some(idx2) => {self.count[idx][idx2] += 1;},
+                None => ()
+            }
+            match self.lbin_pos(time){
+                Some(idx2) => {self.lcount[idx][idx2] += 1;},
+                None => ()
+            }
+        }
+    }
+
+    // Draw distribution from histogram
+    fn draw(&mut self){
+        let en : f64= self.ensemble as f64;
+        let d_bin : f64 = en * (self.bin_size as f64);
+        let lbin : f64 = self.lbin_size;
+
+        for idx in 0..self.num_var{
+            self.means[idx] = self.means[idx] / en;
+            self.stddevs[idx] = ((self.stddevs[idx] / en) - self.means[idx].powi(2)).sqrt();
+
+            let mut d_lbin : f64 = self.min_time * en * (lbin - 1f64);
+
+            let count = &self.count[idx];
+            let hist = &mut self.hist[idx];
+            for (i, &x) in count.iter().enumerate(){
+                hist[i] = (x as f64) / d_bin;
+            }
+
+            let lcount = &self.lcount[idx];
+            let lhist = &mut self.lhist[idx];
+            for (i, &x) in lcount.iter().enumerate(){
+                lhist[i] = (x as f64) / d_lbin;
+                d_lbin *= lbin;
+            }
+        }
+    }
+}
+
+impl Analysis for MergeTimeAnalysis{
+    const NUM_ARGS : usize = 4;
+
+    // Clear data
+    fn clear(&mut self){
+        self.means = vec![0f64; self.num_var];
+        self.stddevs = vec![0f64; self.num_var];
+        self.ensemble = 0;
+
+        self.count = vec![vec![0; self.num_bin]; self.num_var];
+        self.lcount = vec![vec![0; self.num_lbin]; self.num_var];
+    }
+
+    impl_fn_brief_info!(brief_info, "MergeTime", min_time, max_time, bin_size, lbin_size, output_dir);
+    impl_fn_info!(info,
+                  min_time, "Minimal time for Histogram",
+                  max_time, "Maximal time for Histogram",
+                  bin_size, "Bin size for Linear Histogram",
+                  lbin_size, "Bin size for Logarithmic Histogram",
+                  output_dir, "Directory for data files");
+    export_form!(export_form, ensemble, merge_time, stddev );
+
+    #[allow(dead_code)]
+    fn export_mean_stddev(&self, prec : usize) -> Result<String, Error>{
+        let mut string = String::new();
+        string.push_str(format!("{}", format_args!("{1:<0$}\t", prec, self.ensemble)).as_str());
+        for (mean, stddev) in self.means.iter().zip(self.stddevs.iter()){
+            string.push_str(format!("{}", format_args!("{1:<0$e}\t{2:<0$e}\t", prec, mean, stddev)).as_str());
+        }
+        Ok(string)
+    }
+
+    #[allow(dead_code)]
+    fn export_distribution<W: Write>(&self, prec : usize, writer : &mut W) -> Result<(), Error>{
+        let bin_size = self.bin_size;
+        let mut time = self.min_time + bin_size / 2f64;
+        let mut i : usize = 0;
+
+        while time <= self.max_time{
+            let mut string = String::new();
+            let mut check = false;
+
+            string.push_str(format!("{}", format_args!("{1:0$e}\t", prec, time)).as_str());
+            for idx in 0..self.num_var{
+                let n = self.count[idx][i];
+                let x = self.hist[idx][i];
+
+                if x > 1e-15{
+                    check = true;
+                }
+                string.push_str(format!("{}", format_args!("{1:0$}\t{2:0$e}\t", prec, n, x)).as_str());
+            }
+            if check{
+                writer.write_fmt(format_args!("{}\n", string)).map_err(Error::make_error_io)?;
+            }
+
+            time += bin_size;
+            i += 1;
+
+        }
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    fn export_log_scaled_distribution<W: Write>(&self, prec : usize, writer: &mut W) -> Result<(), Error>{
+        let lbin_size = self.lbin_size;
+        let mut time = self.min_time * lbin_size.sqrt();
+        let mut i : usize = 0;
+
+        while time <= self.max_time{
+            let mut string = String::new();
+            let mut check = false;
+
+            string.push_str(format!("{}", format_args!("{1:0$e}\t", prec, time)).as_str());
+            for idx in 0..self.num_var{
+                let n = self.lcount[idx][i];
+                let x = self.lhist[idx][i];
+
+                if x > 1e-15{
+                    check = true;
+                }
+                string.push_str(format!("{}", format_args!("{1:0$}\t{2:0$e}\t", prec, n, x)).as_str());
+            }
+            if check{
+                writer.write_fmt(format_args!("{}\n", string)).map_err(Error::make_error_io)?;
+            }
+
+            time *= lbin_size;
+            i += 1;
+        }
+        Ok(())
+    }
+
+    // export data to summary file
+    fn export<W: Write>(&self, prec: usize, brief_data : &mut W, export_dir: &String, filename: &String) -> Result<(), Error>{
+
+        brief_data.write(format!("{}", format_args!("{}\n", self.export_mean_stddev(prec)?)).as_bytes()).map_err(Error::make_error_io)?;
+
+        // Export linear histogram
+        let linear_filename = format!("{}", format_args!("{}/linear_distribution/{}", export_dir, filename));
+        let linear = File::create(linear_filename).map_err(Error::make_error_io)?;
+        let mut linear = BufWriter::new(linear);
+        self.export_distribution(prec, linear.get_mut())?;
+
+        // Export logarithmic histogram
+        let log_filename = format!("{}", format_args!("{}/logarithmic_distribution/{}", export_dir, filename));
+        let log = File::create(log_filename).map_err(Error::make_error_io)?;
+        let mut log = BufWriter::new(log);
+        self.export_log_scaled_distribution(prec, log.get_mut())?;
+
+        Ok(())
+    }
+
+    // analysis
+    fn analyze<H : Hash + Eq + Copy + DataSet>(args : &[String], width : usize, prefix : &str) -> Result<(), Error>{
+        use chrono::offset::Utc;
+
+        let min_time : f64;
+        let max_time : f64;
+        let num_bin : usize;
+        let bin_size : f64;
+        let lbin_size : f64;
+        let data_dir : String;
+
+        match args.len(){
+            4 => {
+                let mut idx : usize = 0;
+                min_time = args[idx].parse().unwrap();      idx+=1;
+                max_time = args[idx].parse().unwrap();      idx+=1;
+                num_bin  = args[idx].parse().unwrap();      idx+=1;
+                data_dir = args[idx].clone();
+
+                let bin_info =  Self::convert_num_bin_to_bin_size(min_time, max_time, num_bin)?;
+                bin_size = bin_info.0;
+                lbin_size = bin_info.1;
+            },
+            5 => {
+                let mut idx : usize = 0;
+                min_time = args[idx].parse().unwrap();      idx+=1;
+                max_time = args[idx].parse().unwrap();      idx+=1;
+                bin_size = args[idx].parse().unwrap();      idx+=1;
+                lbin_size= args[idx].parse().unwrap();      idx+=1;
+                data_dir = args[idx].clone();
+            },
+            _ => {
+                return Err(Error::make_error_syntax(ErrorCode::InvalidNumberOfArguments))
+            }
+        }
+
+        let mut hashmap : HashMap<H, Self> = HashMap::new();
+        let mut summary_dir : String = format!("{}", format_args!("{}/analysis_{}",
+                                    data_dir, Utc::today().format("%Y%m%d").to_string()));
+
+        if Path::new(&summary_dir).exists(){
+            let mut i : usize = 2;
+            let mut new : String;
+            loop{
+                new = format!("{}", format_args!("{}_{}", summary_dir, i));
+                if Path::new(&new).exists(){
+                    i += 1;
+                }
+                else{
+                    break;
+                }
+            }
+            summary_dir = new.clone();
+        }
+
+        let summary_file : String = format!("{}/analysis_merge_time.dat", summary_dir);
+
+        fs::create_dir_all(&summary_dir).map_err(Error::make_error_io)?;
+        fs::create_dir_all(format!("{}/linear_distribution", &summary_dir)).map_err(Error::make_error_io)?;
+        fs::create_dir_all(format!("{}/logarithmic_distribution", &summary_dir)).map_err(Error::make_error_io)?;
+
+        let summary = File::create(summary_file).map_err(Error::make_error_io)?;
+        let mut summary = BufWriter::new(summary);
+
+        summary.write_fmt(format_args!("{}{}\n", H::export_form(width), Self::export_form(width)))
+               .map_err(Error::make_error_io)?;
+
+        for entry in fs::read_dir(&data_dir).map_err(Error::make_error_io)?{
+            let entry = entry.map_err(Error::make_error_io)?;
+            let path = entry.path();
+            if path.is_dir(){
+                continue;
+            }
+
+            let (dataset, mut lines) : (H, Lines<BufReader<File>>) = match H::from_file(path.clone()){
+                Ok(ds) => ds,
+                Err(_err) => {continue;},
+            };
+
+            let analysis = match hashmap.get_mut(&dataset){
+                Some(x) => x,
+                None => {
+                    let mut x = Self::new();
+                    x.update_from_bin_size(min_time, max_time, bin_size, lbin_size)?;
+                    hashmap.insert(dataset, x);
+                    hashmap.get_mut(&dataset).unwrap()
+                },
+            };
+            lines.next();
+
+            for line in lines{
+                let line = line.map_err(Error::make_error_io)?;
+                let values = line.trim().split_whitespace().map(|x| x.parse::<f64>().unwrap()).collect();
+                analysis.add_ensemble(values);
+            }
+        }
+
+        for (dataset, analysis) in hashmap.iter_mut(){
+            analysis.draw();
+
+            let hist_filename = dataset.export_file_removed_idx(prefix);
+
+            summary.write_fmt(format_args!("{}", dataset.export_data(width)?)).map_err(Error::make_error_io)?;
+            analysis.export(width, &mut summary, &summary_dir, &hist_filename)?;
+        }
+        return Ok(());
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
 
 #[cfg(test)]
 mod tests{
@@ -736,13 +1113,13 @@ mod tests{
         let mut analysis : MFPTAnalysis = Default::default();
         analysis.add_ensemble(3f64);
         analysis.add_ensemble(5f64);
-        assert!((analysis.sum_fpt - 8f64).abs() < thr);
-        assert!((analysis.square_fpt - 34f64).abs() < thr);
+        assert!((analysis.mean - 8f64).abs() < thr);
+        assert!((analysis.stddev - 34f64).abs() < thr);
         assert_eq!(analysis.ensemble, 2);
 
         analysis.clear();
-        assert!((analysis.sum_fpt - 0f64).abs() < thr);
-        assert!((analysis.square_fpt - 0f64).abs() < thr);
+        assert!((analysis.mean - 0f64).abs() < thr);
+        assert!((analysis.stddev - 0f64).abs() < thr);
         assert_eq!(analysis.ensemble, 0);
 
         for _i in 0..n{
@@ -750,12 +1127,11 @@ mod tests{
             analysis.add_ensemble(x);
         }
 
-        let mfpt    : f64 = analysis.mfpt();
-        let stddev  : f64 = analysis.stddev();
+        analysis.draw();
         let en      : usize = analysis.ensemble;
 
-        assert!(mfpt.abs() < thr);
-        assert!((stddev - 1f64).abs() < thr);
+        assert!(analysis.mean.abs() < thr);
+        assert!((analysis.stddev - 1f64).abs() < thr);
         assert_eq!(en, n);
     }
 
@@ -765,7 +1141,9 @@ mod tests{
         let mut rng = rng_seed(100);
         let n : usize = 100000;
 
-        let mut analysis = MFPTAnalysis::from_bin_size(0f64, 10f64, 0.05f64, 1.05f64)?;
+        let mut analysis = MFPTAnalysis::new();
+        analysis.update_from_bin_size(0f64, 10f64, 0.05f64, 1.05f64)?;
+        analysis.allocate_vectors();
         for _i in 0..n{
             let x = get_gaussian(&mut rng) + 5f64;
             analysis.add_ensemble(x);
@@ -794,6 +1172,97 @@ mod tests{
 
         let bs : (f64, f64) = MFPTAnalysis::convert_num_bin_to_bin_size(min, max, num_bin)?;
         assert_eq!(bs, (1f64, 1.0472327459898225));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_varn() -> Result<(), Error>{
+        let mut an = MergeTimeAnalysis::new();
+        assert_eq!(an, MergeTimeAnalysis{
+            means : Vec::new(),
+            stddevs : Vec::new(),
+            ensemble : 0usize,
+            min_time : 0f64,
+            max_time : 0f64,
+            bin_size : 0f64,
+            lbin_size : 0f64,
+            num_bin : 0usize,
+            num_lbin : 0usize,
+            num_var : 0usize,
+            hist : Vec::new(),
+            lhist : Vec::new(),
+            count : Vec::new(),
+            lcount : Vec::new(),
+        });
+
+        an.update_from_num_bin(1f64, 20f64, 19)?;
+
+        let thr : f64 = 1e-5;
+        assert!((an.min_time - 1f64).abs() < thr);
+        assert!((an.max_time- 20f64).abs() < thr);
+        assert!((an.bin_size - 1f64).abs() < thr);
+        assert!((an.lbin_size - 1.170779913f64).abs() <thr);
+
+        an.num_var = 3;
+        an.allocate_vectors();
+        assert_eq!(an.means.len(), 3);
+        assert_eq!(an.stddevs.len(), 3);
+        assert_eq!(an.hist.len(), 3);
+        assert_eq!(an.hist[0].len(), 19);
+
+        let input = vec![1.5f64, 2.5f64, 3.5f64];
+        an.add_ensemble(input);
+        assert_eq!(an.ensemble, 1);
+        assert_eq!(an.means[0], 1.5f64);
+        assert_eq!(an.means[1], 2.5f64);
+        assert_eq!(an.means[2], 3.5f64);
+        assert_eq!(an.stddevs[0], 2.25f64);
+        assert_eq!(an.stddevs[1], 6.25f64);
+        assert_eq!(an.stddevs[2], 12.25f64);
+        assert_eq!(an.count[0][0], 1);
+        assert_eq!(an.count[1][1], 1);
+        assert_eq!(an.count[2][2], 1);
+        assert_eq!(an.lcount[0][2], 1);
+        assert_eq!(an.lcount[1][5], 1);
+        assert_eq!(an.lcount[2][7], 1);
+
+        an.draw();
+        let string = an.export_mean_stddev(5)?;
+        assert_eq!(string, "1    \t1.5e0\t0e0  \t2.5e0\t0e0  \t3.5e0\t0e0  \t".to_string());
+        Ok(())
+    }
+
+    #[test]
+    fn test_varn_histogram() -> Result<(), Error>{
+        use crate::random_mod::{get_gaussian_vec};
+        use crate::position::Position;
+        let mut rng = rng_seed(100);
+        let n : usize = 100000;
+        let num_var : usize = 3;
+
+        let mut analysis = MergeTimeAnalysis::new();
+        analysis.update_from_bin_size(0f64, 10f64, 0.05f64, 1.05f64)?;
+        analysis.num_var = num_var;
+        analysis.allocate_vectors();
+
+        let bias = Position::new(vec![5f64; num_var]);
+        for _i in 0..n{
+            let x = &get_gaussian_vec(&mut rng, num_var) + &bias;
+            analysis.add_ensemble(x.coordinate);
+        }
+        analysis.draw();
+        std::fs::create_dir_all("tests/images").map_err(Error::make_error_io)?;
+
+        let hist_file = File::create("tests/images/analysis_varn_histogram_test.dat").map_err(Error::make_error_io)?;
+        let mut hist_buff = BufWriter::new(hist_file);
+        analysis.export_distribution(20, hist_buff.get_mut())?;
+        hist_buff.flush().map_err(Error::make_error_io)?;
+
+        let log_hist_file = File::create("tests/images/analysis_varn_log_histogram_test.dat").map_err(Error::make_error_io)?;
+        let mut log_hist_buff = BufWriter::new(log_hist_file);
+        analysis.export_log_scaled_distribution(20, log_hist_buff.get_mut())?;
+        log_hist_buff.flush().map_err(Error::make_error_io)?;
 
         Ok(())
     }
