@@ -17,7 +17,7 @@ pub use crate::{
     random_mod::{rng_seed},
     system_mod::{SystemCore, SystemType, BoundaryCond},
     target_mod::{TargetCore, TargetType},
-    searcher_mod::{SearcherCore, SearcherType, MoveType, InitType},
+    searcher_mod::{SearcherCore, types::{SearcherType, MoveType, InitType, InteractType}},
     time_mod::{TimeType, TimeIterator},
     setup::{Simulation, SimulationArguments},
     iterator::{Node, LinkedList},
