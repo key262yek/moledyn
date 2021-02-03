@@ -117,7 +117,7 @@ impl SearcherCore<f64> for ContPassiveIndepSearcher{
     }
 }
 
-impl Passive<f64> for ContPassiveIndepSearcher{
+impl Passive<f64, f64> for ContPassiveIndepSearcher{
     fn random_move(&self, rng : &mut Pcg64, dt : f64) -> Result<Position<f64>, Error>{
         // Random walk characteristic에 따라 그에 맞는 random walk displacement를 반환
         // rng : random number generator
@@ -163,5 +163,49 @@ mod tests{
     #[allow(unused_imports)]
     use super::*;
 
+    #[test]
+    fn test_new(){
+        let pos = Position::<f64>::new(vec![0.0, 0.0]);
+        let searcher1 = ContPassiveIndepSearcher::new(MoveType::Brownian(1f64), pos.clone());
+        assert_eq!(searcher1, ContPassiveIndepSearcher{
+            searcher_type : SearcherType::ContinuousPassiveIndependent,
+            mtype   : MoveType::Brownian(1f64),
+            itype   : InitType::SpecificPosition(pos.clone()),
+            dim     : 2,
+            pos     : pos.clone(),
+        });
+    }
 
+    #[test]
+    fn test_uniform() -> Result<(), Error>{
+        use crate::system_mod::cont_circ::ContCircSystem;
+        use crate::target_mod::cont_bulk::ContBulkTarget;
+        use crate::random_mod::get_uniform_to_vec_nonstandard;
+
+
+        let mut rng1 = rng_seed(12341234);
+        let mut rng2 = rng_seed(12341234);
+
+        let system = ContCircSystem::new(10.0, 2);
+        let target = ContBulkTarget::new(Position::<f64>::new(vec![0.0, 0.0]), 1.0);
+
+        let searcher1 = ContPassiveIndepSearcher::new_uniform(&system, &target, &mut rng1,
+                        MoveType::Brownian(1f64));
+
+        let mut pos = system.position_out_of_system();
+        while !system.check_inclusion(&pos)? || target.check_find(&pos)?{
+            pos.clear();
+            get_uniform_to_vec_nonstandard(&mut rng2, &mut pos, -10.0, 10.0);
+        }
+
+        assert_eq!(searcher1?, ContPassiveIndepSearcher{
+            searcher_type : SearcherType::ContinuousPassiveIndependent,
+            mtype   : MoveType::Brownian(1f64),
+            itype   : InitType::Uniform,
+            dim     : 2,
+            pos     : pos.clone(),
+        });
+
+        Ok(())
+    }
 }
