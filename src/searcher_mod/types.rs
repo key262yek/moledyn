@@ -258,13 +258,13 @@ impl<T> Default for InitType<T>{
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub enum InteractType{
-    Exponential(i32, f64, f64),      // Exponential form f(r) = s C exp(- r / g), first : dim, second : g, third : s, C : determined by g
-    Coulomb(i32, f64),             // Coulomb potential f(r) = k / 2pi * log(r / r0) , first : dim, second : k
+    Exponential(usize, f64, f64),      // Exponential form f(r) = s C exp(- r / g), first : dim, second : g, third : s, C : determined by g
+    Coulomb(usize, f64),             // Coulomb potential f(r) = k / 2pi * log(r / r0) , first : dim, second : k
 }
 
 impl InteractType{
     #[allow(dead_code)]
-    fn dim(&self) -> i32{
+    fn dim(&self) -> usize{
         match *self{
             InteractType::Exponential(dim, _g, _s) => dim,
             InteractType::Coulomb(dim, _s) => dim,
@@ -303,12 +303,12 @@ impl FromStr for InteractType{
             let parameters : Vec<&str> = split[1].split(',').collect();
             match split[0]{
                 "Exponential" => {
-                    return Ok(InteractType::Exponential(parameters[0].parse::<i32>().expect("Failed to parse"),
+                    return Ok(InteractType::Exponential(parameters[0].parse::<usize>().expect("Failed to parse"),
                                                           parameters[1].parse::<f64>().expect("Failed to parse"),
                                                           parameters[2].parse::<f64>().expect("Failed to parse")));
                 },
                 "Coulomb" => {
-                    return Ok(InteractType::Coulomb(parameters[0].parse::<i32>().expect("Failed to parse"),
+                    return Ok(InteractType::Coulomb(parameters[0].parse::<usize>().expect("Failed to parse"),
                                                   parameters[1].parse::<f64>().expect("Failed to parse")));
                 },
                 _ => {return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));},
@@ -316,10 +316,10 @@ impl FromStr for InteractType{
         }
         else{
             match split[0]{
-                "Exponential" => Ok(InteractType::Exponential(split[3].parse::<i32>().expect("Failed to parse"),
+                "Exponential" => Ok(InteractType::Exponential(split[3].parse::<usize>().expect("Failed to parse"),
                                                               split[7].parse::<f64>().expect("Failed to parse"),
                                                               split[9].parse::<f64>().expect("Failed to parse"))),
-                "Coulomb" => Ok(InteractType::Coulomb(split[3].parse::<i32>().expect("Failed to parse"),
+                "Coulomb" => Ok(InteractType::Coulomb(split[3].parse::<usize>().expect("Failed to parse"),
                                                       split[7].parse::<f64>().expect("Failed to parse"))),
                 _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
             }

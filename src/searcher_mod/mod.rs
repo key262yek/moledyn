@@ -35,6 +35,10 @@ pub trait Interaction<T, F>{
     fn mutual_displacement_to_vec(&self, other : &Self, vec : &mut Position<T>) -> Result<T, Error>;
 
     // Interaction between particles
+    fn potential(&self, radius : T) -> F;
+
+    fn force(&self, radius : T) -> F;
+
     fn add_force(&mut self, vec : &Position<T>) -> Result<(), Error>;
 }
 
@@ -52,7 +56,7 @@ pub trait Merge{
 pub mod types;
 pub mod cont_passive_indep;     // 연속 시스템에서 Passive하게 움직이는 독립된 searcher
 pub mod cont_passive_merge;     // 연속 시스템에서 Passive하게 움직이는 서로 합쳐질 수 있는 searcher
-pub mod cont_passive_interact;  //연속 시스템에서 Passive하게 움직이며, interaction을 주고 받는 Searcher
+pub mod cont_passive_exp;  //연속 시스템에서 Passive하게 움직이며, interaction을 주고 받는 Searcher
 
 
 

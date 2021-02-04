@@ -6,7 +6,7 @@ use rand_pcg::Pcg64;
 use rts::random_mod::rng_seed;
 use rts::system_mod::cont_circ::ContCircSystem;
 use rts::target_mod::cont_bulk::ContBulkTarget;
-use rts::searcher_mod::{MoveType, cont_passive_indep::ContPassiveIndepSearcher};
+use rts::searcher_mod::{types::MoveType, cont_passive_indep::ContPassiveIndepSearcher};
 use rts::position::Position;
 use rts::error::Error;
 

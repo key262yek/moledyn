@@ -37,5 +37,6 @@ pub use std::{fmt::{self, Display, Formatter},
             any::type_name,};
 pub use streaming_iterator::{StreamingIterator,
         };
+pub use std::f64::consts::PI;
 
 

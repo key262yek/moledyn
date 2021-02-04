@@ -18,7 +18,7 @@ criterion = "0.3"
 plotlib = "0.5.1"
 
 [[bench]]
-name = "bench_merge_with_exponential_step"
+name = "force_computation"
 harness = false
 
 [profile.release]
