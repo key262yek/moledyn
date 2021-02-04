@@ -200,8 +200,8 @@ impl Default for MoveType{
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum InitType<T>{
-    SpecificPosition(Position<T>),      // Brownian motion with given diffusion coefficient
-    Uniform,               // Levy walk. not developed yet.
+    SpecificPosition(Position<T>),      // Initiate searcher at specific position
+    Uniform,               // Initiate searchers with uniform distribution
 }
 
 
@@ -258,35 +258,19 @@ impl<T> Default for InitType<T>{
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub enum InteractType{
-    Exponential(usize, f64, f64),      // Exponential form f(r) = s C exp(- r / g), first : dim, second : g, third : s, C : determined by g
-    Coulomb(usize, f64),             // Coulomb potential f(r) = k / 2pi * log(r / r0) , first : dim, second : k
+    Exponential,      // Exponential form f(r) = s C exp(- r / g),
+    Coulomb,             // Coulomb potential
 }
 
-impl InteractType{
-    #[allow(dead_code)]
-    fn dim(&self) -> usize{
-        match *self{
-            InteractType::Exponential(dim, _g, _s) => dim,
-            InteractType::Coulomb(dim, _s) => dim,
-        }
-    }
 
-    #[allow(dead_code)]
-    fn name(&self) -> &str{
-        match *self{
-            InteractType::Exponential(_d, _g, _s) => "Exponential",
-            InteractType::Coulomb(_d, _s) => "Coulomb",
-        }
-    }
-}
 
 impl Display for InteractType{
     fn fmt(&self, f: &mut Formatter) -> fmt::Result{
         match self{
-            InteractType::Exponential(dim, gamma, strength) =>
-                write!(f, "Exponential form in {} D with gamma= {} strength= {}", dim, gamma, strength),
-            InteractType::Coulomb(dim, strength) =>
-                write!(f, "Coulomb potential in {} D with strength= {}", dim, strength),
+            InteractType::Exponential =>
+                write!(f, "Exponential form interaction"),
+            InteractType::Coulomb =>
+                write!(f, "Coulomb potential"),
         }
     }
 }
@@ -297,39 +281,17 @@ impl FromStr for InteractType{
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let split : Vec<&str> = s.split_whitespace().collect();
-        if split.len() == 1{
-            let length = split[0].len();
-            let split : Vec<&str> = split[0][0..length-1].split('(').collect();  // remove character ')' and split '('
-            let parameters : Vec<&str> = split[1].split(',').collect();
-            match split[0]{
-                "Exponential" => {
-                    return Ok(InteractType::Exponential(parameters[0].parse::<usize>().expect("Failed to parse"),
-                                                          parameters[1].parse::<f64>().expect("Failed to parse"),
-                                                          parameters[2].parse::<f64>().expect("Failed to parse")));
-                },
-                "Coulomb" => {
-                    return Ok(InteractType::Coulomb(parameters[0].parse::<usize>().expect("Failed to parse"),
-                                                  parameters[1].parse::<f64>().expect("Failed to parse")));
-                },
-                _ => {return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));},
-            }
-        }
-        else{
-            match split[0]{
-                "Exponential" => Ok(InteractType::Exponential(split[3].parse::<usize>().expect("Failed to parse"),
-                                                              split[7].parse::<f64>().expect("Failed to parse"),
-                                                              split[9].parse::<f64>().expect("Failed to parse"))),
-                "Coulomb" => Ok(InteractType::Coulomb(split[3].parse::<usize>().expect("Failed to parse"),
-                                                      split[7].parse::<f64>().expect("Failed to parse"))),
-                _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
-            }
+        match split[0]{
+            "Exponential" => Ok(InteractType::Exponential),
+            "Coulomb" => Ok(InteractType::Coulomb),
+            _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
         }
     }
 }
 
 impl Default for InteractType{
     fn default() -> Self{
-        InteractType::Exponential(2, 1.0, 0.0)
+        InteractType::Exponential
     }
 }
 
@@ -421,52 +383,34 @@ mod tests{
         assert_eq!(SearcherType::ContinuousPassiveIndependent.is_interacting(), false);
     }
 
-    #[test]
-    fn test_fn_interact_type(){
-        let test1 = InteractType::Exponential(2, 1f64, 3f64);
-        assert_eq!(test1.dim(), 2);
-        assert_eq!(test1.name(), "Exponential");
 
-        let test2 = InteractType::Coulomb(3, 1f64);
-        assert_eq!(test2.dim(), 3);
-        assert_eq!(test2.name(), "Coulomb");
-    }
 
     #[test]
     fn test_fmt_interact_type(){
-        assert_eq!(format!("{}", InteractType::Exponential(2, 0.1, 0.0)).as_str(),
-            "Exponential form in 2 D with gamma= 0.1 strength= 0");
-        assert_eq!(format!("{}", InteractType::Coulomb(2, 1.0)).as_str(),
-            "Coulomb potential in 2 D with strength= 1");
-        assert_eq!(format!("{}", InteractType::Coulomb(3, 1.0)).as_str(),
-            "Coulomb potential in 3 D with strength= 1");
+        assert_eq!(format!("{}", InteractType::Exponential).as_str(),
+            "Exponential form interaction");
+        assert_eq!(format!("{}", InteractType::Coulomb).as_str(),
+            "Coulomb potential");
     }
 
     #[test]
     fn test_fromstr_interact_type(){
-        let test1 =  "Exponential form in 2 D with gamma= 0.1 strength= 0";
-        let result1 = Ok(InteractType::Exponential(2, 0.1, 0.0));
+        let test1 =  "Exponential form interaction";
+        let result1 = Ok(InteractType::Exponential);
         assert_eq!(InteractType::from_str(test1), result1);
 
-        let test2 = "Coulomb potential in 2 D with strength= 1";
-        let result2 = Ok(InteractType::Coulomb(2, 1.0));
+        let test2 = "Coulomb potential";
+        let result2 = Ok(InteractType::Coulomb);
         assert_eq!(InteractType::from_str(test2), result2);
 
-        let test3 = "Coulomb potential in 3 D with strength= 1";
-        let result3 = Ok(InteractType::Coulomb(3, 1.0));
-        assert_eq!(InteractType::from_str(test3), result3);
-
-        let test4 = "Exponential(2,1,0)";
-        let result4 = Ok(InteractType::Exponential(2, 1f64, 0f64));
+        let test4 = "Exponential";
+        let result4 = Ok(InteractType::Exponential);
         assert_eq!(InteractType::from_str(test4), result4);
 
-        let test5 = "Coulomb(2,1.0)";
-        let result5 = Ok(InteractType::Coulomb(2, 1f64));
+        let test5 = "Coulomb";
+        let result5 = Ok(InteractType::Coulomb);
         assert_eq!(InteractType::from_str(test5), result5);
 
-        let test6 = "Coulomb3D(2,1.0)";
-        let result6 = Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
-        assert_eq!(InteractType::from_str(test6), result6);
     }
 
     #[test]

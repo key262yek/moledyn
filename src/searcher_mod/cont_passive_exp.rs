@@ -23,16 +23,15 @@ pub struct ContPassiveExpSearcher{            // 연속한 시스템에서 Passi
 
 impl ContPassiveExpSearcher{
     // 모든 정보를 제공했을 경우, 새 Searcher struct를 반환하는 함수
-    pub fn new(int_type : InteractType, mtype : MoveType, pos : Position<f64>) -> Self{
+    pub fn new(int_type : InteractType, mtype : MoveType, pos : Position<f64>, gamma : f64, strength : f64) -> Self{
         // int_type : Interaction Type
         // mtype    : Random walk characteristic
         // pos      : initial position of searcher
 
+        let dim : usize = pos.dim();
+
         match int_type{
-            InteractType::Exponential(dim, gamma, strength) => {
-                if dim != pos.dim(){
-                    panic!("Invalid Argument Input to Searcher Definition");
-                }
+            InteractType::Exponential => {
 
                 let (coeff_pot, coeff_force) : (f64, f64);
                 match dim{
@@ -53,7 +52,7 @@ impl ContPassiveExpSearcher{
                     int_type: int_type,
                     mtype   : mtype,
                     itype   : InitType::SpecificPosition(pos.clone()),
-                    dim     : pos.dim(),
+                    dim     : dim,
                     pos     : pos,
                     gamma   : gamma,
                     strength: strength,
@@ -61,14 +60,14 @@ impl ContPassiveExpSearcher{
                     coeff_force : coeff_force,
                 }
             },
-            InteractType::Coulomb(_d, _s) =>{
+            InteractType::Coulomb =>{
                 panic!("Invalid Argument Input to Searcher Definition");
             }
         }
     }
 
     pub fn new_uniform(sys : &dyn SystemCore<f64>, target : &dyn TargetCore<f64>,
-                   rng : &mut Pcg64, int_type : InteractType, mtype : MoveType) -> Result<Self, Error>{
+                   rng : &mut Pcg64, int_type : InteractType, mtype : MoveType, gamma : f64, strength : f64) -> Result<Self, Error>{
         // system과 target이 주어져 있는 상황에서 시스템 domain 안에서 초기위치를 uniform하게 뽑아 searcher를 정의해주는 함수
         // sys      : system configuration
         // target   : target configuration
@@ -76,10 +75,12 @@ impl ContPassiveExpSearcher{
         // int_type : interaction type
         // mtype    : random walk characteristic
 
+        let dim : usize = sys.position_out_of_system().dim();
+
         match int_type{
-            InteractType::Exponential(dim, gamma, strength) => {
+            InteractType::Exponential => {
                 let (coeff_pot, coeff_force) : (f64, f64);
-                match dim{
+                match dim {
                     2 => {
                         coeff_pot = strength / (2f64 * PI * gamma.powi(2));
                     },
@@ -104,7 +105,7 @@ impl ContPassiveExpSearcher{
                     searcher_type : SearcherType::ContinuousPassiveInteracting,
                     int_type: int_type,
                     mtype   : mtype,
-                    itype   : InitType::SpecificPosition(pos.clone()),
+                    itype   : InitType::Uniform,
                     dim     : pos.dim(),
                     pos     : pos,
                     gamma   : gamma,
@@ -113,7 +114,7 @@ impl ContPassiveExpSearcher{
                     coeff_force : coeff_force,
                 })
             },
-            InteractType::Coulomb(_d, _s) =>{
+            InteractType::Coulomb =>{
                 Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput))
             }
         }
@@ -131,6 +132,20 @@ impl ContPassiveExpSearcher{
             Err(_) => {
                 self.pos = sys.position_out_of_system();
                 self.dim = self.pos.dim();
+
+                match self.dim{
+                    2 => {
+                        self.coeff_pot = self.strength / (2f64 * PI * self.gamma.powi(2));
+                        self.coeff_force = self.coeff_pot / self.gamma;
+                    },
+                    3 => {
+                        self.coeff_pot = self.strength / (8f64 * PI * self.gamma.powi(3));
+                        self.coeff_force = self.coeff_pot / self.gamma;
+                    },
+                    _ => {
+                        return Err(Error::make_error_syntax(ErrorCode::FeatureNotProvided));
+                    },
+                }
             }
         }
         loop{
@@ -144,18 +159,22 @@ impl ContPassiveExpSearcher{
     }
 }
 
-impl_argument_trait!(ContPassiveExpSearcher, "Searcher", ContPassiveExpSearcherArguments, 4,
-    searcher_type, SearcherType, SearcherType::ContinuousPassiveInteracting;
-    int_type, InteractType, "Interaction configuration. ex) Exponential(dim, gamma, strength)",
+impl_argument_trait!(ContPassiveExpSearcher, "Searcher", ContPassiveExpSearcherArguments, 5,
+    searcher_type, SearcherType, SearcherType::ContinuousPassiveInteracting,
+    int_type, InteractType, InteractType::Exponential;
     mtype,  MoveType,       "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype,  InitType<f64>,  "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform",
+    gamma,  f64,            "Length scale of interaction. ex) 1.0, 0.1 ...",
+    strength, f64,          "Strength of interaction",
     num_searcher, usize,    "Number of Searcher");
 
 impl ContPassiveExpSearcher{
     #[allow(dead_code)]
     pub fn convert_from(argument : &ContPassiveExpSearcherArguments) -> Vec<Self>{
-        let mut dim : usize;
+        let dim : usize;
         let pos : Position<f64>;
+        let gamma : f64;
+        let strength : f64;
 
         match &argument.itype{
             InitType::<f64>::Uniform => {
@@ -168,16 +187,17 @@ impl ContPassiveExpSearcher{
             }
         }
 
+        gamma = argument.gamma;
+        strength = argument.strength;
+
         match &argument.int_type{
-            InteractType::Exponential(d, gamma, strength) => {
-                if dim != 0 && dim != *d{
-                    panic!("Invalid Dimension input");
-                }
-                else if dim == 0{
-                    dim = *d;
-                }
+            InteractType::Exponential => {
+
                 let (coeff_pot, coeff_force) : (f64, f64);
-                match d{
+                match dim{
+                    0 => {
+                        coeff_pot = 0f64;  // dimension이 추후에 결정되면 그 때 계산되도록. renew_uniform or new_uniform에서 계산될 것.
+                    },
                     2 => {
                         coeff_pot = strength / (2f64 * PI * gamma.powi(2));
                     },
@@ -197,13 +217,13 @@ impl ContPassiveExpSearcher{
                     itype   : InitType::SpecificPosition(pos.clone()),
                     dim     : dim,
                     pos     : pos,
-                    gamma   : *gamma,
-                    strength: *strength,
+                    gamma   : gamma,
+                    strength: strength,
                     coeff_pot : coeff_pot,
                     coeff_force : coeff_force,
                 }; argument.num_searcher]
             },
-            InteractType::Coulomb(_d, _s) =>{
+            InteractType::Coulomb =>{
                 panic!("Invalid Argument Input to Searcher Definition");
             }
         }
@@ -303,11 +323,11 @@ mod tests{
     #[test]
     fn test_new(){
         let pos = Position::<f64>::new(vec![0.0, 0.0]);
-        let searcher1 = ContPassiveExpSearcher::new(InteractType::Exponential(2, 1f64, 0f64),
-            MoveType::Brownian(1f64), pos.clone());
+        let searcher1 = ContPassiveExpSearcher::new(InteractType::Exponential,
+            MoveType::Brownian(1f64), pos.clone(), 1f64, 0f64);
         assert_eq!(searcher1, ContPassiveExpSearcher{
             searcher_type : SearcherType::ContinuousPassiveInteracting,
-            int_type: InteractType::Exponential(2, 1f64, 0f64),
+            int_type: InteractType::Exponential,
             mtype   : MoveType::Brownian(1f64),
             itype   : InitType::SpecificPosition(pos.clone()),
             dim     : 2,
@@ -317,14 +337,6 @@ mod tests{
             coeff_pot: 0f64,
             coeff_force:0f64,
         });
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_new_panic(){
-        let pos = Position::<f64>::new(vec![0.0, 0.0, 0.0]);
-        let _searcher1 = ContPassiveExpSearcher::new(InteractType::Exponential(2, 1f64, 0f64),
-            MoveType::Brownian(1f64), pos.clone());
     }
 
     #[test]
@@ -341,7 +353,7 @@ mod tests{
         let target = ContBulkTarget::new(Position::<f64>::new(vec![0.0, 0.0]), 1.0);
 
         let searcher1 = ContPassiveExpSearcher::new_uniform(&system, &target, &mut rng1,
-            InteractType::Exponential(2, 1f64, 0f64), MoveType::Brownian(1f64));
+            InteractType::Exponential, MoveType::Brownian(1f64), 1f64, 0f64);
 
         let mut pos = system.position_out_of_system();
         while !system.check_inclusion(&pos)? || target.check_find(&pos)?{
@@ -351,7 +363,7 @@ mod tests{
 
         assert_eq!(searcher1?, ContPassiveExpSearcher{
             searcher_type : SearcherType::ContinuousPassiveInteracting,
-            int_type: InteractType::Exponential(2, 1f64, 0f64),
+            int_type: InteractType::Exponential,
             mtype   : MoveType::Brownian(1f64),
             itype   : InitType::Uniform,
             dim     : 2,
@@ -367,11 +379,11 @@ mod tests{
 
     #[test]
     fn test_interaction_trait() -> Result<(), Error>{
-        let int_type = InteractType::Exponential(2, 1.0, 0.0);
+        let int_type = InteractType::Exponential;
         let mtype = MoveType::Brownian(1f64);
 
-        let mut searcher1 = ContPassiveExpSearcher::new(int_type, mtype, Position::<f64>::new(vec![0.0, 0.0]));
-        let searcher2 = ContPassiveExpSearcher::new(int_type, mtype, Position::<f64>::new(vec![2.5, 0.0]));
+        let mut searcher1 = ContPassiveExpSearcher::new(int_type, mtype, Position::<f64>::new(vec![0.0, 0.0]), 1f64, 0f64);
+        let searcher2 = ContPassiveExpSearcher::new(int_type, mtype, Position::<f64>::new(vec![2.5, 0.0]), 1f64, 0f64);
 
         let test1 = searcher1.mutual_displacement(&searcher2)?;
         assert_eq!(test1, (Position::<f64>::new(vec![1.0, 0.0]), 2.5));
