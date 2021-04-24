@@ -147,6 +147,33 @@ impl SearcherCore<f64> for ContPassiveMergeSearcher{
     fn pos(&self) -> &Position<f64>{
         &self.pos
     }
+
+    // Mutual displacement
+    fn mutual_displacement(&self, other : &Self) -> Result<(Position<f64>, f64), Error>{
+        if self.dim != other.dim{
+            return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
+        }
+        let mut disp : Position<f64> = &other.pos - &self.pos;
+        let distance : f64 = disp.norm();
+        disp.mut_scalar_mul(1f64 / distance);
+        return Ok((disp, distance));
+    }
+
+    fn mutual_displacement_to_vec(&self, other : &Self, vec : &mut Position<f64>) -> Result<f64, Error>{
+        if self.dim != other.dim || self.dim != vec.dim(){
+            return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
+        }
+        vec.clear();
+        vec.mut_add(&other.pos)?;
+        vec.mut_sub(&self.pos)?;
+        let distance : f64 = vec.norm();
+        vec.mut_scalar_mul(1f64 / distance);
+        return Ok(distance);
+    }
+
+    fn mutual_distance(&self, other : &Self) -> Result<f64, Error>{
+        self.pos().distance(other.pos())
+    }
 }
 
 impl Passive<f64, f64> for ContPassiveMergeSearcher{

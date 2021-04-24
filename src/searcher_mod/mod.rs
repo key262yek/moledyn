@@ -11,6 +11,15 @@ use crate::prelude::*;
 
 pub trait SearcherCore<T>{    // Core functionality of searcher.
     fn pos(&self) -> &Position<T>;
+
+    // Mutual displacement
+    // Position<T> indicates the direction between particles (hence, normal vector)
+    // T indicates distance between them
+    fn mutual_displacement(&self, other : &Self) -> Result<(Position<T>, T), Error>;
+
+    fn mutual_displacement_to_vec(&self, other : &Self, vec : &mut Position<T>) -> Result<T, Error>;
+
+    fn mutual_distance(&self, other : &Self) -> Result<T, Error>;
 }
 
 pub trait Passive<T, F>{         // Functions for Passive ptls
@@ -27,12 +36,6 @@ pub trait Active<T>{          // Functions for Active ptls
 }
 
 pub trait Interaction<T, F>{
-    // Mutual displacement
-    // Position<T> indicates the direction between particles (hence, normal vector)
-    // T indicates distance between them
-    fn mutual_displacement(&self, other : &Self) -> Result<(Position<T>, T), Error>;
-
-    fn mutual_displacement_to_vec(&self, other : &Self, vec : &mut Position<T>) -> Result<T, Error>;
 
     // Interaction between particles
     fn potential(&self, radius : T) -> F;
