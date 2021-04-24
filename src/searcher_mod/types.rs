@@ -258,8 +258,17 @@ impl<T> Default for InitType<T>{
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub enum InteractType{
-    Exponential,      // Exponential form f(r) = s C exp(- r / g),
-    Coulomb,             // Coulomb potential
+    Exponential(usize, f64),
+    // Exponential form V(r) = C exp(- r / g), C depends on a dimension and typical length
+    // dim : usize / dimension
+    // gamma : f64 / typical length
+    Coulomb2D,
+    // Coulomb potential V(r) = log(r) / 2pi
+    Coulomb3D,
+    // Coulomb potential V(r) = 1 / 4 pi r
+    LennardJones(f64),
+    // Lennard Jones potential V(r) = 4[(a / r)^12 - (a / r)^6 ],
+    // ptl_size : f64 / size of particle, should be O(1)
 }
 
 
@@ -267,10 +276,14 @@ pub enum InteractType{
 impl Display for InteractType{
     fn fmt(&self, f: &mut Formatter) -> fmt::Result{
         match self{
-            InteractType::Exponential =>
-                write!(f, "Exponential form interaction"),
-            InteractType::Coulomb =>
-                write!(f, "Coulomb potential"),
+            InteractType::Exponential(dim, gamma) =>
+                write!(f, "Exponential form interaction in {} D with typical length {}", dim, gamma),
+            InteractType::Coulomb2D =>
+                write!(f, "Coulomb potential in 2 D"),
+            InteractType::Coulomb3D =>
+                write!(f, "Coulomb potential in 3 D"),
+            InteractType::LennardJones(ptl_size) =>
+                write!(f, "Lennard Jones potential with particle size {}", ptl_size),
         }
     }
 }
@@ -281,17 +294,77 @@ impl FromStr for InteractType{
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let split : Vec<&str> = s.split_whitespace().collect();
-        match split[0]{
-            "Exponential" => Ok(InteractType::Exponential),
-            "Coulomb" => Ok(InteractType::Coulomb),
-            _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
+        if split.len() == 1{
+            let split : Vec<&str> = split[0].split(&['(', ')'][..]).collect();
+            let name = split[0];
+            match name{
+                "Exponential" => {
+                    let args : Vec<&str> = split[1].split(',').collect();
+                    if args.len() != 2{
+                        return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+                    }
+                    let dim : usize = args[0].parse().map_err(|_e| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
+                    let gamma : f64 = args[1].parse().map_err(|_e| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
+                    return Ok(InteractType::Exponential(dim, gamma));
+                },
+                "Coulomb2D" => {
+                    return Ok(InteractType::Coulomb2D);
+                },
+                "Coulomb3D" => {
+                    return Ok(InteractType::Coulomb3D);
+                },
+                "LennardJones" => {
+                    let ptl_size : f64 = split[1].parse().map_err(|_e| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
+                    return Ok(InteractType::LennardJones(ptl_size));
+                }
+                _ => {
+                    return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+                }
+            }
+        } else {
+            match split[0]{
+                "Exponential" => {
+                    if split.len() != 10{
+                        return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+                    }
+                    let dim : usize = split[4].parse().map_err(|_e| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
+                    let gamma : f64 = split[9].parse().map_err(|_e| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
+                    return Ok(InteractType::Exponential(dim, gamma));
+                },
+                "Coulomb" =>{
+                    if split.len() != 5{
+                        return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+                    }
+                    match split[3]{
+                        "2" => {
+                            return Ok(InteractType::Coulomb2D);
+                        },
+                        "3" =>{
+                            return Ok(InteractType::Coulomb3D);
+                        }
+                        _ => {
+                            return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+                        }
+                    }
+                },
+                "Lennard" => {
+                    if split.len() != 7{
+                        return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+                    }
+                    let ptl_size = split[6].parse().map_err(|_e| Error::make_error_syntax(ErrorCode::InvalidArgumentInput))?;
+                    return Ok(InteractType::LennardJones(ptl_size));
+                },
+                _ => {
+                    return Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+                }
+            }
         }
     }
 }
 
 impl Default for InteractType{
     fn default() -> Self{
-        InteractType::Exponential
+        InteractType::Exponential(2, 0.1)
     }
 }
 
@@ -387,30 +460,58 @@ mod tests{
 
     #[test]
     fn test_fmt_interact_type(){
-        assert_eq!(format!("{}", InteractType::Exponential).as_str(),
-            "Exponential form interaction");
-        assert_eq!(format!("{}", InteractType::Coulomb).as_str(),
-            "Coulomb potential");
+        assert_eq!(format!("{}", InteractType::Exponential(2, 0.1)).as_str(),
+            "Exponential form interaction in 2 D with typical length 0.1");
+        assert_eq!(format!("{}", InteractType::Coulomb2D).as_str(),
+            "Coulomb potential in 2 D");
+        assert_eq!(format!("{}", InteractType::Coulomb3D).as_str(),
+            "Coulomb potential in 3 D");
+        assert_eq!(format!("{}", InteractType::LennardJones(1.0)).as_str(),
+            "Lennard Jones potential with particle size 1");
     }
+
 
     #[test]
     fn test_fromstr_interact_type(){
-        let test1 =  "Exponential form interaction";
-        let result1 = Ok(InteractType::Exponential);
-        assert_eq!(InteractType::from_str(test1), result1);
+        let test =  "Exponential form interaction in 2 D with typical length 0.1";
+        let result = Ok(InteractType::Exponential(2, 0.1));
+        assert_eq!(InteractType::from_str(test), result);
 
-        let test2 = "Coulomb potential";
-        let result2 = Ok(InteractType::Coulomb);
-        assert_eq!(InteractType::from_str(test2), result2);
+        let test = "Coulomb potential in 2 D";
+        let result = Ok(InteractType::Coulomb2D);
+        assert_eq!(InteractType::from_str(test), result);
 
-        let test4 = "Exponential";
-        let result4 = Ok(InteractType::Exponential);
-        assert_eq!(InteractType::from_str(test4), result4);
+        let test = "Coulomb potential in 3 D";
+        let result = Ok(InteractType::Coulomb3D);
+        assert_eq!(InteractType::from_str(test), result);
 
-        let test5 = "Coulomb";
-        let result5 = Ok(InteractType::Coulomb);
-        assert_eq!(InteractType::from_str(test5), result5);
+        let test = "Lennard Jones potential with particle size 1.0";
+        let result = Ok(InteractType::LennardJones(1.0));
+        assert_eq!(InteractType::from_str(test), result);
 
+        let test = "Exponential(2,0.1)";
+        let result = Ok(InteractType::Exponential(2, 0.1));
+        assert_eq!(InteractType::from_str(test), result);
+
+        let test = "Coulomb2D";
+        let result = Ok(InteractType::Coulomb2D);
+        assert_eq!(InteractType::from_str(test), result);
+
+        let test = "Coulomb3D";
+        let result = Ok(InteractType::Coulomb3D);
+        assert_eq!(InteractType::from_str(test), result);
+
+        let test = "LennardJones(1.0)";
+        let result = Ok(InteractType::LennardJones(1.0));
+        assert_eq!(InteractType::from_str(test), result);
+
+        let test =  "Exponential form interaction in 2 D with typical length";
+        let result = Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+        assert_eq!(InteractType::from_str(test), result);
+
+        let test =  "Test form interaction in 2 D with typical length 1.0";
+        let result = Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput));
+        assert_eq!(InteractType::from_str(test), result);
     }
 
     #[test]
