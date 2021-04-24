@@ -275,7 +275,7 @@ impl TimeIterator for ExponentialStep{
                 self.dt = dt_min;
             }
             _ => {
-                panic!(format!("{}", ErrorCode::InvalidType));
+                panic!("{}", ErrorCode::InvalidType);
             }
         }
     }
@@ -325,7 +325,7 @@ impl Iterator for ExponentialStep{
                 }
             },
             _ => {
-                panic!(format!("{}", ErrorCode::InvalidType));
+                panic!("{}", ErrorCode::InvalidType);
             }
         }
     }

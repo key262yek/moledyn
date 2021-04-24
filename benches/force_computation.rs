@@ -1,6 +1,5 @@
-// Benchmarks for force computation method
+// // Benchmarks for force computation method
 
-use rts::searcher_mod::types::InteractType;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn bench_enum(c : &mut Criterion){
@@ -9,6 +8,11 @@ fn bench_enum(c : &mut Criterion){
     // Found 10 outliers among 100 measurements (10.00%)
     // 7 (7.00%) high mild
     // 3 (3.00%) high severe
+
+    enum InteractType{
+        Exponential(usize, f64, f64),
+        Coulomb(usize, f64),
+    }
 
     struct Searcher{
         int_type : InteractType,
@@ -32,7 +36,6 @@ fn bench_enum(c : &mut Criterion){
 
     c.bench_function("force_from_enum", |b|  b.iter(|| s.force(black_box(3f64))));
 }
-
 
 fn bench_struct(c : &mut Criterion){
     // Collecting 100 samples in estimated 5.0000 s (717M iterations)

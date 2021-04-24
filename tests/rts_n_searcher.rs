@@ -9,7 +9,6 @@ use rts::position::{Position};
 use rts::error::Error;
 
 #[test]
-#[ignore]
 fn test_n_ptl_fpt() -> Result<(), Error>{
     // n ptl fpt가 기존의 연구결과와 잘 맞는지 확인하는 테스트
     // 하지만 단일 cpu로 계산하기엔 시간이 너무 오래걸려서 접음.
@@ -23,13 +22,14 @@ fn test_n_ptl_fpt() -> Result<(), Error>{
                                          (120, 1.70510E-01), (133, 1.51860E-01), (146, 1.28170E-01), (161, 1.07530E-01),
                                          (177, 9.32130E-02), (194, 8.14110E-02)];
 
-    let num_ensemble : usize = 10;
+    let num_ensemble : usize = 1000;
     let mut rng : Pcg64 = rng_seed(1231412314);             // random number generator
 
     for &data in data_set.iter(){
         let (n, mfpt_c) = data;
         let mfpt = ensemble_n_ptl_fpt(n, num_ensemble, &mut rng)?;
         assert!(((mfpt - mfpt_c)/mfpt_c).abs() < (num_ensemble as f64).powf(-0.3));
+        println!("{} {} {}", n, mfpt_c, mfpt);
     }
     Ok(())
 }

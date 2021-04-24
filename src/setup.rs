@@ -52,7 +52,6 @@ macro_rules! export_simulation_info {
             let $struct_name = <$struct_type>::convert_from(&$argument_name);
             )*
 
-
         fs::create_dir_all(&$dir).map_err(Error::make_error_io)?;
         let filename : String = $dataset.export_file($prefix);
         let output = fs::File::create(format!("{}/{}", $dir, filename)).map_err(Error::make_error_io)?;
