@@ -150,7 +150,8 @@ impl_argument_trait!(ContPassiveExpSearcher, "Searcher", ContPassiveExpSearcherA
     searcher_type, SearcherType, SearcherType::ContinuousPassiveInteracting;
     mtype,  MoveType,       "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype,  InitType<f64>,  "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform",
-    int_type, InteractType, "Characteristic of potential. ex) Exponential(dim,gamma)",
+    gamma,  f64,            "Typical length scale of interaction. ex) 0.1, 0.5",
+    dim,    usize,          "Dimension of system ex) 2, 3",
     strength, f64,          "Strength of interaction",
     num_searcher, usize,    "Number of Searcher");
 
@@ -173,34 +174,28 @@ impl ContPassiveExpSearcher{
             }
         }
 
-        match argument.int_type{
-            InteractType::Exponential(d, g) => {
-                if dim == 0 {
-                    dim = d;
-                } else if dim != d{
-                    panic!("Invalid Argument Input to Searcher Argument");
-                }
-                gamma = g;
-
-                let (coeff_pot, coeff_force) = Self::coeff(dim, gamma, strength).expect("Feature for dimensions without 2D or 3D is not Provided");
-
-                vec![Self{
-                    searcher_type : SearcherType::ContinuousPassiveInteracting,
-                    int_type: argument.int_type,
-                    mtype   : argument.mtype,
-                    itype   : InitType::SpecificPosition(pos.clone()),
-                    dim     : dim,
-                    pos     : pos,
-                    gamma   : gamma,
-                    strength: strength,
-                    coeff_pot : coeff_pot,
-                    coeff_force : coeff_force,
-                }; argument.num_searcher]
-            },
-            _ => {
-                panic!("Invalid Argument Input to Searcher Argument");
-            }
+        let d = argument.dim;
+        if dim == 0 {
+            dim = d;
+        } else if dim != d{
+            panic!("Invalid Argument Input to Searcher Argument");
         }
+        gamma = argument.gamma;
+
+        let (coeff_pot, coeff_force) = Self::coeff(dim, gamma, strength).expect("Feature for dimensions without 2D or 3D is not Provided");
+
+        vec![Self{
+            searcher_type : SearcherType::ContinuousPassiveInteracting,
+            int_type: InteractType::Exponential(dim, gamma),
+            mtype   : argument.mtype,
+            itype   : InitType::SpecificPosition(pos.clone()),
+            dim     : dim,
+            pos     : pos,
+            gamma   : gamma,
+            strength: strength,
+            coeff_pot : coeff_pot,
+            coeff_force : coeff_force,
+        }; argument.num_searcher]
     }
 }
 
