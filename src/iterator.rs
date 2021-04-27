@@ -2,7 +2,7 @@
 use crate::prelude::*;
 use crate::searcher_mod::Merge;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd)]
 pub struct Node{
     pub next : Option<usize>,
     pub prev : Option<usize>,
@@ -322,6 +322,16 @@ impl<M : Merge> LinkedList<M>{
 }
 
 
+impl<T : Default> LinkedList<Position<T>>{
+    #[allow(dead_code)]
+    pub fn clear(&mut self){
+        self.into_iter();
+        while let Some(cont) = self.get_mut(){
+            (*cont).clear();
+        }
+    }
+}
+
 #[cfg(test)]
 mod test{
     use super::*;
@@ -625,6 +635,16 @@ TestType { x: 2.0, n: 2, vec: [1.0, 3.0, 5.0], enu: Var2 }\n");
 
         assert_eq!(result, "0 1\n0 2\n0 3\n0 4\n1 2\n1 4\n2 4\n");
         Ok(())
+    }
+
+    #[test]
+    fn test_clear(){
+        let mut linkedlist = LinkedList::from(vec![Position::<f64>::new(vec![2.0; 2]); 10]);
+        linkedlist.clear();
+        linkedlist.into_iter();
+        while let Some(cont) = linkedlist.get(){
+            assert_eq!(*cont, Position::<f64>::new(vec![0.0; 2]));
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use std::default::Default;
+use std::convert::From;
 
 
 // =====================================================================================
@@ -368,6 +369,16 @@ impl Default for InteractType{
     }
 }
 
+impl From<InteractType> for f64{
+    fn from(item : InteractType) -> Self{
+        match item {
+            InteractType::Exponential(_dim, gamma) => gamma,
+            InteractType::LennardJones(ptl_size) => ptl_size,
+            _ => 0.0,
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests{
@@ -519,6 +530,21 @@ mod tests{
     fn test_fromstr_panic() -> (){
         let test7 = "Coulomb(a,1.0)";
         InteractType::from_str(test7).expect("Panic occurs");
+    }
+
+    #[test]
+    fn test_from_into(){
+        let test = InteractType::Exponential(2, 1.0);
+        assert_eq!(f64::from(test), 1.0);
+
+        let test = InteractType::Coulomb2D;
+        assert_eq!(f64::from(test), 0.0);
+
+        let test = InteractType::Coulomb3D;
+        assert_eq!(f64::from(test), 0.0);
+
+        let test = InteractType::LennardJones(2.0);
+        assert_eq!(f64::from(test), 2.0);
     }
 }
 

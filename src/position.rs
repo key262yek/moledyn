@@ -93,9 +93,6 @@ impl<T> IntoIterator for Position<T>{
     }
 }
 
-
-
-
 impl<T : Default> Position<T>{
     pub fn clear(&mut self){
         // 종종 vector를 initialize해야할 필요가 있다.
@@ -538,6 +535,8 @@ mod tests{
         pos.clear();
         assert_eq!(pos, Position::<f64>::new(vec![0.0, 0.0]));
     }
+
+
 
     #[test]
     fn test_from_str(){

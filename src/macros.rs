@@ -127,6 +127,8 @@ macro_rules! construct_structure {
     };
 }
 
+
+
 #[macro_export]
 // #[allow(unused_macros)]
 macro_rules! derive_hash{
@@ -139,6 +141,8 @@ macro_rules! derive_hash{
         }
     }
 }
+
+
 
 #[macro_export]
 // #[allow(unused_macros)]

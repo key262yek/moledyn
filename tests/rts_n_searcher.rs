@@ -9,6 +9,7 @@ use rts::position::{Position};
 use rts::error::Error;
 
 #[test]
+#[ignore]
 fn test_n_ptl_fpt() -> Result<(), Error>{
     // n ptl fpt가 기존의 연구결과와 잘 맞는지 확인하는 테스트
     // 하지만 단일 cpu로 계산하기엔 시간이 너무 오래걸려서 접음.
