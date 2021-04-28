@@ -13,7 +13,7 @@ pub struct ContPassiveExpSearcher{            // 연속한 시스템에서 Passi
     pub int_type: InteractType,                 // Type of interaction
     pub mtype   : MoveType,                     // Type of random movement
     pub itype   : InitType<f64>,                // Type of Initialization
-    pub dim     : usize,                        // dimension of space containing searcher
+    pub exp_dim     : usize,                        // dimension of space containing searcher
     pub pos     : Position<f64>,                // position of searcher
     pub gamma   : f64,                          // typical length of potential
     pub strength: f64,                          // strength of interaction
@@ -58,7 +58,7 @@ impl ContPassiveExpSearcher{
                     int_type: int_type,
                     mtype   : mtype,
                     itype   : InitType::SpecificPosition(pos.clone()),
-                    dim     : dim,
+                    exp_dim     : dim,
                     pos     : pos,
                     gamma   : gamma,
                     strength: strength,
@@ -103,7 +103,7 @@ impl ContPassiveExpSearcher{
                     int_type: int_type,
                     mtype   : mtype,
                     itype   : InitType::Uniform,
-                    dim     : pos.dim(),
+                    exp_dim     : pos.dim(),
                     pos     : pos,
                     gamma   : gamma,
                     strength: strength,
@@ -128,9 +128,9 @@ impl ContPassiveExpSearcher{
             Ok(()) => (),
             Err(_) => {
                 self.pos = sys.position_out_of_system();
-                self.dim = self.pos.dim();
+                self.exp_dim = self.pos.dim();
 
-                let (coeff_pot, coeff_force) = Self::coeff(self.dim, self.gamma, self.strength)?;
+                let (coeff_pot, coeff_force) = Self::coeff(self.exp_dim, self.gamma, self.strength)?;
                 self.coeff_pot = coeff_pot;
                 self.coeff_force = coeff_force;
             }
@@ -151,7 +151,7 @@ impl_argument_trait!(ContPassiveExpSearcher, "Searcher", ContPassiveExpSearcherA
     mtype,  MoveType,       "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype,  InitType<f64>,  "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform",
     gamma,  f64,            "Typical length scale of interaction. ex) 0.1, 0.5",
-    dim,    usize,          "Dimension of system ex) 2, 3",
+    exp_dim,    usize,          "Dimension of system ex) 2, 3",
     strength, f64,          "Strength of interaction",
     num_searcher, usize,    "Number of Searcher");
 
@@ -174,7 +174,7 @@ impl ContPassiveExpSearcher{
             }
         }
 
-        let d = argument.dim;
+        let d = argument.exp_dim;
         if dim == 0 {
             dim = d;
         } else if dim != d{
@@ -189,7 +189,7 @@ impl ContPassiveExpSearcher{
             int_type: InteractType::Exponential(dim, gamma),
             mtype   : argument.mtype,
             itype   : InitType::SpecificPosition(pos.clone()),
-            dim     : dim,
+            exp_dim     : dim,
             pos     : pos,
             gamma   : gamma,
             strength: strength,
@@ -206,7 +206,7 @@ impl SearcherCore<f64> for ContPassiveExpSearcher{
 
      // Mutual displacement
     fn mutual_displacement(&self, other : &Self) -> Result<(Position<f64>, f64), Error>{
-        if self.dim != other.dim{
+        if self.exp_dim != other.exp_dim{
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
         let mut disp : Position<f64> = &other.pos - &self.pos;
@@ -217,7 +217,7 @@ impl SearcherCore<f64> for ContPassiveExpSearcher{
 
     fn mutual_displacement_to_vec(&self, other : &Self, vec : &mut Position<f64>) -> Result<f64, Error>{
         // return distance, and direction vector on vec
-        if self.dim != other.dim || self.dim != vec.dim(){
+        if self.exp_dim != other.exp_dim || self.exp_dim != vec.dim(){
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
         vec.clear();
@@ -242,7 +242,7 @@ impl Passive<f64, f64> for ContPassiveExpSearcher{
         match self.mtype{
             MoveType::Brownian(coeff_diff) => {                                 // Brownian motion의 경우
                 let length : f64 = (2f64 * coeff_diff * dt).sqrt();             // variance가 sqrt(2 D dt)
-                let mut mv : Position<f64> = get_gaussian_vec(rng, self.dim);
+                let mut mv : Position<f64> = get_gaussian_vec(rng, self.exp_dim);
                 mv.mut_scalar_mul(length);
                 Ok(mv)
             },
@@ -257,7 +257,7 @@ impl Passive<f64, f64> for ContPassiveExpSearcher{
         // rng : Random number generator
         // dt : Time step size
         // vec : 값을 저장할 벡터
-        if self.dim != vec.dim(){    // searcher가 움직이는 공간의 dimension과 주어진 vec의 dimension이 다르면?
+        if self.exp_dim != vec.dim(){    // searcher가 움직이는 공간의 dimension과 주어진 vec의 dimension이 다르면?
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
         match self.mtype{
@@ -304,7 +304,7 @@ mod tests{
             int_type: InteractType::Exponential(2, 1f64),
             mtype   : MoveType::Brownian(1f64),
             itype   : InitType::SpecificPosition(pos.clone()),
-            dim     : 2,
+            exp_dim     : 2,
             pos     : pos.clone(),
             gamma   : 1f64,
             strength: 0f64,
@@ -348,7 +348,7 @@ mod tests{
             int_type: InteractType::Exponential(2, 1f64),
             mtype   : MoveType::Brownian(1f64),
             itype   : InitType::Uniform,
-            dim     : 2,
+            exp_dim     : 2,
             pos     : pos.clone(),
             gamma   : 1f64,
             strength: 0f64,
