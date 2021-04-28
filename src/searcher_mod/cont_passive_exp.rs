@@ -146,12 +146,12 @@ impl ContPassiveExpSearcher{
     }
 }
 
-impl_argument_trait!(ContPassiveExpSearcher, "Searcher", ContPassiveExpSearcherArguments, 5,
+impl_argument_trait!(ContPassiveExpSearcher, "Searcher", ContPassiveExpSearcherArguments, 6,
     searcher_type, SearcherType, SearcherType::ContinuousPassiveInteracting;
     mtype,  MoveType,       "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype,  InitType<f64>,  "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform",
     gamma,  f64,            "Typical length scale of interaction. ex) 0.1, 0.5",
-    exp_dim,    usize,          "Dimension of system ex) 2, 3",
+    exp_dim,    usize,       "Dimension of system ex) 2, 3",
     strength, f64,          "Strength of interaction",
     num_searcher, usize,    "Number of Searcher");
 
