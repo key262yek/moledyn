@@ -8,7 +8,7 @@ pub use crate::{
         impl_fmt_for_type, impl_fmt_test, impl_fromstr_for_type, impl_fromstr_test,
         construct_dataset, derive_hash, export_form, pub_export_form, export_data, pub_export_data,
         export_simulation_item, define_total_num_args, read_arguments, export_simulation_info,
-        setup_simulation, setup_simulation_fixed, construct_trait_bin
+        setup_simulation, setup_simulation_fixed, construct_trait_bin,
     },
     error::{Error, ErrorCode},
     position::{Position, Numerics},
@@ -38,5 +38,7 @@ pub use std::{fmt::{self, Display, Formatter},
 pub use streaming_iterator::{StreamingIterator,
         };
 pub use std::f64::consts::PI;
+
+pub use eager::*;
 
 

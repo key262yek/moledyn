@@ -12,6 +12,7 @@ rand_pcg = "0.2.1"
 rand_distr = "0.2.2"
 streaming-iterator = "0.1.5"
 chrono = "0.4"
+eager="0.1"
 
 [dev-dependencies]
 criterion = "0.3"

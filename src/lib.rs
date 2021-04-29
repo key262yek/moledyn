@@ -4,6 +4,7 @@
 // by generating various system, target, searchers and their dynamics
 //
 
+extern crate eager;
 
 // Public module
 pub mod error;
