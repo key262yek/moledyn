@@ -135,7 +135,15 @@ macro_rules! derive_hash{
     ($name:ident $(, $var:ident) *) => {
         impl Hash for $name{
             fn hash<H: Hasher>(&self, state: &mut H){
-                $(((self.$var as f64 * 1e10) as usize).hash(state);
+                $(
+                    let mut c = self.$var as f64 * 1e10;
+                    let mut b : f64 = 0.0;
+
+                    if c < 0.0 {
+                        c = - c;
+                        b = 1.0;
+                    }
+                    ((c + b) as usize).hash(state);
                     )*
             }
         }
