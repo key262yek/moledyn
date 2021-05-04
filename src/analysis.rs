@@ -490,14 +490,14 @@ impl Analysis for TimeAnalysis{
         self.lcount = vec![0; self.num_lbin];
     }
 
-    impl_fn_brief_info!(brief_info, "MFPT", min_time, max_time, bin_size, lbin_size, output_dir);
+    impl_fn_brief_info!(brief_info, "Single Time", min_time, max_time, bin_size, lbin_size, output_dir);
     impl_fn_info!(info,
                   min_time, "Minimal time for Histogram",
                   max_time, "Maximal time for Histogram",
                   bin_size, "Bin size for Linear Histogram",
                   lbin_size, "Bin size for Logarithmic Histogram",
                   output_dir, "Directory for data files");
-    export_form!(export_form, ensemble, mfpt, stddev);
+    export_form!(export_form, ensemble, mean, stddev);
 
 
     #[allow(dead_code)]
@@ -609,7 +609,7 @@ impl Analysis for TimeAnalysis{
             summary_dir = new.clone();
         }
 
-        let summary_file : String = format!("{}/analysis_fpt.dat", summary_dir);
+        let summary_file : String = format!("{}/brief_result.dat", summary_dir);
 
         fs::create_dir_all(&summary_dir).map_err(Error::make_error_io)?;
         fs::create_dir_all(format!("{}/linear_distribution", &summary_dir)).map_err(Error::make_error_io)?;
@@ -690,10 +690,10 @@ pub struct TimeVecAnalysis{       // Merge Time Analysis
 
 impl TimeVecAnalysis{
     #[allow(dead_code)]
-    fn new() -> Self{
+    fn new(num_var : usize) -> Self{
         Self{
-            means : Vec::new(),
-            stddevs : Vec::new(),
+            means : vec![0f64; num_var],
+            stddevs : vec![0f64; num_var],
             ensemble : 0usize,
             min_time : 0f64,
             max_time : 0f64,
@@ -701,7 +701,7 @@ impl TimeVecAnalysis{
             lbin_size : 0f64,
             num_bin : 0usize,
             num_lbin : 0usize,
-            num_var : 0usize,
+            num_var : num_var,
             hist : Vec::new(),
             lhist : Vec::new(),
             count : Vec::new(),
@@ -813,7 +813,7 @@ impl Analysis for TimeVecAnalysis{
         self.lcount = vec![vec![0; self.num_lbin]; self.num_var];
     }
 
-    impl_fn_brief_info!(brief_info, "MergeTime", num_var, min_time, max_time, bin_size, lbin_size, output_dir);
+    impl_fn_brief_info!(brief_info, "Vector of Time", num_var, min_time, max_time, bin_size, lbin_size, output_dir);
     impl_fn_info!(info,
                   num_var, "Number of data for each ensemble",
                   min_time, "Minimal time for Histogram",
@@ -821,7 +821,7 @@ impl Analysis for TimeVecAnalysis{
                   bin_size, "Bin size for Linear Histogram",
                   lbin_size, "Bin size for Logarithmic Histogram",
                   output_dir, "Directory for data files");
-    export_form!(export_form, ensemble, merge_time, stddev);
+    export_form!(export_form, ensemble, meantime, stddev);
 
     #[allow(dead_code)]
     fn export_mean_stddev(&self, prec : usize) -> Result<String, Error>{
@@ -918,6 +918,7 @@ impl Analysis for TimeVecAnalysis{
     fn analyze<H : Hash + Eq + Copy + DataSet>(args : &[String], width : usize, prefix : &str) -> Result<(), Error>{
         use chrono::offset::Utc;
 
+        let num_var : usize;
         let min_time : f64;
         let max_time : f64;
         let num_bin : usize;
@@ -926,8 +927,9 @@ impl Analysis for TimeVecAnalysis{
         let data_dir : String;
 
         match args.len(){
-            4 => {
+            5 => {
                 let mut idx : usize = 0;
+                num_var  = args[idx].parse().unwrap();      idx+=1;
                 min_time = args[idx].parse().unwrap();      idx+=1;
                 max_time = args[idx].parse().unwrap();      idx+=1;
                 num_bin  = args[idx].parse().unwrap();      idx+=1;
@@ -937,8 +939,9 @@ impl Analysis for TimeVecAnalysis{
                 bin_size = bin_info.0;
                 lbin_size = bin_info.1;
             },
-            5 => {
+            6 => {
                 let mut idx : usize = 0;
+                num_var  = args[idx].parse().unwrap();      idx+=1;
                 min_time = args[idx].parse().unwrap();      idx+=1;
                 max_time = args[idx].parse().unwrap();      idx+=1;
                 bin_size = args[idx].parse().unwrap();      idx+=1;
@@ -969,7 +972,7 @@ impl Analysis for TimeVecAnalysis{
             summary_dir = new.clone();
         }
 
-        let summary_file : String = format!("{}/analysis_merge_time.dat", summary_dir);
+        let summary_file : String = format!("{}/brief_result.dat", summary_dir);
 
         fs::create_dir_all(&summary_dir).map_err(Error::make_error_io)?;
         fs::create_dir_all(format!("{}/linear_distribution", &summary_dir)).map_err(Error::make_error_io)?;
@@ -996,8 +999,9 @@ impl Analysis for TimeVecAnalysis{
             let analysis = match hashmap.get_mut(&dataset){
                 Some(x) => x,
                 None => {
-                    let mut x = Self::new();
+                    let mut x = Self::new(num_var);
                     x.update_from_bin_size(min_time, max_time, bin_size, lbin_size)?;
+                    x.allocate_vectors();
                     hashmap.insert(dataset, x);
                     hashmap.get_mut(&dataset).unwrap()
                 },
@@ -1184,15 +1188,14 @@ impl Analysis for ProcessAnalysis{
         self.lcount = vec![0; self.num_lbin];
     }
 
-    impl_fn_brief_info!(brief_info, "Displacement", num_var, min_time, max_time, bin_size, lbin_size, output_dir);
+    impl_fn_brief_info!(brief_info, "Random Process analysis", min_time, max_time, bin_size, lbin_size, output_dir);
     impl_fn_info!(info,
-                  num_var, "Number of data for each ensemble",
                   min_time, "Minimal time for Histogram",
                   max_time, "Maximal time for Histogram",
                   bin_size, "Bin size for Linear Histogram",
                   lbin_size, "Bin size for Logarithmic Histogram",
                   output_dir, "Directory for data files");
-    export_form!(export_form, ensemble, displacement, long_term_stddev);
+    export_form!(export_form, ensemble, long_term_mean, long_term_stddev);
 
     #[allow(dead_code)]
     fn export_mean_stddev(&self, prec : usize) -> Result<String, Error>{
@@ -1354,6 +1357,7 @@ impl Analysis for ProcessAnalysis{
                 None => {
                     let mut x = Self::new();
                     x.update_from_bin_size(min_time, max_time, bin_size, lbin_size)?;
+                    x.allocate_vectors();
                     hashmap.insert(dataset, x);
                     hashmap.get_mut(&dataset).unwrap()
                 },
