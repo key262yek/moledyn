@@ -93,6 +93,14 @@ impl<T> IntoIterator for Position<T>{
     }
 }
 
+// impl<T> Iterator for Position<T>{
+//     type Item = T;
+
+//     fn next(&mut self) -> Option<Self::Item>{
+//         self.coordinate.next()
+//     }
+// }
+
 impl<T : Default> Position<T>{
     pub fn clear(&mut self){
         // 종종 vector를 initialize해야할 필요가 있다.
@@ -288,10 +296,10 @@ pub trait Numerics<T>{
     fn mut_scalar_mul(&mut self, scalar : T);
 
     // 덧셈. 계산 결과를 새로운 벡터로 출력하는 것이 아니라 주어진 벡터를 바꾸는 방식
-    fn mut_add(&mut self, other: &Self) -> Result<(), Error>;
+    fn mut_add(&mut self, other: &Self);
 
     // 뺄셈. 계산 결과를 새로운 벡터로 출력하는 것이 아니라 주어진 벡터를 바꾸는 방식
-    fn mut_sub(&mut self, other: &Self) -> Result<(), Error>;
+    fn mut_sub(&mut self, other: &Self);
 }
 
 impl<T> Numerics<T> for Position<T>
@@ -315,28 +323,32 @@ impl<T> Numerics<T> for Position<T>
         }
     }
 
-    fn mut_add(&mut self, other: &Self) -> Result<(), Error>{
-        if self.dim() != other.dim(){
-            return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
+    fn mut_add(&mut self, other: &Self){
+        for idx in 0..self.dim(){
+            let x = &mut self.coordinate[idx];
+            let y = other.coordinate[idx];
+            *x += y;
         }
+    }
 
+    fn mut_sub(&mut self, other: &Self){
+        for idx in 0..self.dim(){
+            let x = &mut self.coordinate[idx];
+            let y = other.coordinate[idx];
+            *x -= y;
+        }
+    }
+}
+
+impl<T> Position<T>
+    where T : Add<Output = T> + AddAssign
+                + Sub<Output = T> + SubAssign
+                + Mul<Output = T> + Clone + Copy + Default{
+    #[allow(dead_code)]
+    pub fn mut_add_bench(&mut self, other : &Self){
         for (x, &y) in self.iter_mut().zip(other.iter()){
             *x += y;
         }
-
-        Ok(())
-    }
-
-    fn mut_sub(&mut self, other: &Self) -> Result<(), Error>{
-        if self.dim() != other.dim(){
-            return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
-        }
-
-        for (x, &y) in self.iter_mut().zip(other.iter()){
-            *x -= y;
-        }
-
-        Ok(())
     }
 }
 
@@ -500,7 +512,7 @@ mod tests{
     }
 
     #[test]
-    fn test_num_ops() -> Result<(), Error>{
+    fn test_num_ops(){
         assert_eq!(&Position::<f64>::new(vec![0.0, 0.0]) + &Position::<f64>::new(vec![1.0, 2.0]),
             Position::<f64>::new(vec![1.0, 2.0]));
         assert_eq!(&Position::<f64>::new(vec![0.0, 0.0]) - &Position::<f64>::new(vec![1.0, 2.0]),
@@ -514,13 +526,11 @@ mod tests{
         pos.mut_scalar_mul(2.0);
         assert_eq!(pos, Position::<f64>::new(vec![2.0, 4.0]));
 
-        pos.mut_add(&pos2)?;
+        pos.mut_add(&pos2);
         assert_eq!(pos, Position::<f64>::new(vec![4.0, 7.0]));
 
-        pos.mut_sub(&pos2)?;
+        pos.mut_sub(&pos2);
         assert_eq!(pos, Position::<f64>::new(vec![2.0, 4.0]));
-
-        Ok(())
     }
 
     #[test]

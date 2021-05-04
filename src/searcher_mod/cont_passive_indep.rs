@@ -128,13 +128,21 @@ impl SearcherCore<f64> for ContPassiveIndepSearcher{
     }
 
     fn mutual_displacement_to_vec(&self, other : &Self, vec : &mut Position<f64>) -> Result<f64, Error>{
-        if self.dim != other.dim || self.dim != vec.dim(){
+        // return distance, and direction vector on vec
+        if self.dim != other.dim || self.dim != vec.dim() {
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
-        vec.clear();
-        vec.mut_add(&other.pos)?;
-        vec.mut_sub(&self.pos)?;
-        let distance : f64 = vec.norm();
+
+        let mut s = 0f64;
+        for i in 0..self.dim{
+            let x = self.pos.coordinate[i];
+            let y = other.pos.coordinate[i];
+
+            vec[i] = y - x;
+            s += (y - x).powi(2);
+        }
+
+        let distance : f64 = s.sqrt();
         vec.mut_scalar_mul(1f64 / distance);
         return Ok(distance);
     }

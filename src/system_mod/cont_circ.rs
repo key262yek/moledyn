@@ -80,7 +80,7 @@ impl SystemCore<f64> for ContCircSystem{
         // pos : initial position of ptl
         // dp : displacement of ptl
 
-        pos.mut_add(dp)?;                           // add dp to pos
+        pos.mut_add(dp);                           // add dp to pos
         if self.check_inclusion(pos)?{              // if ptl is still in the system after movement
             return Ok(());                          // return
         }
@@ -175,12 +175,12 @@ pub fn check_bc_exact(sys: ContCircSystem, pos: &mut Position<f64>, dp: &mut Pos
     // pos : initial position of ptl
     // dp : displacement of ptl
 
-    pos.mut_add(dp)?;
+    pos.mut_add(dp);
     if sys.check_inclusion(pos)?{
         return Ok(());
     }
 
-    pos.mut_sub(dp)?;
+    pos.mut_sub(dp);
     let r0 = sys.sys_size;
     let r = pos.norm();
     let dr = dp.norm();
@@ -190,7 +190,7 @@ pub fn check_bc_exact(sys: ContCircSystem, pos: &mut Position<f64>, dp: &mut Pos
 
     dp.mut_scalar_mul(1f64 - 2f64 * k * t);
     pos.mut_scalar_mul(1f64 - 2f64 * k);
-    pos.mut_add(dp)?;
+    pos.mut_add(dp);
 
     if sys.check_inclusion(pos)?{
         return Ok(());
@@ -203,12 +203,12 @@ pub fn check_bc_first_order(sys: ContCircSystem, pos: &mut Position<f64>, dp: &m
     // 위의 정확한 계산에서 dp가 작고, pos이 경계에 가깝단 조건에서 first order만 남긴 결과
     // 비례로 줄여들어오는 것보다 오히려 더 안좋다.
 
-    pos.mut_add(dp)?;
+    pos.mut_add(dp);
     if sys.check_inclusion(pos)?{
         return Ok(());
     }
 
-    pos.mut_sub(dp)?;
+    pos.mut_sub(dp);
     let r0 = sys.sys_size;
     let r = pos.norm();
     let dr = dp.norm();
@@ -221,7 +221,7 @@ pub fn check_bc_first_order(sys: ContCircSystem, pos: &mut Position<f64>, dp: &m
 
     pos.mut_scalar_mul(1f64 - 2f64 * k);
     dp.mut_scalar_mul(1f64 - 2f64 * k * t);
-    pos.mut_add(dp)?;
+    pos.mut_add(dp);
 
     if sys.check_inclusion(pos)?{
         return Ok(());

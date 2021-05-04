@@ -217,13 +217,20 @@ impl SearcherCore<f64> for ContPassiveExpSearcher{
 
     fn mutual_displacement_to_vec(&self, other : &Self, vec : &mut Position<f64>) -> Result<f64, Error>{
         // return distance, and direction vector on vec
-        if self.exp_dim != other.exp_dim || self.exp_dim != vec.dim(){
+        if self.exp_dim != other.exp_dim || self.exp_dim != vec.dim() {
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
-        vec.clear();
-        vec.mut_add(&other.pos)?;
-        vec.mut_sub(&self.pos)?;
-        let distance : f64 = vec.norm();
+
+        let mut s = 0f64;
+        for i in 0..self.exp_dim{
+            let x = self.pos.coordinate[i];
+            let y = other.pos.coordinate[i];
+
+            vec[i] = y - x;
+            s += (y - x).powi(2);
+        }
+
+        let distance : f64 = s.sqrt();
         vec.mut_scalar_mul(1f64 / distance);
         return Ok(distance);
     }
@@ -374,9 +381,9 @@ mod tests{
         let (force, dt) = (1f64, 0.5f64);
         let mut temp = Position::<f64>::new(vec![0.0, 0.0]);
         vec.mut_scalar_mul(force * dt);
-        temp.mut_add(&vec)?;
+        temp.mut_add(&vec);
         assert_eq!(temp, Position::<f64>::new(vec![0.5, 0.0]));
-        searcher1.pos.mut_add(&temp)?;
+        searcher1.pos.mut_add(&temp);
         assert_eq!(searcher1.pos, Position::<f64>::new(vec![0.5,0.0]));
 
         return Ok(());

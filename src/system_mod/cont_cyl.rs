@@ -112,7 +112,7 @@ impl SystemCore<f64> for ContCylindricalSystem{
         // pos : initial position of ptl
         // dp : displacement of ptl
 
-        pos.mut_add(dp)?;                           // add dp to pos
+        pos.mut_add(dp);                           // add dp to pos
         if self.check_inclusion(pos)?{              // if ptl is still in the system after movement
             return Ok(());                          // return
         }
