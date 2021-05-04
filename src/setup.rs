@@ -1,6 +1,7 @@
 
 use crate::prelude::*;
 
+
 #[macro_export]
 // #[allow(unused_macros)]
 macro_rules! export_simulation_item{
@@ -113,22 +114,22 @@ macro_rules! setup_simulation_fixed{
     }
 }
 
-pub struct Simulation{
+pub struct VariableSimulation{
     pub num_ensemble : usize,
     pub idx_set : usize,
     pub seed : u128,
     pub output_dir : String,
 }
 
-impl_argument_trait!(Simulation, "Simulation", SimulationArguments, 4;
+impl_argument_trait!(VariableSimulation, "Variable Simulation", VariableSimulationArguments, 4;
     num_ensemble, usize, "Number of Ensemble",
     idx_set, usize, "Index of Ensemble Set",
     seed, u128, "Initial Seed for Random Number Generator",
     output_dir, String, "Directory containing output file");
 
-impl Simulation{
+impl VariableSimulation{
     #[allow(dead_code)]
-    pub fn convert_from(argument : &SimulationArguments) -> Self{
+    pub fn convert_from(argument : &VariableSimulationArguments) -> Self{
         Self{
             num_ensemble    : argument.num_ensemble,
             idx_set         : argument.idx_set,
@@ -136,5 +137,41 @@ impl Simulation{
             output_dir      : argument.output_dir.clone(),
         }
     }
+}
+
+pub struct ProcessSimulation{
+    pub idx_set : usize,
+    pub seed : u128,
+    pub output_dir : String,
+}
+
+impl_argument_trait!(ProcessSimulation, "Process Simulation", ProcessSimulationArguments, 3;
+    idx_set, usize, "Index of Ensemble Set",
+    seed, u128, "Initial Seed for Random Number Generator",
+    output_dir, String, "Directory containing output file");
+
+impl ProcessSimulation{
+    #[allow(dead_code)]
+    pub fn convert_from(argument : &ProcessSimulationArguments) -> Self{
+        Self{
+            idx_set         : argument.idx_set,
+            seed            : argument.seed,
+            output_dir      : argument.output_dir.clone(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests{
+    #[allow(unused_imports)]
+    use super::*;
+
+    // #[test]
+    // #[ignore]
+    // fn test_hash_input(){
+    //     // macro 결과를 확인하기 편하게 하기 위해 먼저 macro 내부 코드 내용에 println!을 씌워 확인하기로 하였다.
+    //     assert_eq!(hash_input!(ContCircSystem), "ContCircSystem, sys_arg, ContCircSystemArguments, [sys_size, f64, dim, usize]");
+    //     assert_eq!(hash_input!(ContCubicSystem), "ContCubicSystem, sys_arg, ContCubicSystemArguments, [bctype, BoundaryCond, sys_size, f64, dim, usize]");
+    // }
 }
 
