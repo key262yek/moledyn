@@ -13,7 +13,7 @@ construct_dataset!(SimulationData, ContCircSystem, sys_arg, ContCircSystemArgume
                 [num_searcher, usize];
                 ConstStep, time_arg, ConstStepArguments,
                 [dt, f64];
-                Simulation, sim_arg, SimulationArguments,
+                VariableSimulation, sim_arg, VariableSimulationArguments,
                 [idx_set, usize]);
 
 #[test]
@@ -23,7 +23,7 @@ fn test_setup() -> Result<(), Error>{
     setup_simulation_fixed!(args, 15, 0, MFPTAnalysis, "RTS_N_PTL_INDEP_SEARCHER_SYS_SIZE", dataset, SimulationData,
         sys_arg, ContCircSystem, target_arg, ContBulkTarget,
         searcher_arg, ContPassiveIndepSearcher,
-        time_arg, ConstStep, sim_arg, Simulation);
+        time_arg, ConstStep, sim_arg, VariableSimulation);
 
     let sys_size    = sys_arg.sys_size;
     let dim         = sys_arg.dim;
@@ -55,7 +55,7 @@ fn test_setup() -> Result<(), Error>{
                             ContCircSystem, sys, sys_arg,
                             ContBulkTarget, target, target_arg,
                             ContPassiveIndepSearcher, searcher, searcher_arg,
-                            Simulation, simulation, sim_arg);
+                            VariableSimulation, simulation, sim_arg);
 
     let mut single_move = Position::<f64>::new(vec![0f64; dim]);
 

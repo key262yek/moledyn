@@ -32,7 +32,7 @@ fn test_ptl_diffusion_in_time() -> Result<(), Error>{
             // Searcher moves with time dt
             single_move.clear();
             searcher.random_move_to_vec(&mut rng, dt, &mut single_move)?;
-            searcher.pos.mut_add(&single_move)?;
+            searcher.pos.mut_add(&single_move);
             let dx2 : f64 = searcher.pos.norm().powi(2);          // Compute square of displacement
             data[k + 1] += dx2;                                     // Add to data
         }

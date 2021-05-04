@@ -155,7 +155,7 @@ macro_rules! derive_hash{
 #[macro_export]
 // #[allow(unused_macros)]
 macro_rules! export_form{
-    ($name:ident $(,$var:ident) *) => {
+    ($name:ident $(,$var: ident) *) => {
         #[allow(dead_code)]
         fn $name(width: usize) -> String{
             let mut string = String::new();
@@ -302,7 +302,7 @@ mod tests{
                         [num_searcher, usize, radius, f64, alpha, f64];
                         ExponentialStep, time_arg, ExponentialStepArguments,
                         [dt_min, f64, dt_max, f64, length, usize];
-                        {Simulation, sim_arg, SimulationArguments,
+                        {VariableSimulation, sim_arg, VariableSimulationArguments,
                         [idx_set, usize]});
 
         let dataset1 = SimulationData{

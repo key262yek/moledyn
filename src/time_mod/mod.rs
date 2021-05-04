@@ -548,13 +548,42 @@ tmax      : Upper limit of time for computing. ex) 1.0, 0 means INFINITE\n");
 
         Ok(())
     }
+
+    #[test]
+    fn test_const_increasing() -> Result<(), Error>{
+
+        let mut timeiter = ConstStep::new(1e-3)?;
+        let tmax = 0.5f64;
+        timeiter.set_tmax(tmax)?;
+
+        let mut prev = -1e-4;
+        for (time, _dt) in timeiter.into_diff(){
+            if time < prev{
+                panic!("Why time decreases?");
+            }
+            prev = time;
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_exponential_increasing() -> Result<(), Error>{
+
+        let mut timeiter = ExponentialStep::new(1e-10, 1e-3, 10)?;
+        let tmax = 1f64;
+        timeiter.set_tmax(tmax)?;
+
+        let mut prev = -1e-4;
+        for (time, _dt) in timeiter.into_diff(){
+            if time < prev{
+                panic!("Why time decreases?");
+            }
+            prev = time;
+        }
+
+        Ok(())
+    }
 }
-
-
-
-
-
-
-
 
 

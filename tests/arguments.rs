@@ -19,14 +19,14 @@ construct_dataset!(SimulationData, ContCircSystem, sys_arg, ContCircSystemArgume
                 [num_searcher, usize];
                 ConstStep, time_arg, ConstStepArguments,
                 [dt, f64];
-                Simulation, sim_arg, SimulationArguments,
+                VariableSimulation, sim_arg, VariableSimulationArguments,
                 [idx_set, usize]);
 
 
 fn main() -> Result<(), Error>{
     setup_simulation!(args, 15, 1, MFPTAnalysis, "RTS_N_PTL_MERGEABLE_SEARCHER", dataset, SimulationData,
         sys_arg, ContCircSystem, target_arg, ContBulkTarget,
-        searcher_arg, ContPassiveIndepSearcher, time_arg, ConstStep, sim_arg, Simulation);
+        searcher_arg, ContPassiveIndepSearcher, time_arg, ConstStep, sim_arg, VariableSimulation);
 
     let sys_size    = sys_arg.sys_size;
     let dim         = sys_arg.dim;
@@ -59,7 +59,7 @@ fn main() -> Result<(), Error>{
                             ContBulkTarget, target, target_arg,
                             ContPassiveIndepSearcher, vec_searchers, searcher_arg,
                             ConstStep, timeiter, time_arg,
-                            Simulation, simulation, sim_arg);
+                            VariableSimulation, simulation, sim_arg);
 
     let mut single_move = Position::<f64>::new(vec![0f64; dim]);
     let mut list_searchers : LinkedList<ContPassiveIndepSearcher> = LinkedList::from(vec_searchers);
