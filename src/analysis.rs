@@ -632,6 +632,7 @@ impl Analysis for TimeAnalysis{
             if path.is_dir(){
                 continue;
             }
+            println!("File read start : {:?}", path.clone());
 
             let (dataset, mut lines) : (H, Lines<BufReader<File>>) = match H::from_file(path.clone()){
                 Ok(ds) => ds,
@@ -655,6 +656,8 @@ impl Analysis for TimeAnalysis{
                 let time : f64 = line.trim().parse().unwrap();
                 analysis.add_ensemble(time);
             }
+
+            println!("File read end : {:?}", path.clone());
         }
 
         for (dataset, analysis) in hashmap.iter_mut(){
@@ -995,6 +998,7 @@ impl Analysis for TimeVecAnalysis{
             if path.is_dir(){
                 continue;
             }
+            println!("File read start : {:?}", path.clone());
 
             let (dataset, mut lines) : (H, Lines<BufReader<File>>) = match H::from_file(path.clone()){
                 Ok(ds) => ds,
@@ -1018,6 +1022,8 @@ impl Analysis for TimeVecAnalysis{
                 let values = line.trim().split_whitespace().map(|x| x.parse::<f64>().unwrap()).collect();
                 analysis.add_ensemble(values);
             }
+
+            println!("File read end : {:?}", path.clone());
         }
 
         for (dataset, analysis) in hashmap.iter_mut(){
@@ -1039,7 +1045,7 @@ impl Analysis for TimeVecAnalysis{
 // ===  Implement Data Pair ============================================================
 // =====================================================================================
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
 pub struct Pair<T>(T, T);
 
 impl<T> FromStr for Pair<T>
@@ -1048,7 +1054,7 @@ impl<T> FromStr for Pair<T>
 
     fn from_str(s : &str) -> Result<Self, Self::Err>{
         let mut trim = s.to_string();
-        trim.retain(|c| c != '(' || c != ')');
+        trim.retain(|c| c != '(' && c != ')');
         let splitted : Vec<T> = trim.split(',').map(|t| t.parse::<T>().map_err(|_e| Error::make_error_syntax(ErrorCode::InvalidArgumentInput)).unwrap())
                            .collect();
         if splitted.len() != 2{
@@ -1242,15 +1248,13 @@ impl Analysis for ProcessAnalysis{
         let mut i : usize = 0;
 
         while time <= self.max_time{
-            let mut string = String::new();
 
-            string.push_str(format!("{}", format_args!("{1:0$e}\t", prec, time)).as_str());
             let n = self.count[i];
             let x = self.mean[i];
             let dx = self.stddev[i];
 
             if x > 1e-15{
-                writer.write_fmt(format_args!("{1:0$}\t{2:0$e}\t{3:0$e}\n", prec, n, x, dx)).map_err(Error::make_error_io)?;
+                writer.write_fmt(format_args!("{1:0$e}\t{2:0$}\t{3:0$e}\t{4:0$e}\n", prec, time, n, x, dx)).map_err(Error::make_error_io)?;
             }
 
             time += bin_size;
@@ -1266,15 +1270,12 @@ impl Analysis for ProcessAnalysis{
         let mut i : usize = 0;
 
         while time <= self.max_time{
-            let mut string = String::new();
-
-            string.push_str(format!("{}", format_args!("{1:0$e}\t", prec, time)).as_str());
             let n = self.lcount[i];
             let x = self.log_mean[i];
             let dx = self.log_stddev[i];
 
             if x > 1e-15{
-                writer.write_fmt(format_args!("{1:0$}\t{2:0$e}\t{3:0$e}\n", prec, n, x, dx)).map_err(Error::make_error_io)?;
+                writer.write_fmt(format_args!("{1:0$e}\t{2:0$}\t{3:0$e}\t{4:0$e}\n", prec, time, n, x, dx)).map_err(Error::make_error_io)?;
             }
 
             time *= lbin_size;
@@ -1376,6 +1377,7 @@ impl Analysis for ProcessAnalysis{
             if path.is_dir(){
                 continue;
             }
+            println!("File read start : {:?}", path.clone());
 
             let (dataset, mut lines) : (H, Lines<BufReader<File>>) = match H::from_file(path.clone()){
                 Ok(ds) => ds,
@@ -1403,6 +1405,8 @@ impl Analysis for ProcessAnalysis{
                 }
                 analysis.add_ensemble();
             }
+
+            println!("File read end : {:?}", path.clone());
         }
 
         for (dataset, analysis) in hashmap.iter_mut(){
@@ -1720,6 +1724,14 @@ mod tests{
         let mut log_hist_buff = BufWriter::new(log_hist_file);
         analysis.export_log_scaled_distribution(20, log_hist_buff.get_mut())?;
         log_hist_buff.flush().map_err(Error::make_error_io)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_pair() -> Result<(), Error>{
+        let s : Pair<f64> = "(12.1231,12312.21)".parse().unwrap();
+        assert_eq!(s, Pair(12.1231, 12312.21));
 
         Ok(())
     }

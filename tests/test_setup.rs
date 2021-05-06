@@ -20,7 +20,7 @@ construct_dataset!(SimulationData, ContCircSystem, sys_arg, ContCircSystemArgume
 fn test_setup() -> Result<(), Error>{
     let args: Vec<String> = vec!["10", "2", "0:0", "1", "1.0", "Uniform", "10", "1e-3", "100", "10", "1", "12314", "tests/images/test_setup"].iter().map(|x| x.to_string()).collect();
 
-    setup_simulation_fixed!(args, 15, 0, MFPTAnalysis, "RTS_N_PTL_INDEP_SEARCHER_SYS_SIZE", dataset, SimulationData,
+    setup_simulation_fixed!(args, 15, 0, TimeAnalysis, "RTS_N_PTL_INDEP_SEARCHER_SYS_SIZE", dataset, SimulationData,
         sys_arg, ContCircSystem, target_arg, ContBulkTarget,
         searcher_arg, ContPassiveIndepSearcher,
         time_arg, ConstStep, sim_arg, VariableSimulation);
