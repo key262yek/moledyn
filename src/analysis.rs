@@ -306,6 +306,7 @@ macro_rules! construct_trait_bin {
 
 pub trait Var1
     where Self : Sized + Bin{
+    // Single variable analysis.
 
     // Add ensemble data
     fn add_ensemble(&mut self, value : f64);
@@ -316,6 +317,7 @@ pub trait Var1
 
 pub trait VarN
     where Self : Sized + Bin{
+    // N variable analysis.
 
     // Add ensemble data
     fn add_ensemble(&mut self, values : Vec<f64>);
@@ -326,9 +328,12 @@ pub trait VarN
 
 pub trait VarTime
     where Self : Sized + Bin{
+    // time vs variable analysis.
 
-    // Add ensemble data
-    fn add_ensemble(&mut self, pair : (f64, f64));
+    fn add_ensemble(&mut self);
+
+    // Add data
+    fn add_pair(&mut self, pair : Pair<f64>);
 
     // Draw distribution
     fn draw(&mut self);
@@ -1030,16 +1035,38 @@ impl Analysis for TimeVecAnalysis{
     }
 }
 
+// =====================================================================================
+// ===  Implement Data Pair ============================================================
+// =====================================================================================
 
+#[derive(Debug, Clone, Copy)]
+pub struct Pair<T>(T, T);
+
+impl<T> FromStr for Pair<T>
+    where T : FromStr + Copy{
+    type Err = crate::error::Error;
+
+    fn from_str(s : &str) -> Result<Self, Self::Err>{
+        let mut trim = s.to_string();
+        trim.retain(|c| c != '(' || c != ')');
+        let splitted : Vec<T> = trim.split(',').map(|t| t.parse::<T>().map_err(|_e| Error::make_error_syntax(ErrorCode::InvalidArgumentInput)).unwrap())
+                           .collect();
+        if splitted.len() != 2{
+            return Err(Error::make_error_syntax(ErrorCode::InvalidNumberOfArguments));
+        }
+        return Ok(Pair(splitted[0], splitted[1]));
+    }
+}
 
 // =====================================================================================
 // ===  Implement ProcessAnalysis =================================================
 // =====================================================================================
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct ProcessAnalysis{        // analysis for process measurement
-    long_term_mean : f64,                     // Mean of variable within whole process
-    long_term_stddev : f64,                   // Stddev of variable within whole process
+pub struct ProcessAnalysis{         // analysis for process measurement
+    long_term_mean : f64,           // Mean of variable within whole process
+    long_term_stddev : f64,         // Stddev of variable within whole process
+    tot_point: usize,               // total number of points
     ensemble : usize,               // Number of ensemble
     min_time : f64,                 // Minimal time for logarithmic histogram
     max_time : f64,                 // Maximal time for storing
@@ -1061,6 +1088,7 @@ impl ProcessAnalysis{
         Self{
             long_term_mean : 0f64,
             long_term_stddev : 0f64,
+            tot_point : 0usize,
             ensemble : 0usize,
             min_time : 0f64,
             max_time : 0f64,
@@ -1082,9 +1110,6 @@ impl Bin for ProcessAnalysis{
     construct_trait_bin!();
 
     fn allocate_vectors(&mut self){
-        self.long_term_mean = 0f64;
-        self.long_term_stddev = 0f64;
-
         self.mean = vec![0.0f64; self.num_bin];
         self.stddev = vec![0.0f64; self.num_bin];
         self.count = vec![0; self.num_bin];
@@ -1100,6 +1125,7 @@ impl Default for ProcessAnalysis{
         Self{
             long_term_mean : 0f64,
             long_term_stddev : 0f64,
+            tot_point : 0usize,
             ensemble : 0usize,
             min_time : 1e-15f64,
             max_time : 1e13f64,
@@ -1118,11 +1144,15 @@ impl Default for ProcessAnalysis{
 }
 
 impl VarTime for ProcessAnalysis{
-     // Add ensemble data
-    fn add_ensemble(&mut self, pair : (f64, f64)){
-
+    fn add_ensemble(&mut self){
         self.ensemble += 1;
-        let (time, value) = pair;
+    }
+
+     // Add ensemble data
+    fn add_pair(&mut self, pair : Pair<f64>){
+
+        self.tot_point += 1;
+        let (time, value) = (pair.0, pair.1);
 
         self.long_term_mean += value;
         self.long_term_stddev += value * value;
@@ -1147,7 +1177,7 @@ impl VarTime for ProcessAnalysis{
 
     // Draw distribution from histogram
     fn draw(&mut self){
-        let en : f64= self.ensemble as f64;
+        let en = self.tot_point as f64;
 
         self.long_term_mean = self.long_term_mean / en;
         self.long_term_stddev = ((self.long_term_stddev / en) - self.long_term_mean.powi(2)).sqrt();
@@ -1366,9 +1396,12 @@ impl Analysis for ProcessAnalysis{
 
             for line in lines{
                 let line = line.map_err(Error::make_error_io)?;
-                let values : Vec<f64> = line.trim().split_whitespace().map(|x| x.parse::<f64>().unwrap()).collect();
-                let pair = (values[0], values[1]);
-                analysis.add_ensemble(pair);
+                let splitted : Vec<&str> = line.trim().split_whitespace().collect();
+                for s in splitted{
+                    let pair : Pair<f64> = s.parse()?;
+                    analysis.add_pair(pair);
+                }
+                analysis.add_ensemble();
             }
         }
 
@@ -1602,7 +1635,7 @@ mod tests{
 
     #[test]
     fn test_varn() -> Result<(), Error>{
-        let mut an = TimeVecAnalysis::new();
+        let mut an = TimeVecAnalysis::new(0);
         assert_eq!(an, TimeVecAnalysis{
             means : Vec::new(),
             stddevs : Vec::new(),
@@ -1665,7 +1698,7 @@ mod tests{
         let n : usize = 100000;
         let num_var : usize = 3;
 
-        let mut analysis = TimeVecAnalysis::new();
+        let mut analysis = TimeVecAnalysis::new(0);
         analysis.update_from_bin_size(0f64, 10f64, 0.05f64, 1.05f64)?;
         analysis.num_var = num_var;
         analysis.allocate_vectors();
