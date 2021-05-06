@@ -141,13 +141,15 @@ impl VariableSimulation{
 
 pub struct ProcessSimulation{
     pub num_ensemble : usize,
+    pub period : f64,
     pub idx_set : usize,
     pub seed : u128,
     pub output_dir : String,
 }
 
-impl_argument_trait!(ProcessSimulation, "Process Simulation", ProcessSimulationArguments, 4;
+impl_argument_trait!(ProcessSimulation, "Process Simulation", ProcessSimulationArguments, 5;
     num_ensemble, usize, "Number of Ensemble",
+    period, f64, "Time between recording",
     idx_set, usize, "Index of Ensemble Set",
     seed, u128, "Initial Seed for Random Number Generator",
     output_dir, String, "Directory containing output file");
@@ -157,6 +159,7 @@ impl ProcessSimulation{
     pub fn convert_from(argument : &ProcessSimulationArguments) -> Self{
         Self{
             num_ensemble    : argument.num_ensemble,
+            period          : argument.period,
             idx_set         : argument.idx_set,
             seed            : argument.seed,
             output_dir      : argument.output_dir.clone(),
