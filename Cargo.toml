@@ -20,7 +20,7 @@ members = [
 ]
 
 [dependencies]
-rts_proc = { path = "rts_proc" }
+rts_proc = { path = "rts_proc", version = "0.1.0"}
 rand = "0.7"
 rand_pcg = "0.2.1"
 rand_distr = "0.2.2"
