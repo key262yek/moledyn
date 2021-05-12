@@ -7,25 +7,25 @@ use crate::prelude::*;
 pub struct ContCylindricalSystem{              // 연속 cubic 시스템
     pub sys_type : SystemType,          // System type
     pub bctype : BoundaryCond,          // Boundary condition : mixed. reflection for circular domain, periodic for rectangular domain
-    pub radius : f64,                   // radius of circular domain
-    pub length : f64,                   // length of rectangular domain (-length, length)
+    pub sys_radius : f64,                   // radius of circular domain
+    pub sys_length : f64,                   // length of rectangular domain (-length, length)
     pub dim : usize,                    // dimension of system
 }
 
 impl ContCylindricalSystem{
-    pub fn new(cyl_dim : usize, radius : f64, length : f64, dim : usize) -> Self{
+    pub fn new(cyl_dim : usize, sys_radius : f64, sys_length : f64, dim : usize) -> Self{
         // length : length, width, height of system
         // dim : dimension of system
 
-        if cyl_dim > dim || radius <= 0f64 || length <= 0f64 || dim == 0{
+        if cyl_dim > dim || sys_radius <= 0f64 || sys_length <= 0f64 || dim == 0{
             panic!("{}", ErrorCode::InvalidArgumentInput);
         }
 
         ContCylindricalSystem{
             sys_type : SystemType::ContinuousCylindrical(cyl_dim),
             bctype : BoundaryCond::Mixed(cyl_dim),
-            radius : radius,
-            length : length,
+            sys_radius : sys_radius,
+            sys_length : sys_length,
             dim : dim,
         }
     }
@@ -34,8 +34,8 @@ impl ContCylindricalSystem{
 impl_argument_trait!(ContCylindricalSystem, "System", ContCylindricalSystemArguments, 5;
     sys_type, SystemType, "Dimension of circular domain.",
     bctype, BoundaryCond, "Boundary condition. ex) Reflective, Periodic, integer indicates Mixed",
-    radius, f64, "Radius of Circular Domain",
-    length, f64, "Length of Rectangular Domain (-length, length)",
+    sys_radius, f64, "Radius of Circular Domain",
+    sys_length, f64, "Length of Rectangular Domain (-length, length)",
     dim, usize, "Dimension of System");
 
 impl ContCylindricalSystem{
@@ -53,16 +53,16 @@ impl ContCylindricalSystem{
                 panic!("{:?}", ErrorCode::InvalidArgumentInput);
             },
         };
-        if cyl_dim1 != cyl_dim2 || cyl_dim1 > argument.dim || argument.radius < 0f64 ||
-                argument.length <= 0f64 || argument.dim == 0{
+        if cyl_dim1 != cyl_dim2 || cyl_dim1 > argument.dim || argument.sys_radius < 0f64 ||
+                argument.sys_length <= 0f64 || argument.dim == 0{
             panic!("{:?}", ErrorCode::InvalidArgumentInput);
         }
 
         Self{
             sys_type    : argument.sys_type,
             bctype      : argument.bctype,
-            radius      : argument.radius,
-            length      : argument.length,
+            sys_radius      : argument.sys_radius,
+            sys_length      : argument.sys_length,
             dim         : argument.dim,
         }
     }
@@ -85,19 +85,19 @@ impl SystemCore<f64> for ContCylindricalSystem{
             },
         };
 
-        let radius = self.radius;
+        let sys_radius = self.sys_radius;
         let mut r = 0f64;
         for x in &pos[..d]{
             r += *x * *x;
         }
         r = r.sqrt();
-        if r > radius{
+        if r > sys_radius{
             return Ok(false);
         }
 
-        let length = self.length;
+        let sys_length = self.sys_length;
         for x in &pos[d..]{
-            if x.abs() > length{
+            if x.abs() > sys_length{
                 return Ok(false);
             }
         }
@@ -121,14 +121,14 @@ impl SystemCore<f64> for ContCylindricalSystem{
             BoundaryCond::Mixed(d) =>{
 
                 // Reflection
-                let radius = self.radius;
+                let sys_radius = self.sys_radius;
                 let mut r = 0f64;
                 for x in &pos[..d]{
                     r += *x * *x;
                 }
                 r = r.sqrt();
-                if r > radius{
-                    let t = (2f64 * radius - r) / r;
+                if r > sys_radius{
+                    let t = (2f64 * sys_radius - r) / r;
                     for i in 0..d{
                         pos.coordinate[i] *= t;
                     }
@@ -136,18 +136,18 @@ impl SystemCore<f64> for ContCylindricalSystem{
 
 
                 // Periodic
-                let length : f64 = self.length;
+                let sys_length : f64 = self.sys_length;
                 for i in d..self.dim{
                     let x = &mut pos.coordinate[i];
-                    if (*x).abs() <= length{
+                    if (*x).abs() <= sys_length{
                         continue;
                     }
 
                     if *x < 0f64{
-                        *x = 2f64 * length + *x;
+                        *x = 2f64 * sys_length + *x;
                     }
                     else{
-                        *x = - 2f64 * length + *x;
+                        *x = - 2f64 * sys_length + *x;
                     }
                 }
 
@@ -176,8 +176,8 @@ impl SystemCore<f64> for ContCylindricalSystem{
                 return Err(Error::make_error_syntax(ErrorCode::InvalidType));
             },
         };
-        let radius : f64 = self.radius;
-        let length : f64 = self.length;
+        let sys_radius : f64 = self.sys_radius;
+        let sys_length : f64 = self.sys_length;
         let dim : usize = self.dim;
         let pos0 : Position<f64> = Position::<f64>::new(vec![-0.5f64; self.dim]);
         let mut pos1;
@@ -187,15 +187,15 @@ impl SystemCore<f64> for ContCylindricalSystem{
                                                                 // 평행이동
             let mut r : f64 = 0f64;
             for i in 0..d{
-                pos1[i] *= 2f64 * radius;
+                pos1[i] *= 2f64 * sys_radius;
                 r += pos1[i] * pos1[i];
             }
             for i in d..dim{
-                pos1[i] *= 2f64 * length;
+                pos1[i] *= 2f64 * sys_length;
             }
 
             r = r.sqrt();
-            if r < radius{
+            if r < sys_radius{
                 break;
             }
         }
@@ -216,8 +216,8 @@ impl SystemCore<f64> for ContCylindricalSystem{
                 return Err(Error::make_error_syntax(ErrorCode::InvalidType));
             },
         };
-        let length : f64 = self.length;
-        let radius : f64 = self.radius;
+        let sys_length : f64 = self.sys_length;
+        let sys_radius : f64 = self.sys_radius;
         let dim : usize = self.dim;
         if vec.dim() != dim{
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
@@ -228,15 +228,15 @@ impl SystemCore<f64> for ContCylindricalSystem{
 
             let mut r : f64 = 0f64;
             for i in 0..d{
-                vec[i] *= 2f64 * radius;
+                vec[i] *= 2f64 * sys_radius;
                 r += vec[i] * vec[i];
             }
             for i in d..dim{
-                vec[i] *= 2f64 * length;
+                vec[i] *= 2f64 * sys_length;
             }
 
             r = r.sqrt();
-            if r < radius{
+            if r < sys_radius{
                 break;
             }
         }
@@ -248,9 +248,9 @@ impl SystemCore<f64> for ContCylindricalSystem{
         // system 밖의 점을 하나 출력해주는 함수
         // searcher를 새로 정의할 때, 맨 처음 위치를 시스템 밖에 두면 편리해서 생긴 기능
 
-        let length : f64 = self.length;
+        let sys_length : f64 = self.sys_length;
         let dim : usize = self.dim;
-        return Position::new(vec![2f64 * length; dim]);   // circular domain에선 아니더라도 rectangular domain에서 밖으로 나감
+        return Position::new(vec![2f64 * sys_length; dim]);   // circular domain에선 아니더라도 rectangular domain에서 밖으로 나감
     }
 
     fn position_out_of_system_to_vec(&self, vec: &mut Position<f64>) -> Result<(), Error>{
@@ -260,9 +260,9 @@ impl SystemCore<f64> for ContCylindricalSystem{
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
 
-        let length : f64 = self.length;
+        let sys_length : f64 = self.sys_length;
         for x in vec.iter_mut(){
-            *x = 2f64 * length;
+            *x = 2f64 * sys_length;
         }
         Ok(())
     }
@@ -279,8 +279,8 @@ mod tests{
 
         assert_eq!(sys.sys_type, SystemType::ContinuousCylindrical(1));
         assert_eq!(sys.bctype, BoundaryCond::Mixed(1));
-        assert_eq!(sys.radius, 3.0);
-        assert_eq!(sys.length, 10.0);
+        assert_eq!(sys.sys_radius, 3.0);
+        assert_eq!(sys.sys_length, 10.0);
         assert_eq!(sys.dim, 2);
     }
 

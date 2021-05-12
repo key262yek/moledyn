@@ -13,17 +13,17 @@ pub struct ContPassiveMergeSearcher{            // 연속한 시스템에서 Pas
     pub itype   : InitType<f64>,                // Type of Initialization
     pub dim     : usize,                        // dimension of space containing searcher
     pub pos     : Position<f64>,                // position of searcher
-    pub radius  : f64,                          // radius of ptl. when they collide, they merge.
+    pub ptl_radius  : f64,                          // radius of ptl. when they collide, they merge.
     pub size    : usize,                        // size of cluster
     pub alpha   : f64,                          // Exponent of diffusion decrease a function of size
 }
 
 impl ContPassiveMergeSearcher{
     // 모든 정보를 제공했을 경우, 새 Searcher struct를 반환하는 함수
-    pub fn new(mtype : MoveType, pos : Position<f64>, radius : f64, alpha : f64) -> Self{
+    pub fn new(mtype : MoveType, pos : Position<f64>, ptl_radius : f64, alpha : f64) -> Self{
         // mtype    : Random walk characteristic
         // pos      : initial position of searcher
-        // radius   : Radius of ptl
+        // ptl_radius   : Radius of ptl
         // size     : size of ptl
         // alpha    : exponent of diffusion decrease
 
@@ -33,14 +33,14 @@ impl ContPassiveMergeSearcher{
             itype   : InitType::SpecificPosition(pos.clone()),
             dim     : pos.dim(),
             pos     : pos,
-            radius  : radius,
+            ptl_radius  : ptl_radius,
             size    : 1,
             alpha   : alpha,
         }
     }
 
     pub fn new_uniform(sys : &dyn SystemCore<f64>, target : &dyn TargetCore<f64>,
-                   rng : &mut Pcg64, mtype : MoveType, radius : f64, alpha : f64) -> Result<Self, Error>{
+                   rng : &mut Pcg64, mtype : MoveType, ptl_radius : f64, alpha : f64) -> Result<Self, Error>{
         // system과 target이 주어져 있는 상황에서 시스템 domain 안에서 초기위치를 uniform하게 뽑아 searcher를 정의해주는 함수
         // sys      : system configuration
         // target   : target configuration
@@ -63,7 +63,7 @@ impl ContPassiveMergeSearcher{
             itype   : InitType::Uniform,
             dim     : pos.dim(),
             pos     : pos,
-            radius  : radius,
+            ptl_radius  : ptl_radius,
             size    : 1,
             alpha   : alpha,
         })
@@ -110,7 +110,7 @@ impl_argument_trait!(ContPassiveMergeSearcher, "Searcher", ContPassiveMergeSearc
     size,   usize,          1;
     mtype,  MoveType,       "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype,  InitType<f64>,  "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform",
-    radius, f64,            "Radius of particle. When they collide, they merge. ex) 0.1",
+    ptl_radius, f64,            "Radius of particle. When they collide, they merge. ex) 0.1",
     alpha,  f64,            "Exponent of diffusion decrease. D ~ n^alpha ex) 1.0",
     num_searcher, usize, "Number of Searcher");
 
@@ -136,7 +136,7 @@ impl ContPassiveMergeSearcher{
             itype           : argument.itype.clone(),
             dim             : dim,
             pos             : pos,
-            radius          : argument.radius,
+            ptl_radius          : argument.ptl_radius,
             size            : 1,
             alpha           : argument.alpha,
         }; argument.num_searcher]
@@ -274,7 +274,7 @@ mod tests{
             itype   : InitType::SpecificPosition(pos.clone()),
             dim     : 2,
             pos     : pos.clone(),
-            radius  : 0.1,
+            ptl_radius  : 0.1,
             size    : 1,
             alpha   : 0.0,
         });
@@ -308,7 +308,7 @@ mod tests{
             itype   : InitType::Uniform,
             dim     : 2,
             pos     : pos.clone(),
-            radius  : 0.1,
+            ptl_radius  : 0.1,
             size    : 1,
             alpha   : 0.0,
         });

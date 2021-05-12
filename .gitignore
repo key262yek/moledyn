@@ -8,3 +8,4 @@ sftp-config.json
 *.dat
 *.svg
 !tests/images/RTS_N_PTL_INDEP_SEARCHER_SYS_SIZE_10_DIM_2_TARGET_SIZE_1_NUMBER_OF_SEARCHER_1_SET_1.dat
+/datas

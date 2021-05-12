@@ -26,56 +26,6 @@ pub trait DataSet{
 }
 
 
-#[macro_export]
-#[allow(unused_macros)]
-macro_rules! hash_input{
-    // System Types
-    (ContCircSystem) => {
-        ContCircSystem, sys_arg, ContCircSystemArguments, [sys_size, f64, dim, usize]
-    };
-    (ContCubicSystem) => {
-        ContCubicSystem, sys_arg, ContCubicSystemArguments, [sys_size, f64, dim, usize]
-    };
-    (ContCylindricalSystem) => {
-        ContCylindricalSystem, sys_arg, ContCylindricalSystemArguments, [radius, f64, length, f64, dim, usize]
-    };
-
-    // Target Types
-    (ContBoundaryTarget) => {
-        ContBoundaryTarget, target_arg, ContBoundaryTargetArguments, [target_size, f64]
-    };
-    (ContBulkTarget) => {
-        ContBulkTarget, target_arg, ContBulkTargetArguments, [target_size, f64]
-    };
-
-    // Searcher Types
-    (ContPassiveIndepSearcher) => {
-        ContPassiveIndepSearcher, searcher_arg, ContPassiveIndepSearcherArguments, [num_searcher, usize]
-    };
-    (ContPassiveMergeSearcher) => {
-        ContPassiveMergeSearcher, searcher_arg, ContPassiveMergeSearcherArguments, [radius, f64, alpha, f64, num_searcher, usize]
-    };
-    (ContPassiveExpSearcher) => {
-        ContPassiveExpSearcher, searcher_arg, ContPassiveExpSearcherArguments, [gamma, f64, strength, f64, num_searcher, usize]
-    };
-
-    // TimeStep Types
-    (ConstStep) => {
-        ConstStep, time_arg, ConstStepArguments, [dt, f64, tmax, f64]
-    };
-    (ExponentialStep) => {
-        ExponentialStep, time_arg, ExponentialStepArguments, [dt_min, f64, dt_max, f64, length, f64, tmax, f64]
-    };
-
-    // Simulation Types
-    (Simulation) => {
-        Simulation, sim_arg, SimulationArguments, [idx_set, usize]
-    };
-
-    ($name : ty, $($rem : ty), +) => {
-        hash_input!($name); hash_input!($($rem), +)
-    };
-}
 
 #[macro_export]
 #[allow(unused_macros)]
@@ -84,7 +34,7 @@ macro_rules! construct_dataset_recursive{
         construct_dataset!($($t), * ; $t2);
     };
     ($($name : ty),+ ; $sim : ty) => {
-        construct_dataset_recursive!($($name),+ ; $sim :ty [SimulationData]);
+        construct_dataset_recursive!($($name),+ ; $sim : ty [SimulationData]);
     };
 }
 
