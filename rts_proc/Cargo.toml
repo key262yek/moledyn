@@ -1,8 +1,17 @@
 [package]
 name = "rts_proc"
 version = "0.1.0"
-authors = ["key262yek <key262yek@gmail.com>"]
+authors = ["Myeongseon Choi"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/key262yek/rts"
+documentation = "https://docs.rs/rts"
+description = """
+    Rust package for Random Target Search simulation
+"""
+keywords = ["random target search", "rts"]
+categories = ["simulation", "molecular dynamics"]
+include = ["src/", "Cargo.toml", "README.md"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

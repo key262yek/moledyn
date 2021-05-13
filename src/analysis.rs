@@ -1309,7 +1309,7 @@ impl Analysis for ProcessAnalysis{
             summary_dir = new.clone();
         }
 
-        let summary_file : String = format!("{}/analysis_merge_time.dat", summary_dir);
+        let summary_file : String = format!("{}/brief_data.dat", summary_dir);
 
         fs::create_dir_all(&summary_dir).map_err(Error::make_error_io)?;
         fs::create_dir_all(format!("{}/linear_distribution", &summary_dir)).map_err(Error::make_error_io)?;
