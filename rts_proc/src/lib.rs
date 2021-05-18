@@ -160,7 +160,7 @@ fn ident_to_dataset(ident : &proc_macro2::Ident) -> proc_macro2::TokenStream{
 
 impl ParsedArguments{
     #[allow(dead_code)]
-    pub fn proc_construct_dataset(&self) -> proc_macro2::TokenStream{
+    fn proc_construct_dataset(&self) -> proc_macro2::TokenStream{
         let tt_sys = ident_to_dataset(&self.setups[1]);
         let tt_target = ident_to_dataset(&self.setups[2]);
         let tt_searcher = ident_to_dataset(&self.setups[3]);
@@ -175,7 +175,7 @@ impl ParsedArguments{
     }
 
     #[allow(dead_code)]
-    pub fn proc_setup_simulation(&self) -> proc_macro2::TokenStream{
+    fn proc_setup_simulation(&self) -> proc_macro2::TokenStream{
         let prefix = self.prefix.clone();
         let id_analysis = self.setups[0].clone();
         let id_sys = self.setups[1].clone();
@@ -194,9 +194,9 @@ impl ParsedArguments{
     }
 
     #[allow(dead_code)]
-    pub fn proc_variable_declare(&self) -> proc_macro2::TokenStream{
-        pub fn ident_to_variables(ident : proc_macro2::Ident) -> Vec<proc_macro2::Ident>{
-            pub fn string_to_ident(name : &str) -> proc_macro2::Ident{
+    fn proc_variable_declare(&self) -> proc_macro2::TokenStream{
+        fn ident_to_variables(ident : proc_macro2::Ident) -> Vec<proc_macro2::Ident>{
+            fn string_to_ident(name : &str) -> proc_macro2::Ident{
                 syn::Ident::new(name, proc_macro2::Span::call_site())
             }
 
@@ -306,7 +306,7 @@ impl ParsedArguments{
     }
 
     #[allow(dead_code)]
-    pub fn proc_export_simulation_info(&self) -> proc_macro2::TokenStream{
+    fn proc_export_simulation_info(&self) -> proc_macro2::TokenStream{
         let prefix = self.prefix.clone();
         let id_sys = self.setups[1].clone();
         let id_target = self.setups[2].clone();
