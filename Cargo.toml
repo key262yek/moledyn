@@ -11,7 +11,7 @@ description = """
     Rust package for Random Target Search simulation
 """
 keywords = ["random-target-search", "target-search", "rts"]
-categories = ["simulation", "Molecular-Dynamics"]
+categories = ["simulation"]
 include = ["src/", "rts_proc/", "Cargo.toml", "Readme.md", "LICENSE-*"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -22,7 +22,7 @@ members = [
 ]
 
 [dependencies]
-rts_proc = { path="rts_proc" }
+rts_proc = "0.1.0"
 rand = "0.7"
 rand_pcg = "0.2.1"
 rand_distr = "0.2.2"

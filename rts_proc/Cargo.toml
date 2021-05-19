@@ -11,7 +11,7 @@ description = """
     which is the rust package for Random Target Search simulation
 """
 keywords = ["random-target-search", "target-search", "rts"]
-categories = ["simulation", "Molecular-Dynamics"]
+categories = ["simulation"]
 include = ["src/", "Cargo.toml", "README.md", "LICENSE-*"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
