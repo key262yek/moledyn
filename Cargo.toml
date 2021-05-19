@@ -5,8 +5,8 @@ authors = ["Myeongseon Choi"]
 edition = "2018"
 readme="README.md"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/key262yek/rts"
-documentation = "https://docs.rs/rts"
+repository = "https://github.com/key262yek/rust_rts"
+documentation = "https://docs.rs/rust_rts"
 description = """
     Rust package for Random Target Search simulation
 """
