@@ -34,9 +34,5 @@ eager="0.1"
 criterion = "0.3"
 plotlib = "0.5.1"
 
-[[bench]]
-name = "log_functions"
-harness = false
-
 [profile.release]
 panic = 'abort'
