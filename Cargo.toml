@@ -10,8 +10,8 @@ documentation = "https://docs.rs/rts"
 description = """
     Rust package for Random Target Search simulation
 """
-keywords = ["random target search", "rts"]
-categories = ["simulation", "molecular dynamics"]
+keywords = ["random-target-search", "target-search", "rts"]
+categories = ["simulation", "Molecular-Dynamics"]
 include = ["src/", "rts_proc/", "Cargo.toml", "Readme.md", "LICENSE-*"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
