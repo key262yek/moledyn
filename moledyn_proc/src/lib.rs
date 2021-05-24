@@ -94,28 +94,28 @@ fn ident_to_dataset(ident : &proc_macro2::Ident) -> proc_macro2::TokenStream{
             tokens.into()
         },
 
-        // Searcher Types
-        "ContPassiveIndepSearcher" => {
+        // Agent Types
+        "ContPassiveIndepAgent" => {
             let tokens = proc_quote::quote!{
-                ContPassiveIndepSearcher, searcher_arg, ContPassiveIndepSearcherArguments, [num_searcher, usize]
+                ContPassiveIndepAgent, agent_arg, ContPassiveIndepAgentArguments, [num_agent, usize]
             };
             tokens.into()
         },
-        "ContPassiveMergeSearcher" => {
+        "ContPassiveMergeAgent" => {
             let tokens = proc_quote::quote!{
-                ContPassiveMergeSearcher, searcher_arg, ContPassiveMergeSearcherArguments, [radius, f64, alpha, f64, num_searcher, usize]
+                ContPassiveMergeAgent, agent_arg, ContPassiveMergeAgentArguments, [radius, f64, alpha, f64, num_agent, usize]
             };
             tokens.into()
         },
-        "ContPassiveExpSearcher" => {
+        "ContPassiveExpAgent" => {
             let tokens = proc_quote::quote!{
-                ContPassiveExpSearcher, searcher_arg, ContPassiveExpSearcherArguments, [gamma, f64, strength, f64, num_searcher, usize]
+                ContPassiveExpAgent, agent_arg, ContPassiveExpAgentArguments, [gamma, f64, strength, f64, num_agent, usize]
             };
             tokens.into()
         },
-        "ContPassiveLJSearcher" => {
+        "ContPassiveLJAgent" => {
             let tokens = proc_quote::quote!{
-                ContPassiveLJSearcher, searcher_arg, ContPassiveLJSearcherArguments, [ptl_size, f64, strength, f64, num_searcher, usize]
+                ContPassiveLJAgent, agent_arg, ContPassiveLJAgentArguments, [ptl_size, f64, strength, f64, num_agent, usize]
             };
             tokens.into()
         },
@@ -163,13 +163,13 @@ impl ParsedArguments{
     fn proc_construct_dataset(&self) -> proc_macro2::TokenStream{
         let tt_sys = ident_to_dataset(&self.setups[1]);
         let tt_target = ident_to_dataset(&self.setups[2]);
-        let tt_searcher = ident_to_dataset(&self.setups[3]);
+        let tt_agent = ident_to_dataset(&self.setups[3]);
         let tt_time = ident_to_dataset(&self.setups[4]);
         let tt_sim = ident_to_dataset(&self.setups[5]);
 
         let tokens = proc_quote::quote!{
             construct_dataset!(SimulationData,
-            #tt_sys; #tt_target; #tt_searcher; #tt_time; {#tt_sim});
+            #tt_sys; #tt_target; #tt_agent; #tt_time; {#tt_sim});
         };
         tokens.into()
     }
@@ -180,14 +180,14 @@ impl ParsedArguments{
         let id_analysis = self.setups[0].clone();
         let id_sys = self.setups[1].clone();
         let id_target = self.setups[2].clone();
-        let id_searcher = self.setups[3].clone();
+        let id_agent = self.setups[3].clone();
         let id_time = self.setups[4].clone();
         let id_sim = self.setups[5].clone();
 
         let tokens = proc_quote::quote!{
             setup_simulation!(args, 15, 1, #id_analysis, #prefix,
                 dataset, SimulationData, sys_arg, #id_sys,
-                target_arg, #id_target, searcher_arg, #id_searcher,
+                target_arg, #id_target, agent_arg, #id_agent,
                 time_arg, #id_time, sim_arg, #id_sim);
         };
         tokens.into()
@@ -220,32 +220,32 @@ impl ParsedArguments{
                     vec.push(string_to_ident("target_size"));
                 },
 
-                "ContPassiveIndepSearcher" => {
+                "ContPassiveIndepAgent" => {
                     vec.push(string_to_ident("mtype"));
                     vec.push(string_to_ident("itype"));
-                    vec.push(string_to_ident("num_searcher"));
+                    vec.push(string_to_ident("num_agent"));
                 },
-                "ContPassiveMergeSearcher" => {
+                "ContPassiveMergeAgent" => {
                     vec.push(string_to_ident("mtype"));
                     vec.push(string_to_ident("itype"));
                     vec.push(string_to_ident("ptl_radius"));
                     vec.push(string_to_ident("alpha"));
-                    vec.push(string_to_ident("num_searcher"));
+                    vec.push(string_to_ident("num_agent"));
                 },
-                "ContPassiveExpSearcher" => {
+                "ContPassiveExpAgent" => {
                     vec.push(string_to_ident("mtype"));
                     vec.push(string_to_ident("itype"));
                     vec.push(string_to_ident("gamma"));
                     vec.push(string_to_ident("exp_dim"));
                     vec.push(string_to_ident("strength"));
-                    vec.push(string_to_ident("num_searcher"));
+                    vec.push(string_to_ident("num_agent"));
                 },
-                "ContPassiveLJSearcher" => {
+                "ContPassiveLJAgent" => {
                     vec.push(string_to_ident("mtype"));
                     vec.push(string_to_ident("itype"));
                     vec.push(string_to_ident("ptl_size"));
                     vec.push(string_to_ident("strength"));
-                    vec.push(string_to_ident("num_searcher"));
+                    vec.push(string_to_ident("num_agent"));
                 },
 
                 // Timestep Types
@@ -286,8 +286,8 @@ impl ParsedArguments{
         let id_target = self.setups[2].clone();
         let var_target = ident_to_variables(id_target);
 
-        let id_searcher = self.setups[3].clone();
-        let var_searcher = ident_to_variables(id_searcher);
+        let id_agent = self.setups[3].clone();
+        let var_agent = ident_to_variables(id_agent);
 
         let id_time = self.setups[4].clone();
         let var_time = ident_to_variables(id_time);
@@ -298,7 +298,7 @@ impl ParsedArguments{
         let tokens = proc_quote::quote!{
             #(let #var_sys = sys_arg.#var_sys.clone();)*
             #(let #var_target = target_arg.#var_target.clone();)*
-            #(let #var_searcher = searcher_arg.#var_searcher.clone();)*
+            #(let #var_agent = agent_arg.#var_agent.clone();)*
             #(let #var_time = time_arg.#var_time.clone();)*
             #(let #var_sim = sim_arg.#var_sim.clone();)*
         };
@@ -310,7 +310,7 @@ impl ParsedArguments{
         let prefix = self.prefix.clone();
         let id_sys = self.setups[1].clone();
         let id_target = self.setups[2].clone();
-        let id_searcher = self.setups[3].clone();
+        let id_agent = self.setups[3].clone();
         let id_time = self.setups[4].clone();
         let id_sim = self.setups[5].clone();
 
@@ -319,7 +319,7 @@ impl ParsedArguments{
                 #prefix,
                 #id_sys, sys, sys_arg,
                 #id_target, target, target_arg,
-                #id_searcher, vec_searchers, searcher_arg,
+                #id_agent, vec_agents, agent_arg,
                 #id_time, timeiter, time_arg,
                 #id_sim, simulation, sim_arg);
         };

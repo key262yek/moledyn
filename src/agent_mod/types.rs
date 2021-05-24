@@ -4,11 +4,11 @@ use std::convert::From;
 
 
 // =====================================================================================
-// ===  Implement SearcherType =========================================================
+// ===  Implement AgentType =========================================================
 // =====================================================================================
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd)]
-pub enum SearcherType{                          // Type of searcher
+pub enum AgentType{                          // Type of agent
     ContinuousPassiveIndependent,
     ContinuousPassiveInteracting,
     ContinuousActiveIndependent,
@@ -23,14 +23,14 @@ pub enum SearcherType{                          // Type of searcher
     NetworkActiveInteracting,
 }
 
-impl SearcherType{
+impl AgentType{
     #[allow(dead_code)]
     fn in_lattice(&self) -> bool{
         match self{
-            SearcherType::LatticePassiveIndependent
-            | SearcherType::LatticePassiveInteracting
-            | SearcherType::LatticeActiveIndependent
-            | SearcherType::LatticeActiveInteracting => true,
+            AgentType::LatticePassiveIndependent
+            | AgentType::LatticePassiveInteracting
+            | AgentType::LatticeActiveIndependent
+            | AgentType::LatticeActiveInteracting => true,
             _ => false,
         }
     }
@@ -38,10 +38,10 @@ impl SearcherType{
     #[allow(dead_code)]
     fn in_continous(&self) -> bool{
         match self{
-            SearcherType::ContinuousPassiveIndependent
-            | SearcherType::ContinuousPassiveInteracting
-            | SearcherType::ContinuousActiveIndependent
-            | SearcherType::ContinuousActiveInteracting => true,
+            AgentType::ContinuousPassiveIndependent
+            | AgentType::ContinuousPassiveInteracting
+            | AgentType::ContinuousActiveIndependent
+            | AgentType::ContinuousActiveInteracting => true,
             _ => false,
         }
     }
@@ -49,10 +49,10 @@ impl SearcherType{
     #[allow(dead_code)]
     fn in_network(&self) -> bool{
         match self{
-            SearcherType::NetworkPassiveIndependent
-            | SearcherType::NetworkPassiveInteracting
-            | SearcherType::NetworkActiveIndependent
-            | SearcherType::NetworkActiveInteracting => true,
+            AgentType::NetworkPassiveIndependent
+            | AgentType::NetworkPassiveInteracting
+            | AgentType::NetworkActiveIndependent
+            | AgentType::NetworkActiveInteracting => true,
             _ => false,
         }
     }
@@ -60,12 +60,12 @@ impl SearcherType{
     #[allow(dead_code)]
     fn is_passive(&self) -> bool{
         match self{
-            SearcherType::ContinuousPassiveIndependent
-            | SearcherType::ContinuousPassiveInteracting
-            | SearcherType::LatticePassiveIndependent
-            | SearcherType::LatticePassiveInteracting
-            | SearcherType::NetworkPassiveIndependent
-            | SearcherType::NetworkPassiveInteracting => true,
+            AgentType::ContinuousPassiveIndependent
+            | AgentType::ContinuousPassiveInteracting
+            | AgentType::LatticePassiveIndependent
+            | AgentType::LatticePassiveInteracting
+            | AgentType::NetworkPassiveIndependent
+            | AgentType::NetworkPassiveInteracting => true,
             _ => false,
         }
     }
@@ -73,12 +73,12 @@ impl SearcherType{
     #[allow(dead_code)]
     fn is_active(&self) -> bool{
         match self{
-            SearcherType::ContinuousActiveIndependent
-            | SearcherType::ContinuousActiveInteracting
-            | SearcherType::LatticeActiveIndependent
-            | SearcherType::LatticeActiveInteracting
-            | SearcherType::NetworkActiveIndependent
-            | SearcherType::NetworkActiveInteracting => true,
+            AgentType::ContinuousActiveIndependent
+            | AgentType::ContinuousActiveInteracting
+            | AgentType::LatticeActiveIndependent
+            | AgentType::LatticeActiveInteracting
+            | AgentType::NetworkActiveIndependent
+            | AgentType::NetworkActiveInteracting => true,
             _ => false,
         }
     }
@@ -86,12 +86,12 @@ impl SearcherType{
     #[allow(dead_code)]
     fn is_independent(&self) -> bool{
         match self{
-            SearcherType::ContinuousPassiveIndependent
-            | SearcherType::ContinuousActiveIndependent
-            | SearcherType::LatticePassiveIndependent
-            | SearcherType::LatticeActiveIndependent
-            | SearcherType::NetworkPassiveIndependent
-            | SearcherType::NetworkActiveIndependent => true,
+            AgentType::ContinuousPassiveIndependent
+            | AgentType::ContinuousActiveIndependent
+            | AgentType::LatticePassiveIndependent
+            | AgentType::LatticeActiveIndependent
+            | AgentType::NetworkPassiveIndependent
+            | AgentType::NetworkActiveIndependent => true,
             _ => false,
         }
     }
@@ -99,48 +99,48 @@ impl SearcherType{
     #[allow(dead_code)]
     fn is_interacting(&self) -> bool{
         match self{
-            SearcherType::ContinuousPassiveInteracting
-            | SearcherType::ContinuousActiveInteracting
-            | SearcherType::LatticePassiveInteracting
-            | SearcherType::LatticeActiveInteracting
-            | SearcherType::NetworkPassiveInteracting
-            | SearcherType::NetworkActiveInteracting => true,
+            AgentType::ContinuousPassiveInteracting
+            | AgentType::ContinuousActiveInteracting
+            | AgentType::LatticePassiveInteracting
+            | AgentType::LatticeActiveInteracting
+            | AgentType::NetworkPassiveInteracting
+            | AgentType::NetworkActiveInteracting => true,
             _ => false,
         }
     }
 }
 
-impl_fmt_for_type!(SearcherType,
-    SearcherType::ContinuousPassiveIndependent => "Passive Independent Searcher in Continous system.",
-    SearcherType::ContinuousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
-    SearcherType::ContinuousActiveIndependent => "Active Independent Searcher in Continous system.",
-    SearcherType::ContinuousActiveInteracting => "Active Interacting Searcher in Continous system.",
-    SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
-    SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
-    SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
-    SearcherType::LatticeActiveInteracting => "Active Interacting Searcher in Lattice system.",
-    SearcherType::NetworkPassiveIndependent => "Passive Independent Searcher in Network.",
-    SearcherType::NetworkPassiveInteracting => "Passive Interacting Searcher in Network.",
-    SearcherType::NetworkActiveIndependent => "Active Independent Searcher in Network.",
-    SearcherType::NetworkActiveInteracting => "Active Interacting Searcher in Network.");
+impl_fmt_for_type!(AgentType,
+    AgentType::ContinuousPassiveIndependent => "Passive Independent Agent in Continous system.",
+    AgentType::ContinuousPassiveInteracting => "Passive Interacting Agent in Continous system.",
+    AgentType::ContinuousActiveIndependent => "Active Independent Agent in Continous system.",
+    AgentType::ContinuousActiveInteracting => "Active Interacting Agent in Continous system.",
+    AgentType::LatticePassiveIndependent => "Passive Independent Agent in Lattice system.",
+    AgentType::LatticePassiveInteracting => "Passive Interacting Agent in Lattice system.",
+    AgentType::LatticeActiveIndependent => "Active Independent Agent in Lattice system.",
+    AgentType::LatticeActiveInteracting => "Active Interacting Agent in Lattice system.",
+    AgentType::NetworkPassiveIndependent => "Passive Independent Agent in Network.",
+    AgentType::NetworkPassiveInteracting => "Passive Interacting Agent in Network.",
+    AgentType::NetworkActiveIndependent => "Active Independent Agent in Network.",
+    AgentType::NetworkActiveInteracting => "Active Interacting Agent in Network.");
 
-impl_fromstr_for_type!(SearcherType,
-    SearcherType::ContinuousPassiveIndependent => "Passive Independent Searcher in Continous system.",
-    SearcherType::ContinuousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
-    SearcherType::ContinuousActiveIndependent => "Active Independent Searcher in Continous system.",
-    SearcherType::ContinuousActiveInteracting => "Active Interacting Searcher in Continous system.",
-    SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
-    SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
-    SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
-    SearcherType::LatticeActiveInteracting => "Active Interacting Searcher in Lattice system.",
-    SearcherType::NetworkPassiveIndependent => "Passive Independent Searcher in Network.",
-    SearcherType::NetworkPassiveInteracting => "Passive Interacting Searcher in Network.",
-    SearcherType::NetworkActiveIndependent => "Active Independent Searcher in Network.",
-    SearcherType::NetworkActiveInteracting => "Active Interacting Searcher in Network.");
+impl_fromstr_for_type!(AgentType,
+    AgentType::ContinuousPassiveIndependent => "Passive Independent Agent in Continous system.",
+    AgentType::ContinuousPassiveInteracting => "Passive Interacting Agent in Continous system.",
+    AgentType::ContinuousActiveIndependent => "Active Independent Agent in Continous system.",
+    AgentType::ContinuousActiveInteracting => "Active Interacting Agent in Continous system.",
+    AgentType::LatticePassiveIndependent => "Passive Independent Agent in Lattice system.",
+    AgentType::LatticePassiveInteracting => "Passive Interacting Agent in Lattice system.",
+    AgentType::LatticeActiveIndependent => "Active Independent Agent in Lattice system.",
+    AgentType::LatticeActiveInteracting => "Active Interacting Agent in Lattice system.",
+    AgentType::NetworkPassiveIndependent => "Passive Independent Agent in Network.",
+    AgentType::NetworkPassiveInteracting => "Passive Interacting Agent in Network.",
+    AgentType::NetworkActiveIndependent => "Active Independent Agent in Network.",
+    AgentType::NetworkActiveInteracting => "Active Interacting Agent in Network.");
 
-impl Default for SearcherType{
+impl Default for AgentType{
     fn default() -> Self{
-        SearcherType::ContinuousPassiveIndependent
+        AgentType::ContinuousPassiveIndependent
     }
 }
 
@@ -211,9 +211,9 @@ impl<T : Display> Display for InitType<T>{
     fn fmt(&self, f: &mut Formatter) -> fmt::Result{
         match self{
             InitType::SpecificPosition(pos) =>
-                write!(f, "Initialize all searchers at {}", pos),
+                write!(f, "Initialize all agents at {}", pos),
             InitType::Uniform =>
-                write!(f, "Initialize searchers uniformly"),
+                write!(f, "Initialize agents uniformly"),
         }
     }
 }
@@ -234,7 +234,7 @@ impl<T : FromStr + Default + Clone> FromStr for InitType<T>{
         else{
             match split[1]{
                 "all" => Ok(InitType::<T>::SpecificPosition(split[4].parse::<Position<T>>().expect("Failed to parse"))),
-                "searchers" => Ok(InitType::<T>::Uniform),
+                "agents" => Ok(InitType::<T>::Uniform),
                 _ => Err(Error::make_error_syntax(ErrorCode::InvalidArgumentInput)),
             }
         }
@@ -385,34 +385,34 @@ mod tests{
     use super::*;
     use crate::{impl_fmt_test, impl_fromstr_test};
 
-    impl_fmt_test!(test_fmt_searchertype,
-        SearcherType::ContinuousPassiveIndependent => "Passive Independent Searcher in Continous system.",
-        SearcherType::ContinuousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
-        SearcherType::ContinuousActiveIndependent => "Active Independent Searcher in Continous system.",
-        SearcherType::ContinuousActiveInteracting => "Active Interacting Searcher in Continous system.",
-        SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
-        SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
-        SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
-        SearcherType::LatticeActiveInteracting => "Active Interacting Searcher in Lattice system.",
-        SearcherType::NetworkPassiveIndependent => "Passive Independent Searcher in Network.",
-        SearcherType::NetworkPassiveInteracting => "Passive Interacting Searcher in Network.",
-        SearcherType::NetworkActiveIndependent => "Active Independent Searcher in Network.",
-        SearcherType::NetworkActiveInteracting => "Active Interacting Searcher in Network.");
+    impl_fmt_test!(test_fmt_agenttype,
+        AgentType::ContinuousPassiveIndependent => "Passive Independent Agent in Continous system.",
+        AgentType::ContinuousPassiveInteracting => "Passive Interacting Agent in Continous system.",
+        AgentType::ContinuousActiveIndependent => "Active Independent Agent in Continous system.",
+        AgentType::ContinuousActiveInteracting => "Active Interacting Agent in Continous system.",
+        AgentType::LatticePassiveIndependent => "Passive Independent Agent in Lattice system.",
+        AgentType::LatticePassiveInteracting => "Passive Interacting Agent in Lattice system.",
+        AgentType::LatticeActiveIndependent => "Active Independent Agent in Lattice system.",
+        AgentType::LatticeActiveInteracting => "Active Interacting Agent in Lattice system.",
+        AgentType::NetworkPassiveIndependent => "Passive Independent Agent in Network.",
+        AgentType::NetworkPassiveInteracting => "Passive Interacting Agent in Network.",
+        AgentType::NetworkActiveIndependent => "Active Independent Agent in Network.",
+        AgentType::NetworkActiveInteracting => "Active Interacting Agent in Network.");
 
-    impl_fromstr_test!(test_fromstr_searchertype,
-        SearcherType,
-        SearcherType::ContinuousPassiveIndependent => "Passive Independent Searcher in Continous system.",
-        SearcherType::ContinuousPassiveInteracting => "Passive Interacting Searcher in Continous system.",
-        SearcherType::ContinuousActiveIndependent => "Active Independent Searcher in Continous system.",
-        SearcherType::ContinuousActiveInteracting => "Active Interacting Searcher in Continous system.",
-        SearcherType::LatticePassiveIndependent => "Passive Independent Searcher in Lattice system.",
-        SearcherType::LatticePassiveInteracting => "Passive Interacting Searcher in Lattice system.",
-        SearcherType::LatticeActiveIndependent => "Active Independent Searcher in Lattice system.",
-        SearcherType::LatticeActiveInteracting => "Active Interacting Searcher in Lattice system.",
-        SearcherType::NetworkPassiveIndependent => "Passive Independent Searcher in Network.",
-        SearcherType::NetworkPassiveInteracting => "Passive Interacting Searcher in Network.",
-        SearcherType::NetworkActiveIndependent => "Active Independent Searcher in Network.",
-        SearcherType::NetworkActiveInteracting => "Active Interacting Searcher in Network.");
+    impl_fromstr_test!(test_fromstr_agenttype,
+        AgentType,
+        AgentType::ContinuousPassiveIndependent => "Passive Independent Agent in Continous system.",
+        AgentType::ContinuousPassiveInteracting => "Passive Interacting Agent in Continous system.",
+        AgentType::ContinuousActiveIndependent => "Active Independent Agent in Continous system.",
+        AgentType::ContinuousActiveInteracting => "Active Interacting Agent in Continous system.",
+        AgentType::LatticePassiveIndependent => "Passive Independent Agent in Lattice system.",
+        AgentType::LatticePassiveInteracting => "Passive Interacting Agent in Lattice system.",
+        AgentType::LatticeActiveIndependent => "Active Independent Agent in Lattice system.",
+        AgentType::LatticeActiveInteracting => "Active Interacting Agent in Lattice system.",
+        AgentType::NetworkPassiveIndependent => "Passive Independent Agent in Network.",
+        AgentType::NetworkPassiveInteracting => "Passive Interacting Agent in Network.",
+        AgentType::NetworkActiveIndependent => "Active Independent Agent in Network.",
+        AgentType::NetworkActiveInteracting => "Active Interacting Agent in Network.");
 
     #[test]
     fn test_fmt_move_type(){
@@ -437,18 +437,18 @@ mod tests{
     #[test]
     fn test_fmt_init_type(){
         assert_eq!(format!("{}", InitType::<f64>::SpecificPosition(Position::<f64>::new(vec![0.0; 2]))).as_str(),
-            "Initialize all searchers at 0,0");
+            "Initialize all agents at 0,0");
         assert_eq!(format!("{}", InitType::<f64>::Uniform).as_str(),
-            "Initialize searchers uniformly");
+            "Initialize agents uniformly");
     }
 
     #[test]
     fn test_fromstr_init_type(){
-        let test1 = "Initialize all searchers at 0,0";
+        let test1 = "Initialize all agents at 0,0";
         let result1 = Ok(InitType::<f64>::SpecificPosition(Position::<f64>::new(vec![0.0; 2])));
         assert_eq!(InitType::<f64>::from_str(test1), result1);
 
-        let test2 = "Initialize searchers uniformly";
+        let test2 = "Initialize agents uniformly";
         let result2 = Ok(InitType::<f64>::Uniform);
         assert_eq!(InitType::<f64>::from_str(test2), result2);
     }
@@ -456,15 +456,15 @@ mod tests{
 
     #[test]
     fn test_classify(){
-        assert_eq!(SearcherType::ContinuousPassiveIndependent.in_continous(), true);
-        assert_eq!(SearcherType::ContinuousPassiveIndependent.in_lattice(), false);
-        assert_eq!(SearcherType::ContinuousPassiveIndependent.in_network(), false);
+        assert_eq!(AgentType::ContinuousPassiveIndependent.in_continous(), true);
+        assert_eq!(AgentType::ContinuousPassiveIndependent.in_lattice(), false);
+        assert_eq!(AgentType::ContinuousPassiveIndependent.in_network(), false);
 
-        assert_eq!(SearcherType::ContinuousPassiveIndependent.is_passive(), true);
-        assert_eq!(SearcherType::ContinuousPassiveIndependent.is_active(), false);
+        assert_eq!(AgentType::ContinuousPassiveIndependent.is_passive(), true);
+        assert_eq!(AgentType::ContinuousPassiveIndependent.is_active(), false);
 
-        assert_eq!(SearcherType::ContinuousPassiveIndependent.is_independent(), true);
-        assert_eq!(SearcherType::ContinuousPassiveIndependent.is_interacting(), false);
+        assert_eq!(AgentType::ContinuousPassiveIndependent.is_independent(), true);
+        assert_eq!(AgentType::ContinuousPassiveIndependent.is_interacting(), false);
     }
 
 

@@ -1,28 +1,28 @@
-// Module for Continous Passive Independent Searcher
+// Module for Continous Passive Independent Agent
 
 use crate::prelude::*;
-use crate::searcher_mod::{Passive};
+use crate::agent_mod::{Passive};
 use crate::random_mod::{get_gaussian_vec, get_gaussian_to_vec_nonstandard};
 
 
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub struct ContPassiveIndepSearcher{        // 연속한 시스템에서 Passive하게 움직이는 independent searcher
-    pub searcher_type : SearcherType,               // Type of searcher
+pub struct ContPassiveIndepAgent{        // 연속한 시스템에서 Passive하게 움직이는 independent agent
+    pub agent_type : AgentType,               // Type of agent
     pub mtype : MoveType,                   // Type of random movement
     pub itype : InitType<f64>,              // Type of Initialization
-    pub dim : usize,                        // dimension of space containing searcher
-    pub pos : Position<f64>,                // position of searcher
+    pub dim : usize,                        // dimension of space containing agent
+    pub pos : Position<f64>,                // position of agent
 }
 
-impl ContPassiveIndepSearcher{
-    // 모든 정보를 제공했을 경우, 새 Searcher struct를 반환하는 함수
+impl ContPassiveIndepAgent{
+    // 모든 정보를 제공했을 경우, 새 agent struct를 반환하는 함수
     pub fn new(mtype : MoveType, pos : Position<f64>) -> Self{
         // mtype : Random walk characteristic
-        // pos : initial position of searcher
+        // pos : initial position of agent
 
-        ContPassiveIndepSearcher{
-            searcher_type : SearcherType::ContinuousPassiveIndependent,
+        ContPassiveIndepAgent{
+            agent_type : AgentType::ContinuousPassiveIndependent,
             mtype : mtype,
             itype : InitType::SpecificPosition(pos.clone()),
             dim : pos.dim(),
@@ -32,7 +32,7 @@ impl ContPassiveIndepSearcher{
 
     pub fn new_uniform(sys : &dyn SystemCore<f64>, target : &dyn TargetCore<f64>,
                    rng : &mut Pcg64, mtype : MoveType) -> Result<Self, Error>{
-        // system과 target이 주어져 있는 상황에서 시스템 domain 안에서 초기위치를 uniform하게 뽑아 searcher를 정의해주는 함수
+        // system과 target이 주어져 있는 상황에서 시스템 domain 안에서 초기위치를 uniform하게 뽑아 agent를 정의해주는 함수
         // sys : system configuration
         // target : target configuration
         // rng : random number generator
@@ -46,8 +46,8 @@ impl ContPassiveIndepSearcher{
             }
         }
 
-        Ok(ContPassiveIndepSearcher{
-            searcher_type : SearcherType::ContinuousPassiveIndependent,
+        Ok(ContPassiveIndepAgent{
+            agent_type : AgentType::ContinuousPassiveIndependent,
             mtype : mtype,
             itype : InitType::Uniform,
             dim : pos.dim(),
@@ -57,8 +57,8 @@ impl ContPassiveIndepSearcher{
 
     pub fn renew_uniform(&mut self, sys : &dyn SystemCore<f64>, target : &dyn TargetCore<f64>,
                    rng : &mut Pcg64) -> Result<(), Error>{
-        // 매번 searcher를 새로 정의하는 것 역시 상당한 memory 낭비이다.
-        // 있는 searcher를 재활용하도록 하자.
+        // 매번 agent를 새로 정의하는 것 역시 상당한 memory 낭비이다.
+        // 있는 agent를 재활용하도록 하자.
 
         match sys.position_out_of_system_to_vec(&mut self.pos){
             Ok(()) => (),
@@ -78,15 +78,15 @@ impl ContPassiveIndepSearcher{
     }
 }
 
-impl_argument_trait!(ContPassiveIndepSearcher, "Searcher", ContPassiveIndepSearcherArguments, 3,
-    searcher_type, SearcherType, SearcherType::ContinuousPassiveIndependent;
+impl_argument_trait!(ContPassiveIndepAgent, "Agent", ContPassiveIndepAgentArguments, 3,
+    agent_type, AgentType, AgentType::ContinuousPassiveIndependent;
     mtype, MoveType, "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype, InitType<f64>, "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform",
-    num_searcher, usize, "Number of Searchers");
+    num_agent, usize, "Number of Agents");
 
-impl ContPassiveIndepSearcher{
+impl ContPassiveIndepAgent{
     #[allow(dead_code)]
-    pub fn convert_from(argument : &ContPassiveIndepSearcherArguments) -> Vec<Self>{
+    pub fn convert_from(argument : &ContPassiveIndepAgentArguments) -> Vec<Self>{
         let dim : usize;
         let pos : Position<f64>;
 
@@ -101,17 +101,17 @@ impl ContPassiveIndepSearcher{
             }
         }
         vec![Self{
-            searcher_type   : argument.searcher_type,
+            agent_type   : argument.agent_type,
             mtype           : argument.mtype,
             itype           : argument.itype.clone(),
             dim             : dim,
             pos             : pos,
-        }; argument.num_searcher]
+        }; argument.num_agent]
 
     }
 }
 
-impl SearcherCore<f64> for ContPassiveIndepSearcher{
+impl AgentCore<f64> for ContPassiveIndepAgent{
     fn pos(&self) -> &Position<f64>{
         &self.pos
     }
@@ -152,7 +152,7 @@ impl SearcherCore<f64> for ContPassiveIndepSearcher{
     }
 }
 
-impl Passive<f64, f64> for ContPassiveIndepSearcher{
+impl Passive<f64, f64> for ContPassiveIndepAgent{
     fn random_move(&self, rng : &mut Pcg64, dt : f64) -> Result<Position<f64>, Error>{
         // Random walk characteristic에 따라 그에 맞는 random walk displacement를 반환
         // rng : random number generator
@@ -176,7 +176,7 @@ impl Passive<f64, f64> for ContPassiveIndepSearcher{
         // rng : Random number generator
         // dt : Time step size
         // vec : 값을 저장할 벡터
-        if self.dim != vec.dim(){    // searcher가 움직이는 공간의 dimension과 주어진 vec의 dimension이 다르면?
+        if self.dim != vec.dim(){    // agent가 움직이는 공간의 dimension과 주어진 vec의 dimension이 다르면?
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
         match self.mtype{
@@ -201,9 +201,9 @@ mod tests{
     #[test]
     fn test_new(){
         let pos = Position::<f64>::new(vec![0.0, 0.0]);
-        let searcher1 = ContPassiveIndepSearcher::new(MoveType::Brownian(1f64), pos.clone());
-        assert_eq!(searcher1, ContPassiveIndepSearcher{
-            searcher_type : SearcherType::ContinuousPassiveIndependent,
+        let agent1 = ContPassiveIndepAgent::new(MoveType::Brownian(1f64), pos.clone());
+        assert_eq!(agent1, ContPassiveIndepAgent{
+            agent_type : AgentType::ContinuousPassiveIndependent,
             mtype   : MoveType::Brownian(1f64),
             itype   : InitType::SpecificPosition(pos.clone()),
             dim     : 2,
@@ -224,7 +224,7 @@ mod tests{
         let system = ContCircSystem::new(10.0, 2);
         let target = ContBulkTarget::new(Position::<f64>::new(vec![0.0, 0.0]), 1.0);
 
-        let searcher1 = ContPassiveIndepSearcher::new_uniform(&system, &target, &mut rng1,
+        let agent1 = ContPassiveIndepAgent::new_uniform(&system, &target, &mut rng1,
                         MoveType::Brownian(1f64));
 
         let mut pos = system.position_out_of_system();
@@ -233,8 +233,8 @@ mod tests{
             get_uniform_to_vec_nonstandard(&mut rng2, &mut pos, -10.0, 10.0);
         }
 
-        assert_eq!(searcher1?, ContPassiveIndepSearcher{
-            searcher_type : SearcherType::ContinuousPassiveIndependent,
+        assert_eq!(agent1?, ContPassiveIndepAgent{
+            agent_type : AgentType::ContinuousPassiveIndependent,
             mtype   : MoveType::Brownian(1f64),
             itype   : InitType::Uniform,
             dim     : 2,

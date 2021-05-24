@@ -26,18 +26,6 @@ pub trait DataSet{
 }
 
 
-
-#[macro_export]
-#[allow(unused_macros)]
-macro_rules! construct_dataset_recursive{
-    ([$($t : tt), *; $t2 : tt]) => {
-        construct_dataset!($($t), * ; $t2);
-    };
-    ($($name : ty),+ ; $sim : ty) => {
-        construct_dataset_recursive!($($name),+ ; $sim : ty [SimulationData]);
-    };
-}
-
 #[macro_export]
 #[allow(unused_macros)]
 macro_rules! construct_dataset {

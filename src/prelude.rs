@@ -24,12 +24,12 @@ pub use crate::{
             // cont_boundary::{ContBoundaryTarget, ContBoundaryTargetArguments},
             cont_bulk::{ContBulkTarget, ContBulkTargetArguments},
     },
-    searcher_mod::{SearcherCore, Passive, Active, Interaction, Merge,
-            types::{SearcherType, MoveType, InitType, InteractType},
-            cont_passive_indep::{ContPassiveIndepSearcher, ContPassiveIndepSearcherArguments},
-            cont_passive_merge::{ContPassiveMergeSearcher, ContPassiveMergeSearcherArguments},
-            cont_passive_exp::{ContPassiveExpSearcher, ContPassiveExpSearcherArguments},
-            cont_passive_lj::{ContPassiveLJSearcher, ContPassiveLJSearcherArguments},
+    agent_mod::{AgentCore, Passive, Active, Interaction, Merge,
+            types::{AgentType, MoveType, InitType, InteractType},
+            cont_passive_indep::{ContPassiveIndepAgent, ContPassiveIndepAgentArguments},
+            cont_passive_merge::{ContPassiveMergeAgent, ContPassiveMergeAgentArguments},
+            cont_passive_exp::{ContPassiveExpAgent, ContPassiveExpAgentArguments},
+            cont_passive_lj::{ContPassiveLJAgent, ContPassiveLJAgentArguments},
     },
     time_mod::{TimeType, TimeIterator,
         ConstStep, ConstStepArguments,
@@ -39,7 +39,7 @@ pub use crate::{
     macros::TypeName,
 };
 
-pub use rts_proc::simulation;
+pub use moledyn_proc::simulation;
 
 pub use rand_pcg::Pcg64;
 pub use std::{
@@ -58,7 +58,5 @@ pub use std::{
 pub use streaming_iterator::{StreamingIterator,
         };
 pub use std::f64::consts::PI;
-
-pub use eager::*;
 
 

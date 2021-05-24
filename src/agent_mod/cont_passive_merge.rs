@@ -1,34 +1,33 @@
-// Module for Continous Passive Independent Searcher
+// Module for Continous Passive Independent Agent
 
 use crate::prelude::*;
-use crate::searcher_mod::{Passive, Merge};
 use crate::random_mod::{get_gaussian_vec, get_gaussian_to_vec_nonstandard};
 
 
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub struct ContPassiveMergeSearcher{            // 연속한 시스템에서 Passive하게 움직이는 mergeable searcher
-    pub searcher_type : SearcherType,           // Type of searcher
+pub struct ContPassiveMergeAgent{            // 연속한 시스템에서 Passive하게 움직이는 mergeable agent
+    pub agent_type : AgentType,           // Type of agent
     pub mtype   : MoveType,                     // Type of random movement
     pub itype   : InitType<f64>,                // Type of Initialization
-    pub dim     : usize,                        // dimension of space containing searcher
-    pub pos     : Position<f64>,                // position of searcher
+    pub dim     : usize,                        // dimension of space containing agent
+    pub pos     : Position<f64>,                // position of agent
     pub ptl_radius  : f64,                          // radius of ptl. when they collide, they merge.
     pub size    : usize,                        // size of cluster
     pub alpha   : f64,                          // Exponent of diffusion decrease a function of size
 }
 
-impl ContPassiveMergeSearcher{
-    // 모든 정보를 제공했을 경우, 새 Searcher struct를 반환하는 함수
+impl ContPassiveMergeAgent{
+    // 모든 정보를 제공했을 경우, 새 Agent struct를 반환하는 함수
     pub fn new(mtype : MoveType, pos : Position<f64>, ptl_radius : f64, alpha : f64) -> Self{
         // mtype    : Random walk characteristic
-        // pos      : initial position of searcher
+        // pos      : initial position of agent
         // ptl_radius   : Radius of ptl
         // size     : size of ptl
         // alpha    : exponent of diffusion decrease
 
-        ContPassiveMergeSearcher{
-            searcher_type : SearcherType::ContinuousPassiveInteracting,
+        ContPassiveMergeAgent{
+            agent_type : AgentType::ContinuousPassiveInteracting,
             mtype   : mtype,
             itype   : InitType::SpecificPosition(pos.clone()),
             dim     : pos.dim(),
@@ -41,7 +40,7 @@ impl ContPassiveMergeSearcher{
 
     pub fn new_uniform(sys : &dyn SystemCore<f64>, target : &dyn TargetCore<f64>,
                    rng : &mut Pcg64, mtype : MoveType, ptl_radius : f64, alpha : f64) -> Result<Self, Error>{
-        // system과 target이 주어져 있는 상황에서 시스템 domain 안에서 초기위치를 uniform하게 뽑아 searcher를 정의해주는 함수
+        // system과 target이 주어져 있는 상황에서 시스템 domain 안에서 초기위치를 uniform하게 뽑아 agent를 정의해주는 함수
         // sys      : system configuration
         // target   : target configuration
         // rng      : random number generator
@@ -57,8 +56,8 @@ impl ContPassiveMergeSearcher{
             }
         }
 
-        Ok(ContPassiveMergeSearcher{
-            searcher_type : SearcherType::ContinuousPassiveInteracting,
+        Ok(ContPassiveMergeAgent{
+            agent_type : AgentType::ContinuousPassiveInteracting,
             mtype   : mtype,
             itype   : InitType::Uniform,
             dim     : pos.dim(),
@@ -71,9 +70,9 @@ impl ContPassiveMergeSearcher{
 
     pub fn renew_uniform(&mut self, sys : &dyn SystemCore<f64>, target : &dyn TargetCore<f64>,
                    rng : &mut Pcg64) -> Result<(), Error>{
-        // 매번 searcher를 새로 정의하는 것 역시 상당한 memory 낭비이다.
-        // 있는 searcher를 재활용하도록 하자.
-        // independent searcher와 다르게 mergeable searcher는 size도 변할 수 있고, diffusion coefficient도 변한다.
+        // 매번 agent를 새로 정의하는 것 역시 상당한 memory 낭비이다.
+        // 있는 agent를 재활용하도록 하자.
+        // independent agent와 다르게 mergeable agent는 size도 변할 수 있고, diffusion coefficient도 변한다.
         // 이들을 모두 바꿔줘야함
 
         match sys.position_out_of_system_to_vec(&mut self.pos){
@@ -105,18 +104,18 @@ impl ContPassiveMergeSearcher{
     }
 }
 
-impl_argument_trait!(ContPassiveMergeSearcher, "Searcher", ContPassiveMergeSearcherArguments, 5,
-    searcher_type, SearcherType, SearcherType::ContinuousPassiveInteracting,
+impl_argument_trait!(ContPassiveMergeAgent, "Agent", ContPassiveMergeAgentArguments, 5,
+    agent_type, AgentType, AgentType::ContinuousPassiveInteracting,
     size,   usize,          1;
     mtype,  MoveType,       "Random walk Characterstic. ex) 1.0 : Brownian with D=1 / Levy : Levy walk",
     itype,  InitType<f64>,  "Initialization method. ex) 0,0 : All at 0,0 / Uniform : Uniform",
     ptl_radius, f64,            "Radius of particle. When they collide, they merge. ex) 0.1",
     alpha,  f64,            "Exponent of diffusion decrease. D ~ n^alpha ex) 1.0",
-    num_searcher, usize, "Number of Searcher");
+    num_agent, usize, "Number of Agent");
 
-impl ContPassiveMergeSearcher{
+impl ContPassiveMergeAgent{
     #[allow(dead_code)]
-    pub fn convert_from(argument : &ContPassiveMergeSearcherArguments) -> Vec<Self>{
+    pub fn convert_from(argument : &ContPassiveMergeAgentArguments) -> Vec<Self>{
         let dim : usize;
         let pos : Position<f64>;
 
@@ -131,7 +130,7 @@ impl ContPassiveMergeSearcher{
             }
         }
         vec![Self{
-            searcher_type   : argument.searcher_type,
+            agent_type   : argument.agent_type,
             mtype           : argument.mtype,
             itype           : argument.itype.clone(),
             dim             : dim,
@@ -139,11 +138,11 @@ impl ContPassiveMergeSearcher{
             ptl_radius          : argument.ptl_radius,
             size            : 1,
             alpha           : argument.alpha,
-        }; argument.num_searcher]
+        }; argument.num_agent]
     }
 }
 
-impl SearcherCore<f64> for ContPassiveMergeSearcher{
+impl AgentCore<f64> for ContPassiveMergeAgent{
     fn pos(&self) -> &Position<f64>{
         &self.pos
     }
@@ -184,7 +183,7 @@ impl SearcherCore<f64> for ContPassiveMergeSearcher{
     }
 }
 
-impl Passive<f64, f64> for ContPassiveMergeSearcher{
+impl Passive<f64, f64> for ContPassiveMergeAgent{
     fn random_move(&self, rng : &mut Pcg64, dt : f64) -> Result<Position<f64>, Error>{
         // Random walk characteristic에 따라 그에 맞는 random walk displacement를 반환
         // rng : random number generator
@@ -208,7 +207,7 @@ impl Passive<f64, f64> for ContPassiveMergeSearcher{
         // rng : Random number generator
         // dt : Time step size
         // vec : 값을 저장할 벡터
-        if self.dim != vec.dim(){    // searcher가 움직이는 공간의 dimension과 주어진 vec의 dimension이 다르면?
+        if self.dim != vec.dim(){    // agent가 움직이는 공간의 dimension과 주어진 vec의 dimension이 다르면?
             return Err(Error::make_error_syntax(ErrorCode::InvalidDimension));
         }
         match self.mtype{
@@ -224,7 +223,7 @@ impl Passive<f64, f64> for ContPassiveMergeSearcher{
     }
 }
 
-impl Merge for ContPassiveMergeSearcher{
+impl Merge for ContPassiveMergeAgent{
     fn merge(&mut self, other : &Self) -> Result<(), Error>{
         self.size = self.size + other.size;
         match self.mtype{
@@ -266,10 +265,10 @@ mod tests{
     #[test]
     fn test_new(){
         let pos = Position::<f64>::new(vec![0.0, 0.0]);
-        let searcher1 = ContPassiveMergeSearcher::new(MoveType::Brownian(1f64),
+        let agent1 = ContPassiveMergeAgent::new(MoveType::Brownian(1f64),
                         pos.clone(), 0.1, 0.0);
-        assert_eq!(searcher1, ContPassiveMergeSearcher{
-            searcher_type : SearcherType::ContinuousPassiveInteracting,
+        assert_eq!(agent1, ContPassiveMergeAgent{
+            agent_type : AgentType::ContinuousPassiveInteracting,
             mtype   : MoveType::Brownian(1f64),
             itype   : InitType::SpecificPosition(pos.clone()),
             dim     : 2,
@@ -293,7 +292,7 @@ mod tests{
         let system = ContCircSystem::new(10.0, 2);
         let target = ContBulkTarget::new(Position::<f64>::new(vec![0.0, 0.0]), 1.0);
 
-        let searcher1 = ContPassiveMergeSearcher::new_uniform(&system, &target, &mut rng1,
+        let agent1 = ContPassiveMergeAgent::new_uniform(&system, &target, &mut rng1,
             MoveType::Brownian(1f64), 0.1, 0.0);
 
         let mut pos = system.position_out_of_system();
@@ -302,8 +301,8 @@ mod tests{
             get_uniform_to_vec_nonstandard(&mut rng2, &mut pos, -10.0, 10.0);
         }
 
-        assert_eq!(searcher1?, ContPassiveMergeSearcher{
-            searcher_type : SearcherType::ContinuousPassiveInteracting,
+        assert_eq!(agent1?, ContPassiveMergeAgent{
+            agent_type : AgentType::ContinuousPassiveInteracting,
             mtype   : MoveType::Brownian(1f64),
             itype   : InitType::Uniform,
             dim     : 2,
@@ -319,28 +318,28 @@ mod tests{
     #[test]
     fn test_merge() -> Result<(), Error>{
         let pos = Position::<f64>::new(vec![0.0, 0.0]);
-        let mut searcher1 = ContPassiveMergeSearcher::new(MoveType::Brownian(1f64),
+        let mut agent1 = ContPassiveMergeAgent::new(MoveType::Brownian(1f64),
                         pos.clone(), 0.1, 0.0);
-        let mut searcher2 = ContPassiveMergeSearcher::new(MoveType::Brownian(1f64),
+        let mut agent2 = ContPassiveMergeAgent::new(MoveType::Brownian(1f64),
                         pos.clone(), 0.1, 1.0);
 
-        searcher1.merge(&searcher2)?;
-        searcher2.merge(&searcher1)?;
+        agent1.merge(&agent2)?;
+        agent2.merge(&agent1)?;
 
-        assert_eq!(searcher1.size, 2);
-        assert_eq!(searcher1.mtype, MoveType::Brownian(1f64));
+        assert_eq!(agent1.size, 2);
+        assert_eq!(agent1.mtype, MoveType::Brownian(1f64));
 
-        assert_eq!(searcher2.size, 3);
-        assert_eq!(searcher2.mtype, MoveType::Brownian(1.0 / 3.0));
+        assert_eq!(agent2.size, 3);
+        assert_eq!(agent2.mtype, MoveType::Brownian(1.0 / 3.0));
 
-        searcher1.merge(&searcher2)?;
-        searcher2.merge(&searcher1)?;
+        agent1.merge(&agent2)?;
+        agent2.merge(&agent1)?;
 
-        assert_eq!(searcher1.size, 5);
-        assert_eq!(searcher1.mtype, MoveType::Brownian(1f64));
+        assert_eq!(agent1.size, 5);
+        assert_eq!(agent1.mtype, MoveType::Brownian(1f64));
 
-        assert_eq!(searcher2.size, 8);
-        assert_eq!(searcher2.mtype, MoveType::Brownian(0.125f64));
+        assert_eq!(agent2.size, 8);
+        assert_eq!(agent2.mtype, MoveType::Brownian(0.125f64));
 
         Ok(())
     }

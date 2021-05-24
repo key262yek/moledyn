@@ -1,6 +1,6 @@
 
 use crate::prelude::*;
-use crate::searcher_mod::Merge;
+
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd)]
 pub struct Node{
@@ -581,39 +581,39 @@ TestType { x: 2.0, n: 2, vec: [1.0, 3.0, 5.0], enu: Var2 }\n");
 
     #[test]
     fn test_distance() -> Result<(), Error>{
-        use crate::searcher_mod::cont_passive_indep::ContPassiveIndepSearcher;
+        use crate::agent_mod::cont_passive_indep::ContPassiveIndepAgent;
 
         // Empty list
-        let mut linkedlist = LinkedList::<ContPassiveIndepSearcher>::from(Vec::new());
+        let mut linkedlist = LinkedList::<ContPassiveIndepAgent>::from(Vec::new());
         linkedlist.into_double_iter();
         let mut res = String::new();
-        while let Some((searcher1, searcher2)) = linkedlist.get_double(){
-            let d : f64 = searcher1.pos().distance(searcher2.pos())?;
+        while let Some((agent1, agent2)) = linkedlist.get_double(){
+            let d : f64 = agent1.pos().distance(agent2.pos())?;
             res.push_str(format!("{} ", d).as_str());
         }
         assert_eq!(res, String::new());
 
 
-        let s1 = ContPassiveIndepSearcher::new(MoveType::Brownian(1f64), Position::<f64>::new(vec![0.0, 0.0]));
-        let s2 = ContPassiveIndepSearcher::new(MoveType::Brownian(1f64), Position::<f64>::new(vec![3.0, 0.0]));
-        let s3 = ContPassiveIndepSearcher::new(MoveType::Brownian(1f64), Position::<f64>::new(vec![0.0, 4.0]));
+        let s1 = ContPassiveIndepAgent::new(MoveType::Brownian(1f64), Position::<f64>::new(vec![0.0, 0.0]));
+        let s2 = ContPassiveIndepAgent::new(MoveType::Brownian(1f64), Position::<f64>::new(vec![3.0, 0.0]));
+        let s3 = ContPassiveIndepAgent::new(MoveType::Brownian(1f64), Position::<f64>::new(vec![0.0, 4.0]));
 
 
         // Single ptl list
-        let mut linkedlist = LinkedList::<ContPassiveIndepSearcher>::from(vec![s1.clone()]);
+        let mut linkedlist = LinkedList::<ContPassiveIndepAgent>::from(vec![s1.clone()]);
         let mut res = String::new();
-        while let Some((searcher1, searcher2)) = linkedlist.get_double(){
-            let d : f64 = searcher1.pos().distance(searcher2.pos())?;
+        while let Some((agent1, agent2)) = linkedlist.get_double(){
+            let d : f64 = agent1.pos().distance(agent2.pos())?;
             res.push_str(format!("{} ", d).as_str());
         }
         assert_eq!(res, String::new());
 
         // More
-        let mut linkedlist = LinkedList::<ContPassiveIndepSearcher>::from(vec![s1, s2, s3]);
+        let mut linkedlist = LinkedList::<ContPassiveIndepAgent>::from(vec![s1, s2, s3]);
         linkedlist.into_double_iter();
         let mut res = String::new();
-        while let Some((searcher1, searcher2)) = linkedlist.get_double(){
-            let d : f64 = searcher1.pos().distance(searcher2.pos())?;
+        while let Some((agent1, agent2)) = linkedlist.get_double(){
+            let d : f64 = agent1.pos().distance(agent2.pos())?;
             res.push_str(format!("{} ", d).as_str());
         }
         assert_eq!(res, "3 4 5 ");

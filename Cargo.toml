@@ -1,34 +1,33 @@
 [package]
-name = "rust_rts"
-version = "1.1.0"
+name = "moledyn"
+version = "1.2.0"
 authors = ["Myeongseon Choi"]
 edition = "2018"
 readme="README.md"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/key262yek/rust_rts"
-documentation = "https://docs.rs/rust_rts"
+repository = "https://github.com/key262yek/moledyn"
+documentation = "https://docs.rs/moledyn"
 description = """
     Rust package for Random Target Search simulation
 """
-keywords = ["random-target-search", "target-search", "rts"]
+keywords = ["Molecular-Dynamics", "MD"]
 categories = ["simulation"]
-include = ["src/", "rts_proc/", "Cargo.toml", "Readme.md", "LICENSE-*"]
+include = ["src/", "Cargo.toml", "Readme.md", "LICENSE-*"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
 members = [
-	"rts_proc",
+	"moledyn_proc",
 ]
 
 [dependencies]
-rts_proc = "0.1.0"
+moledyn_proc = {path = "moledyn_proc"}
 rand = "0.7"
 rand_pcg = "0.2.1"
 rand_distr = "0.2.2"
 streaming-iterator = "0.1.5"
 chrono = "0.4"
-eager="0.1"
 
 [dev-dependencies]
 criterion = "0.3"

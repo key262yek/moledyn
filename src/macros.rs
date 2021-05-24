@@ -290,7 +290,7 @@ mod tests{
     fn test_hash() -> Result<(), Error>{
         use crate::system_mod::cont_circ::{ContCircSystem, ContCircSystemArguments};
         use crate::target_mod::cont_bulk::{ContBulkTarget, ContBulkTargetArguments};
-        use crate::searcher_mod::{cont_passive_merge::{ContPassiveMergeSearcher, ContPassiveMergeSearcherArguments}};
+        use crate::agent_mod::{cont_passive_merge::{ContPassiveMergeAgent, ContPassiveMergeAgentArguments}};
         use crate::time_mod::{ExponentialStep, ExponentialStepArguments};
 
         // Dataset
@@ -298,8 +298,8 @@ mod tests{
                         [sys_size, f64, dim, usize ];
                         ContBulkTarget, target_arg, ContBulkTargetArguments,
                         [target_size, f64];
-                        ContPassiveMergeSearcher, searcher_arg, ContPassiveMergeSearcherArguments,
-                        [num_searcher, usize, radius, f64, alpha, f64];
+                        ContPassiveMergeAgent, agent_arg, ContPassiveMergeAgentArguments,
+                        [num_agent, usize, ptl_radius, f64, alpha, f64];
                         ExponentialStep, time_arg, ExponentialStepArguments,
                         [dt_min, f64, dt_max, f64, length, usize];
                         {VariableSimulation, sim_arg, VariableSimulationArguments,
@@ -309,8 +309,8 @@ mod tests{
             sys_size : 10f64,
             dim : 2,
             target_size : 1f64,
-            num_searcher : 10,
-            radius : 0.1f64,
+            num_agent : 10,
+            ptl_radius : 0.1f64,
             alpha : 1.0f64,
             dt_min : 1e-10f64,
             dt_max : 1e-5f64,
@@ -322,8 +322,8 @@ mod tests{
             sys_size : 10f64,
             dim : 2,
             target_size : 1f64,
-            num_searcher : 10,
-            radius : 0.1f64,
+            num_agent : 10,
+            ptl_radius : 0.1f64,
             alpha : 1.0f64,
             dt_min : 1e-10f64,
             dt_max : 1e-5f64,

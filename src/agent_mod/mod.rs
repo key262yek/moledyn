@@ -9,7 +9,7 @@ use crate::prelude::*;
 // ===  Implement Searcher =============================================================
 // =====================================================================================
 
-pub trait SearcherCore<T>{    // Core functionality of searcher.
+pub trait AgentCore<T>{    // Core functionality of searcher.
     fn pos(&self) -> &Position<T>;
 
     // Mutual displacement

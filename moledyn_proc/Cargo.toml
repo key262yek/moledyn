@@ -1,16 +1,16 @@
 [package]
-name = "rts_proc"
+name = "moledyn_proc"
 version = "0.1.0"
 authors = ["Myeongseon Choi"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/key262yek/rust_rts"
-documentation = "https://docs.rs/rust_rts"
+repository = "https://github.com/key262yek/moledyn"
+documentation = "https://docs.rs/moledyn"
 description = """
-    Procedural macros crate for rust_rts crate
+    Procedural macros crate for moledyn crate
     which is the rust package for Random Target Search simulation
 """
-keywords = ["random-target-search", "target-search", "rts"]
+keywords = ["Molecular-Dynamics", "MD"]
 categories = ["simulation"]
 include = ["src/", "Cargo.toml", "README.md", "LICENSE-*"]
 
