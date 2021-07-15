@@ -1,14 +1,14 @@
-#![feature(trace_macros)]
-trace_macros!(true);
+// #![feature(trace_macros)]
+// trace_macros!(true);
 
 #[allow(unused_imports)]
-use rts_proc::*;
+use moledyn_proc::*;
 #[allow(unused_imports)]
-use rts::prelude::*;
+use moledyn::prelude::*;
 
 fn main() -> Result<(), Error>{
     simulation!("RTS_N_PTL_EXP_SEARCHER", TimeAnalysis,
-        ContCircSystem, ContBulkTarget, ContPassiveLJSearcher,
+        ContCircSystem, ContBulkTarget, ContPassiveLJAgent,
         ExponentialStep, VariableSimulation);
 
     Ok(())

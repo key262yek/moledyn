@@ -1,18 +1,18 @@
 
 // use std::env;
-use rts::prelude::*;
+use moledyn::prelude::*;
 
 fn main() -> Result<(), Error>{
     // System arguments : (sys_size) (dim)
     // Target arguments : (target_pos) (target_size)
-    // Searcher arguments : (mtype) (itype) (gamma) (exp_dim) (strength) (num_searcher)
+    // agent arguments : (mtype) (itype) (gamma) (exp_dim) (strength) (num_agent)
     // Time Iterator arguments : (dt_min) (dt_max) (length) (tmax)
     // Variable Simulation arguments : (num_ensemble) (idx_set) (seed) (output_dir)
 
     // let args : Vec<String> = ["10", "2", "0:0", "1", "1.0", "Uniform", "0.2", "1.0", "1000", "1e-10", "1e-5", "10", "100", "100", "1", "12314123", "datas/benchmark"].iter().map(|x| x.to_string()).collect();
 
-    simulation!("RTS_N_PTL_EXP_SEARCHER", TimeAnalysis,
-        ContCircSystem, ContBulkTarget, ContPassiveExpSearcher,
+    simulation!("RTS_N_PTL_EXP_Agent", TimeAnalysis,
+        ContCircSystem, ContBulkTarget, ContPassiveExpAgent,
         ExponentialStep, VariableSimulation);
 
     if dim != exp_dim{
@@ -23,7 +23,7 @@ fn main() -> Result<(), Error>{
     let seed : u128 = seed + (628_398_227f64 * sys_size +
                               431_710_567f64 * dim as f64 +
                               277_627_711f64 * target_size +
-                              719_236_607f64 * num_searcher as f64 +
+                              719_236_607f64 * num_agent as f64 +
                               917_299_259f64 * strength +
                               367_276_621f64 * gamma +
                               570_914_867f64 * idx_set as f64).floor() as u128;
@@ -32,23 +32,23 @@ fn main() -> Result<(), Error>{
     let mut distance : f64;
     let mut force : f64;
     let mut displacement = Position::new(vec![0f64; dim]);
-    let mut single_moves = LinkedList::from(vec![Position::new(vec![0f64; dim]); num_searcher]);
-    let mut list_searchers : LinkedList<ContPassiveExpSearcher> = LinkedList::from(vec_searchers);
+    let mut single_moves = LinkedList::from(vec![Position::new(vec![0f64; dim]); num_agent]);
+    let mut list_agents : LinkedList<ContPassiveExpAgent> = LinkedList::from(vec_agents);
 
     let limit : f64 = if 0.1 * target_size > gamma { gamma } else { 0.1 * target_size };
 
     for _i in 0..num_ensemble{
         let mut fpt : f64 = 0f64;
 
-        for s in &mut list_searchers.contents{
+        for s in &mut list_agents.contents{
             s.renew_uniform(&sys, &target, &mut rng)?;
         }
-        list_searchers.connect_all()?;
+        list_agents.connect_all()?;
 
         'outer : for (time, dt) in timeiter.into_diff().skip(1){
             single_moves.clear();
-            list_searchers.into_double_iter();
-            while let Some((idx1, s1, idx2, s2)) = list_searchers.enumerate_double(){
+            list_agents.into_double_iter();
+            while let Some((idx1, s1, idx2, s2)) = list_agents.enumerate_double(){
                 distance = s1.mutual_displacement_to_vec(&s2, &mut displacement)?;
                 force = s1.force(distance) * dt;
                 displacement.mut_scalar_mul(force);
@@ -58,10 +58,10 @@ fn main() -> Result<(), Error>{
             }
 
 
-            list_searchers.into_iter();
-            while let Some((idx, searcher)) = list_searchers.enumerate_mut(){
+            list_agents.into_iter();
+            while let Some((idx, agent)) = list_agents.enumerate_mut(){
                 let single_move = &mut single_moves.contents[idx];
-                searcher.random_move_to_vec(&mut rng, dt, single_move)?;
+                agent.random_move_to_vec(&mut rng, dt, single_move)?;
 
                 // limit maximum displacement
                 let disp = single_move.norm() / limit;
@@ -69,8 +69,8 @@ fn main() -> Result<(), Error>{
                     single_move.mut_scalar_mul(1f64 / disp);
                 }
 
-                sys.check_bc(&mut searcher.pos, single_move)?;
-                if target.check_find(&searcher.pos)?{
+                sys.check_bc(&mut agent.pos, single_move)?;
+                if target.check_find(&agent.pos)?{
                     fpt = time;
                     break 'outer;
                 }

@@ -1379,19 +1379,19 @@ mod tests{
     #[test]
     fn test_constuct_dataset(){
 
-        define_structure!(DataSet;sys_size, f64, dim, usize, target_size, f64, searcher_type, SearcherType,);
+        define_structure!(DataSet;sys_size, f64, dim, usize, target_size, f64, agent_type, AgentType,);
 
         let x = DataSet{
             sys_size : 0f64,
             dim : 2usize,
             target_size : 1f64,
-            searcher_type : SearcherType::ContinuousPassiveIndependent,
+            agent_type : AgentType::ContinuousPassiveIndependent,
         };
 
         assert_eq!(x.sys_size, 0f64);
         assert_eq!(x.dim, 2usize);
         assert_eq!(x.target_size, 1f64);
-        assert_eq!(x.searcher_type, SearcherType::ContinuousPassiveIndependent);
+        assert_eq!(x.agent_type, AgentType::ContinuousPassiveIndependent);
     }
 
     #[test]

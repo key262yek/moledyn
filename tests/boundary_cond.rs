@@ -1,7 +1,7 @@
 
-use rts::system_mod::{SystemCore, cont_circ::ContCircSystem};
-use rts::position::{Position, Numerics};
-use rts::error::{Error, ErrorCode};
+use moledyn::system_mod::{SystemCore, cont_circ::ContCircSystem};
+use moledyn::position::{Position, Numerics};
+use moledyn::error::{Error, ErrorCode};
 use std::f64::consts::PI;
 
 
@@ -34,7 +34,7 @@ fn test_check_bc_realization() -> Result<(), Error>{
     // 실제 데이터를 확인하기 위해 reflection 결과를 출력해주는 test
     use std::fs::File;
     use std::io::Write;
-    use rts::system_mod::cont_circ::check_bc_exact;
+    use moledyn::system_mod::cont_circ::check_bc_exact;
 
     let mut file = File::create("tests/images/check_bc_realization.dat").map_err(Error::make_error_io)?;
     let sys : ContCircSystem = ContCircSystem::new(1.0, 2);
@@ -78,7 +78,7 @@ fn test_error_check_bc()-> Result<(), Error>{
     // 여러 버젼의 boundary condition check들간의 차이를 확인하는 테스트
     use std::fs::File;
     use std::io::Write;
-    use rts::system_mod::cont_circ::{check_bc_exact, check_bc_first_order};
+    use moledyn::system_mod::cont_circ::{check_bc_exact, check_bc_first_order};
 
     let mut file = File::create("tests/images/check_bc_errors.dat").map_err(Error::make_error_io)?;
     let sys : ContCircSystem = ContCircSystem::new(1.0, 2);

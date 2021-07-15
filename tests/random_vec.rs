@@ -1,9 +1,9 @@
 // Confirm the Random number generators
 
-use rts::error::Error;
-use rts::system_mod::{SystemCore, cont_circ::ContCircSystem};
-use rts::random_mod::{rng_seed, get_uniform_vec, get_gaussian_vec, get_uniform_to_vec, get_gaussian_to_vec};
-use rts::position::Position;
+use moledyn::error::Error;
+use moledyn::system_mod::{SystemCore, cont_circ::ContCircSystem};
+use moledyn::random_mod::{rng_seed, get_uniform_vec, get_gaussian_vec, get_uniform_to_vec, get_gaussian_to_vec};
+use moledyn::position::Position;
 
 #[test]
 #[ignore]

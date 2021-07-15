@@ -1,10 +1,10 @@
 // N ptl rts test
 // iterator 를 이용해 한 시스템에 n ptl이 모두 있는 상황의 simulation
 
-use rts::prelude::*;
-use rts::system_mod::{cont_circ::ContCircSystem};
-use rts::target_mod::{cont_bulk::ContBulkTarget};
-use rts::searcher_mod::{Passive, cont_passive_merge::ContPassiveMergeSearcher};
+use moledyn::prelude::*;
+use moledyn::system_mod::{cont_circ::ContCircSystem};
+use moledyn::target_mod::{cont_bulk::ContBulkTarget};
+use moledyn::agent_mod::{Passive, cont_passive_merge::ContPassiveMergeAgent};
 
 #[test]
 #[ignore]
@@ -52,32 +52,32 @@ fn n_ptl_fpt(n : usize, radius : f64, alpha : f64, rng: &mut Pcg64) -> Result<f6
 
     let sys : ContCircSystem = ContCircSystem::new(sys_size, dim);   // System
     let target : ContBulkTarget = ContBulkTarget::new(Position::new(vec![0.0; dim]), target_size);  // Target
-    let mut vec_searchers : Vec<ContPassiveMergeSearcher> = Vec::with_capacity(n);
+    let mut vec_agents : Vec<ContPassiveMergeAgent> = Vec::with_capacity(n);
 
     for _i in 0..n{
-        let searcher = ContPassiveMergeSearcher::new_uniform(&sys, &target, rng, MoveType::Brownian(1f64), radius, alpha)?;
-        vec_searchers.push(searcher);
+        let agent = ContPassiveMergeAgent::new_uniform(&sys, &target, rng, MoveType::Brownian(1f64), radius, alpha)?;
+        vec_agents.push(agent);
     }
-    let mut list_searchers : LinkedList<ContPassiveMergeSearcher> = LinkedList::from(vec_searchers);
+    let mut list_agents : LinkedList<ContPassiveMergeAgent> = LinkedList::from(vec_agents);
     let mut time : f64 = 0f64;
 
     'outer : loop{
         time += dt;
 
-        list_searchers.into_iter();
-        while let Some(searcher) = list_searchers.get_mut(){
-            let mut single_move : Position<f64> = searcher.random_move(rng, dt)?;
-            sys.check_bc(&mut searcher.pos, &mut single_move)?;
-            if target.check_find(&searcher.pos)?{
+        list_agents.into_iter();
+        while let Some(agent) = list_agents.get_mut(){
+            let mut single_move : Position<f64> = agent.random_move(rng, dt)?;
+            sys.check_bc(&mut agent.pos, &mut single_move)?;
+            if target.check_find(&agent.pos)?{
                 break 'outer;
             }
         }
 
-        list_searchers.into_double_iter();
-        while let Some((idx1, s1, idx2, s2)) = list_searchers.enumerate_double(){
+        list_agents.into_double_iter();
+        while let Some((idx1, s1, idx2, s2)) = list_agents.enumerate_double(){
             let d : f64 = s1.pos().distance(s2.pos())?;
             if d < 2f64 * radius{
-                list_searchers.merge(idx1, idx2)?;
+                list_agents.merge(idx1, idx2)?;
             }
         }
     }

@@ -4,7 +4,7 @@ use plotlib::page::Page;
 use plotlib::repr::{Plot, Histogram, HistogramBins};
 use plotlib::style::{BoxStyle, LineStyle};
 use plotlib::view::ContinuousView;
-use rts::random_mod::{rng_seed, get_uniform, get_gaussian};
+use moledyn::random_mod::{rng_seed, get_uniform, get_gaussian};
 use std::f64::consts::PI;
 
 fn bin_bounds(min: f64, max: f64, count: usize) -> HistogramBins{

@@ -4,12 +4,12 @@
 // 후에 시스템 중심에 타겟을 둔 상태로 움직일 때, first passage time의 분포와 평균을 확인하고자 한다.
 
 use rand_pcg::Pcg64;
-use rts::random_mod::rng_seed;
-use rts::system_mod::{SystemCore, cont_circ::ContCircSystem};
-use rts::target_mod::{TargetCore, cont_bulk::ContBulkTarget};
-use rts::searcher_mod::{Passive, types::MoveType, cont_passive_indep::ContPassiveIndepSearcher};
-use rts::position::{Position, Numerics};
-use rts::error::Error;
+use moledyn::random_mod::rng_seed;
+use moledyn::system_mod::{SystemCore, cont_circ::ContCircSystem};
+use moledyn::target_mod::{TargetCore, cont_bulk::ContBulkTarget};
+use moledyn::agent_mod::{Passive, types::MoveType, cont_passive_indep::ContPassiveIndepAgent};
+use moledyn::position::{Position, Numerics};
+use moledyn::error::Error;
 use std::default::Default;
 
 #[test]
@@ -25,15 +25,15 @@ fn test_ptl_diffusion_in_time() -> Result<(), Error>{
     let mut single_move : Position<f64> = Default::default();
 
     for _j in 0..NUM_ENSEMBLE{
-        // Brownian searcher at center of dim-dimensional space with diffusion coefficient 1
-        let mut searcher : ContPassiveIndepSearcher = ContPassiveIndepSearcher::new(MoveType::Brownian(1f64),
+        // Brownian agent at center of dim-dimensional space with diffusion coefficient 1
+        let mut agent : ContPassiveIndepAgent = ContPassiveIndepAgent::new(MoveType::Brownian(1f64),
                                                     Position::<f64>::new(vec![0.0; dim]));
         for k in 0..NUM_STEP{
-            // Searcher moves with time dt
+            // Agent moves with time dt
             single_move.clear();
-            searcher.random_move_to_vec(&mut rng, dt, &mut single_move)?;
-            searcher.pos.mut_add(&single_move);
-            let dx2 : f64 = searcher.pos.norm().powi(2);          // Compute square of displacement
+            agent.random_move_to_vec(&mut rng, dt, &mut single_move)?;
+            agent.pos.mut_add(&single_move);
+            let dx2 : f64 = agent.pos.norm().powi(2);          // Compute square of displacement
             data[k + 1] += dx2;                                     // Add to data
         }
     }
@@ -69,14 +69,14 @@ fn test_single_ptl_fpt() -> Result<(), Error>{
     let target : ContBulkTarget = ContBulkTarget::new(Position::new(vec![0.0; dim]), target_size);  // Target
 
     for _i in 0..NUM_ENSEMBLE{
-        // Searcher initially located by uniform distribution
-        let mut searcher = ContPassiveIndepSearcher::new_uniform(&sys, &target, &mut rng, MoveType::Brownian(1f64))?;
+        // Agent initially located by uniform distribution
+        let mut agent = ContPassiveIndepAgent::new_uniform(&sys, &target, &mut rng, MoveType::Brownian(1f64))?;
         let mut time : f64 = 0f64;
 
-        while !target.check_find(&searcher.pos)?{
+        while !target.check_find(&agent.pos)?{
             single_move.clear();
-            searcher.random_move_to_vec(&mut rng, dt, &mut single_move)?;
-            sys.check_bc(&mut searcher.pos, &mut single_move)?;
+            agent.random_move_to_vec(&mut rng, dt, &mut single_move)?;
+            sys.check_bc(&mut agent.pos, &mut single_move)?;
             time += dt;
         }
         data += time;

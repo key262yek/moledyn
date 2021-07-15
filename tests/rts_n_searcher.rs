@@ -1,12 +1,12 @@
 // Searcher가 여러개 있는 경우에서의 random target search문제 결과 확인하기
 
 use rand_pcg::Pcg64;
-use rts::random_mod::rng_seed;
-use rts::system_mod::{SystemCore, cont_circ::ContCircSystem};
-use rts::target_mod::{TargetCore, cont_bulk::ContBulkTarget};
-use rts::searcher_mod::{Passive, types::MoveType, cont_passive_indep::ContPassiveIndepSearcher};
-use rts::position::{Position};
-use rts::error::Error;
+use moledyn::random_mod::rng_seed;
+use moledyn::system_mod::{SystemCore, cont_circ::ContCircSystem};
+use moledyn::target_mod::{TargetCore, cont_bulk::ContBulkTarget};
+use moledyn::agent_mod::{Passive, types::MoveType, cont_passive_indep::ContPassiveIndepAgent};
+use moledyn::position::{Position};
+use moledyn::error::Error;
 
 #[test]
 #[ignore]
@@ -61,7 +61,7 @@ fn n_ptl_fpt(n : usize, rng: &mut Pcg64) -> Result<f64, Error>{
 
     for _i in 0..n{
         // Searcher initially located by uniform distribution
-        let mut searcher = ContPassiveIndepSearcher::new_uniform(&sys, &target, rng, MoveType::Brownian(1f64))?;
+        let mut searcher = ContPassiveIndepAgent::new_uniform(&sys, &target, rng, MoveType::Brownian(1f64))?;
         let mut time : f64 = 0f64;
 
         while !target.check_find(&searcher.pos)?{

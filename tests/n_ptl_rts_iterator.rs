@@ -1,10 +1,10 @@
 // N ptl rts test
 // iterator 를 이용해 한 시스템에 n ptl이 모두 있는 상황의 simulation
 
-use rts::prelude::*;
-use rts::system_mod::{cont_circ::ContCircSystem};
-use rts::target_mod::{cont_bulk::ContBulkTarget};
-use rts::searcher_mod::{Passive, cont_passive_indep::ContPassiveIndepSearcher};
+use moledyn::prelude::*;
+use moledyn::system_mod::{cont_circ::ContCircSystem};
+use moledyn::target_mod::{cont_bulk::ContBulkTarget};
+use moledyn::agent_mod::{Passive, cont_passive_indep::ContPassiveIndepAgent};
 
 #[test]
 #[ignore]
@@ -52,22 +52,22 @@ fn n_ptl_fpt(n : usize, rng: &mut Pcg64) -> Result<f64, Error>{
 
     let sys : ContCircSystem = ContCircSystem::new(sys_size, dim);   // System
     let target : ContBulkTarget = ContBulkTarget::new(Position::new(vec![0.0; dim]), target_size);  // Target
-    let mut vec_searchers : Vec<ContPassiveIndepSearcher> = Vec::with_capacity(n);
+    let mut vec_agents : Vec<ContPassiveIndepAgent> = Vec::with_capacity(n);
 
     for _i in 0..n{
-        let searcher = ContPassiveIndepSearcher::new_uniform(&sys, &target, rng, MoveType::Brownian(1f64))?;
-        vec_searchers.push(searcher);
+        let agent = ContPassiveIndepAgent::new_uniform(&sys, &target, rng, MoveType::Brownian(1f64))?;
+        vec_agents.push(agent);
     }
-    let mut list_searchers : LinkedList<ContPassiveIndepSearcher> = LinkedList::from(vec_searchers);
+    let mut list_agents : LinkedList<ContPassiveIndepAgent> = LinkedList::from(vec_agents);
     let mut time : f64 = 0f64;
 
     'outer : loop{
-        list_searchers.into_iter();
+        list_agents.into_iter();
         time += dt;
-        while let Some(searcher) = list_searchers.get_mut(){
-            let mut single_move : Position<f64> = searcher.random_move(rng, dt)?;
-            sys.check_bc(&mut searcher.pos, &mut single_move)?;
-            if target.check_find(&searcher.pos)?{
+        while let Some(agent) = list_agents.get_mut(){
+            let mut single_move : Position<f64> = agent.random_move(rng, dt)?;
+            sys.check_bc(&mut agent.pos, &mut single_move)?;
+            if target.check_find(&agent.pos)?{
                 break 'outer;
             }
         }
