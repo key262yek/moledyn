@@ -7,4 +7,3 @@ Change name of package and module
 
 Since the purpose of package is not restricted to random target search, 
 it can be used for general purpose molecular dynamics.
-

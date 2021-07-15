@@ -21,19 +21,20 @@ pub struct ContPassiveExpAgent{            // 연속한 시스템에서 Passive�
 }
 
 impl ContPassiveExpAgent{
-    fn coeff(dim : usize, gamma : f64, strength : f64) -> Result<(f64, f64), Error>{
+    fn coeff(_dim : usize, gamma : f64, strength : f64) -> Result<(f64, f64), Error>{
         let (coeff_pot, coeff_force) : (f64, f64);
-        match dim{
-            2 => {
-                coeff_pot = strength / (2f64 * PI * gamma.powi(2));
-            },
-            3 => {
-                coeff_pot = strength / (8f64 * PI * gamma.powi(3));
-            },
-            _ => {
-                return Err(Error::make_error_syntax(ErrorCode::FeatureNotProvided));
-            }
-        }
+        // match dim{
+        //     2 => {
+        //         coeff_pot = strength / (2f64 * PI * gamma.powi(2));
+        //     },
+        //     3 => {
+        //         coeff_pot = strength / (8f64 * PI * gamma.powi(3));
+        //     },
+        //     _ => {
+        //         return Err(Error::make_error_syntax(ErrorCode::FeatureNotProvided));
+        //     }
+        // }
+        coeff_pot = strength;
         coeff_force = coeff_pot / gamma;
 
         return Ok((coeff_pot, coeff_force));
