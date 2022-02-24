@@ -141,6 +141,12 @@ fn ident_to_dataset(ident : &proc_macro2::Ident) -> proc_macro2::TokenStream{
             };
             tokens.into()
         },
+        "ParVariableSimulation" => {
+            let tokens = proc_quote::quote!{
+                ParVariableSimulation, sim_arg, ParVariableSimulationArguments, [idx_set, usize, n_thrd, usize]
+            };
+            tokens.into()
+        },
         "ProcessSimulation" => {
             let tokens = proc_quote::quote!{
                 ProcessSimulation, sim_arg, ProcessSimulationArguments, [period, f64, idx_set, usize]
@@ -265,6 +271,13 @@ impl ParsedArguments{
                     vec.push(string_to_ident("num_ensemble"));
                     vec.push(string_to_ident("idx_set"));
                     vec.push(string_to_ident("seed"));
+                    vec.push(string_to_ident("output_dir"));
+                },
+                "ParVariableSimulation" => {
+                    vec.push(string_to_ident("num_ensemble"));
+                    vec.push(string_to_ident("idx_set"));
+                    vec.push(string_to_ident("seed"));
+                    vec.push(string_to_ident("n_thrd"));
                     vec.push(string_to_ident("output_dir"));
                 },
                 "ProcessSimulation" => {

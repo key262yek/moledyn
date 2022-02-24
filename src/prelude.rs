@@ -34,7 +34,7 @@ pub use crate::{
     time_mod::{TimeType, TimeIterator,
         ConstStep, ConstStepArguments,
         ExponentialStep, ExponentialStepArguments},
-    setup::{VariableSimulation, VariableSimulationArguments, ProcessSimulation, ProcessSimulationArguments},
+    setup::{VariableSimulation, VariableSimulationArguments, ParVariableSimulation, ParVariableSimulationArguments, ProcessSimulation, ProcessSimulationArguments},
     iterator::{Node, LinkedList},
     macros::TypeName,
 };
