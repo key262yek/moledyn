@@ -141,15 +141,13 @@ impl VariableSimulation{
 
 pub struct ParVariableSimulation{
     pub num_ensemble : usize,
-    pub idx_set : usize,
     pub seed : u128,
     pub n_thrd : usize,
     pub output_dir : String,
 }
 
-impl_argument_trait!(ParVariableSimulation, "Variable Simulation", ParVariableSimulationArguments, 5;
+impl_argument_trait!(ParVariableSimulation, "Variable Simulation", ParVariableSimulationArguments, 4;
     num_ensemble, usize, "Number of Ensemble",
-    idx_set, usize, "Index of Ensemble Set",
     seed, u128, "Initial Seed for Random Number Generator",
     n_thrd, usize, "Number of Thread",
     output_dir, String, "Directory containing output file");
@@ -159,7 +157,6 @@ impl ParVariableSimulation{
     pub fn convert_from(argument : &ParVariableSimulationArguments) -> Self{
         Self{
             num_ensemble    : argument.num_ensemble,
-            idx_set         : argument.idx_set,
             seed            : argument.seed,
             n_thrd          : argument.n_thrd,
             output_dir      : argument.output_dir.clone(),
